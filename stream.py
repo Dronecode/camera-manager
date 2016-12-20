@@ -14,17 +14,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import dbus
-import dbus.service
-import dbus.mainloop.glib
 import fcntl
 import glob
 import ipaddress
 import os
 import v4l2_defines
+import socket
 
-from argparse import ArgumentParser
+os.environ['MAVLINK20'] = '1' #Force using mavlink 2.0
 from pymavlink import mavutil
+
+from argparse import ArgumentParser, ArgumentTypeError
 from serial import serialutil
 from threading import Thread
 from time import sleep
@@ -34,17 +34,7 @@ require_version("Gst", "1.0")
 require_version("GstRtspServer", "1.0")
 from gi.repository import Gst, GstRtspServer, GObject, GLib
 
-STREAM_MANAGER = None
-MAVLINK_CONNECTION = None
-
-CAMERA_IFACE = "org.ardupilot.camera"
-STREAM_IFACE = "org.ardupilot.camera.stream"
-MANAGER_IFACE = "org.ardupilot.StreamManager"
-
-class Stream(dbus.service.Object):
-    _cameraPath = ''
-    _objectPath = ''
-
+class Stream():
     _width = 0
     _height = 0
     _streamFormat = ''
@@ -152,9 +142,8 @@ class Stream(dbus.service.Object):
         "S680": {},
     }
 
-    def __init__(self, conn, cameraPath, streamFormat, mountPath, width=0, height=0):
+    def __init__(self, cameraPath, streamFormat, mountPath, width=0, height=0):
         self._cameraPath = cameraPath
-        self._objectPath = '/org/ardupilot/stream' + mountPath
         self._streamFormat = streamFormat
         self._mountPath = mountPath
         self._width = width
@@ -163,8 +152,6 @@ class Stream(dbus.service.Object):
         self._pipelineDescription = self.BuildPipelineDescription(streamFormat)
         if not self._pipelineDescription:
             raise ValueError
-
-        dbus.service.Object.__init__(self, conn, self._objectPath)
 
     def BuildPipelineDescription(self, streamFormat):
         if not "V4L2_CAP_STREAMING" in self.GetCapabilities().get('capabilities'):
@@ -203,9 +190,6 @@ class Stream(dbus.service.Object):
 
     def GetID(self):
         return int(self._cameraPath[10:])
-
-    def GetPath(self):
-        return self._objectPath
 
     def GetMountPath(self):
         return self._mountPath
@@ -251,7 +235,6 @@ class Stream(dbus.service.Object):
 
         return capabilitiesNames
 
-    @dbus.service.method(CAMERA_IFACE, out_signature="a{sv}")
     def GetCapabilities(self):
         try:
             v = open(self._cameraPath, "r")
@@ -270,27 +253,21 @@ class Stream(dbus.service.Object):
                  "capabilities_union": str(c.capabilities),
                  "capabilities": Stream.GetCapabilitiesNames(c.capabilities) }
 
-    @dbus.service.method(CAMERA_IFACE, out_signature="as")
     def GetFormats(self):
         return Stream.GetFormatsImpl(self._cameraPath)
 
-    @dbus.service.method(CAMERA_IFACE, out_signature="s")
     def GetPath(self):
         return self._cameraPath
 
-    @dbus.service.method(STREAM_IFACE, out_signature="s")
     def GetURI(self):
-        return "rtsp://" + STREAM_MANAGER.GetIP()+ ":" + STREAM_MANAGER.GetPort() + self._mountPath
+        return "rtsp://" + stream_manager.GetIP()+ ":" + stream_manager.GetPort() + self._mountPath
 
-    @dbus.service.method(STREAM_IFACE)
     def Remove(self):
-        STREAM_MANAGER.RemoveStream(self._mountPath)
+        stream_manager.RemoveStream(self._mountPath)
 
-    @dbus.service.method(STREAM_IFACE, out_signature="s")
     def GetFormat(self):
         return self._streamFormat
 
-    @dbus.service.method(STREAM_IFACE, out_signature="ai")
     def GetFrameSize(self):
         try:
             v = open(self._cameraPath, "r")
@@ -318,40 +295,32 @@ class Stream(dbus.service.Object):
         if mountPath[0] != '/':
             mountPath = '/' + mountPath
 
-        STREAM_MANAGER.AddStreamImpl(self._cameraPath, streamFormat, mountPath, width, height)
+        stream_manager.AddStreamImpl(self._cameraPath, streamFormat, mountPath, width, height)
 
         return True
 
-    @dbus.service.method(STREAM_IFACE, in_signature="s", out_signature="b")
     def SetFormat(self, streamFormat):
         return self.SetStream(streamFormat, self._mountPath, self._width, self._height)
 
-    @dbus.service.method(STREAM_IFACE, in_signature="s", out_signature="b")
     def SetMountPath(self, mountPath):
         return self.SetStream(self._streamFormat, mountPath, self._width, self._height)
 
-    @dbus.service.method(STREAM_IFACE, in_signature="ii", out_signature="b")
     def SetFrameSize(self, width, height):
         return self.SetStream(self._streamFormat, self._mountPath, width, height)
 
-class StreamManager(dbus.service.Object):
-    _bus = None
+class StreamManager():
     _streams = []
 
     _rtspSourceID = 0
     _rtspServer = None
     _rtspMountPoints = None
 
-    def __init__(self, conn):
-        self._bus = conn
-
+    def __init__(self):
         self._rtspServer = GstRtspServer.RTSPServer.new()
-        self._rtspServer.set_address("0.0.0.0")
+        self._rtspServer.set_address("0.0.0.0") #TODO: Get the IP that the drones is using to connect to client
         self._rtspServer.set_service("8554")
 
         self._rtspMountPoints = self._rtspServer.get_mount_points()
-
-        dbus.service.Object.__init__(self, conn, "/org/ardupilot/StreamManager")
 
     def StartStreams(self):
         for cameraPath in glob.glob("/dev/video*"):
@@ -370,11 +339,9 @@ class StreamManager(dbus.service.Object):
     def GetStreamObjects(self):
         return self._streams
 
-    @dbus.service.method(MANAGER_IFACE, out_signature="as")
     def GetCameras(self):
         return glob.glob("/dev/video*")
 
-    @dbus.service.method(MANAGER_IFACE, out_signature="as")
     def GetStreams(self):
         return [s.GetMountPath() for s in self._streams]
 
@@ -391,7 +358,7 @@ class StreamManager(dbus.service.Object):
             return False
 
         try:
-            stream = Stream(self._bus, cameraPath, streamFormat, mountPath, width, height)
+            stream = Stream(cameraPath, streamFormat, mountPath, width, height)
         except ValueError:
             return False
 
@@ -409,11 +376,9 @@ class StreamManager(dbus.service.Object):
 
         return True
 
-    @dbus.service.method(MANAGER_IFACE, in_signature="sss", out_signature="b")
     def AddStream(self, cameraPath, streamFormat, mountPath):
         return self.AddStreamImpl(cameraPath, streamFormat, mountPath)
 
-    @dbus.service.method(MANAGER_IFACE, in_signature="s", out_signature="b")
     def RemoveStream(self, mountPath):
         if mountPath[0] != '/':
             mountPath = '/' + mountPath
@@ -434,7 +399,6 @@ class StreamManager(dbus.service.Object):
 
         return True
 
-    @dbus.service.method(MANAGER_IFACE, in_signature="s", out_signature="b")
     def SetIP(self, ip):
         try:
             ipaddress.ip_address(ip)
@@ -451,7 +415,6 @@ class StreamManager(dbus.service.Object):
 
         return True
 
-    @dbus.service.method(MANAGER_IFACE, in_signature="i", out_signature="b")
     def SetPort(self, port):
         if port < 0 or port > 65535:
             print("Error: Port number out of range 0...65535")
@@ -466,22 +429,18 @@ class StreamManager(dbus.service.Object):
 
         return True
 
-    @dbus.service.method(MANAGER_IFACE, out_signature="s")
     def GetIP(self):
         return self._rtspServer.get_address()
 
-    @dbus.service.method(MANAGER_IFACE, out_signature="s")
     def GetPort(self):
         return self._rtspServer.get_service()
 
 def handle_video_stream_get(msg):
-    if msg.command == mavutil.mavlink.VIDEO_STREAM_GET_CMD_SERVER:
-        MAVLINK_CONNECTION.mav.video_stream_server_send(bytearray(STREAM_MANAGER.GetIP().encode()), STREAM_MANAGER.GetPort())
-    elif msg.command == mavutil.mavlink.VIDEO_STREAM_GET_CMD_STREAMS:
-        for s in STREAM_MANAGER.GetStreamObjects():
-            MAVLINK_CONNECTION.mav.video_stream_uri_send(s.GetID(), bytearray(s.GetURI().encode()))
-    elif msg.command == mavutil.mavlink.VIDEO_STREAM_GET_CMD_ATTRIBUTES:
-        for s in STREAM_MANAGER.GetStreamObjects():
+    if msg.command == mavutil.mavlink.VIDEO_STREAM_GET_CMD_STREAMS:
+        for s in stream_manager.GetStreamObjects():
+            mavlink_connection.mav.video_stream_uri_send(s.GetID(), bytearray(s.GetURI().encode()))
+    elif msg.command == mavutil.mavlink.VIDEO_STREAM_GET_CMD_SETTINGS:
+        for s in stream_manager.GetStreamObjects():
             if s.GetID() != msg.id:
                 continue
 
@@ -509,78 +468,101 @@ def handle_video_stream_get(msg):
             if not frame_size:
                 break
 
-            MAVLINK_CONNECTION.mav.video_stream_attributes_send(msg.id, capabilities,
-                format, formats_array, frame_size, bytearray(s.GetURI().encode()))
+            mavlink_connection.mav.video_stream_settings_send(msg.id, capabilities,
+                format, formats_array, frame_size[0], frame_size[1], bytearray(s.GetURI().encode()))
 
             break
 
-def handle_set_video_stream_server(msg):
-    if not STREAM_MANAGER.SetIP(msg.ip):
-        return
-
-    STREAM_MANAGER.SetPort(msg.port)
-
-def handle_set_video_stream_attributes(msg):
-    for s in STREAM_MANAGER.GetStreamObjects():
+def handle_set_video_stream_settings(msg):
+    for s in stream_manager.GetStreamObjects():
         if s.GetID() != msg.id:
             continue
 
         if not s.SetFormat(msg.format):
             return
 
-        if not s.SetFrameSize(msg.frame_size[0], msg.frame_size[1]):
+        if not s.SetFrameSize(msg.video_resolution_h, msg.video_resolution_v):
             return
 
         s.SetMountPath(msg.mount_path)
 
         break
 
-def mavloop(args):
+def setup_mavlink_connection(args):
+    if args.device_parts[0] == "udp":
+        mavlink_connection = mavutil.mavlink_connection("udpbcast:" + args.device_parts[1] + ":" + args.device_parts[2])
+
+        mavlink_connection.port.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        mavlink_connection.port.bind((args.device_parts[1], 0))
+    else:
+        mavlink_connection = mavutil.mavlink_connection(args.device, baud=args.baud)
+
+    mavlink_connection.mav.srcSystem = int(args.system_id)
+    mavlink_connection.mav.srcComponent = mavutil.mavlink.MAV_COMP_ID_VIDEO_STREAM
+
+    return mavlink_connection
+
+def hbloop(mavlink_connection):
+    while(True):
+        mavlink_connection.mav.heartbeat_send(
+                mavutil.mavlink.MAV_TYPE_GENERIC,
+                mavutil.mavlink.MAV_AUTOPILOT_INVALID,
+                mavutil.mavlink.MAV_MODE_PREFLIGHT,
+                0,
+                mavutil.mavlink.MAV_STATE_ACTIVE)
+        sleep(1)
+
+def mavloop(mavlink_connection):
+    while(True):
+        msg = mavlink_connection.recv_match(blocking=False)
+        if not msg:
+            continue
+
+        print(msg)
+        msg_type = msg.get_type()
+        if msg_type == "VIDEO_STREAM_GET":
+            handle_video_stream_get(msg)
+        elif msg_type == "SET_VIDEO_STREAM_SETTINGS":
+            handle_set_video_stream_settings(msg)
+
+        sleep(0.01)
+
+def parse_args():
+    def valid_device(device):
+        if len(device.split(':')) != 3:
+            raise ArgumentTypeError('Invalid device format. Use [protocol]:[address]:[port].')
+        return device
+
+    parser = ArgumentParser(description=('A daemon that allows camera configuration handling'
+        'via D-Bus methods and exports RTSP streams using GStreamer.'))
+    parser.add_argument('-d', '--device', default='udp::14550', help='Serial, UDP, TCP or file mavlink connection.', type=valid_device) #support multiple interfaces
+    parser.add_argument('-b', '--baud', default='115200', help='Baud rate.')
+    parser.add_argument('-s', '--system_id', default=8, help='System ID.')
+
+    return parser.parse_args()
+
+if __name__ == "__main__":
+    #TODO: Test serial, tcp and file support. And mavlink-route supporte
+
+    args = parse_args()
+    args.device_parts = args.device.split(':')
+
+    Gst.init(None)
+
+    stream_manager = StreamManager()
+    stream_manager.StartStreams()
+
     try:
-        MAVLINK_CONNECTION = mavutil.mavlink_connection(args.device, baud=args.baud)
+        mavlink_connection = setup_mavlink_connection(args)
     except serialutil.SerialException:
         print('Could not connect to device "' + args.device + '"')
         os._exit(1)
 
-    MAVLINK_CONNECTION.wait_heartbeat()
+    hbthread = Thread(target=hbloop, args=[mavlink_connection])
+    hbthread.daemon = True
+    hbthread.start()
 
-    MAVLINK_CONNECTION.mav.request_data_stream_send(MAVLINK_CONNECTION.target_system,
-        MAVLINK_CONNECTION.target_component,mavutil.mavlink.MAV_DATA_STREAM_ALL, 4, 1)
-
-    while(True):
-        msg = MAVLINK_CONNECTION.recv_match(blocking=False)
-        if not msg:
-            continue
-
-        msg_type = msg.get_type()
-        if msg_type == "VIDEO_STREAM_GET":
-            handle_video_stream_get(msg)
-        elif msg_type == "SET_VIDEO_STREAM_SERVER":
-            handle_set_video_stream_server(msg)
-        elif msg_type == "SET_VIDEO_STREAM_ATTRIBUTES":
-            handle_set_video_stream_attributes(msg)
-
-        sleep(0.01)
-
-if __name__ == "__main__":
-    parser = ArgumentParser(description=('A daemon that allows camera configuration handling'
-        'via D-Bus methods and exports RTSP streams using GStreamer.'))
-    parser.add_argument('-d', '--device', default='tcp:localhost:5760', help='Serial, UDP, TCP or file mavlink connection.')
-    parser.add_argument('-b', '--baud', default='115200', help='Baud rate.')
-    args = parser.parse_args()
-
-    dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
-    systemBus = dbus.SystemBus()
-
-    Gst.init(None)
-
-    name = dbus.service.BusName(STREAM_IFACE, systemBus)
-
-    STREAM_MANAGER = StreamManager(systemBus)
-
-    STREAM_MANAGER.StartStreams()
-
-    mavthread = Thread(target=mavloop, args=[args])
+    mavthread = Thread(target=mavloop, args=[mavlink_connection])
     mavthread.daemon = True
     mavthread.start()
 
