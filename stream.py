@@ -191,6 +191,9 @@ class Stream():
     def GetID(self):
         return int(self._cameraPath[10:])
 
+    def GetName(self):
+        return self._cameraPath[5:]
+
     def GetMountPath(self):
         return self._mountPath
 
@@ -474,10 +477,15 @@ class MavlinkManager():
     def handle_video_stream_get(self, msg):
         if msg.command == mavutil.mavlink.VIDEO_STREAM_GET_CMD_STREAMS:
             for s in stream_manager.GetStreamObjects():
-                self.mavlink_connection.mav.video_stream_uri_send(s.GetID(), bytearray(s.GetURI(address = self.address).encode()))
-        elif msg.command == mavutil.mavlink.VIDEO_STREAM_GET_CMD_SETTINGS:
+                if msg.id != 0 and s.GetID() != msg.id:
+                    continue
+
+                self.mavlink_connection.mav.video_stream_uri_send(s.GetID(), bytearray(s.GetName().encode()),
+                    bytearray(s.GetURI(address = self.address).encode()))
+
+        elif msg.command == mavutil.mavlink.VIDEO_STREAM_GET_CMD_STREAM_SETTINGS:
             for s in stream_manager.GetStreamObjects():
-                if s.GetID() != msg.id:
+                if msg.id != 0 and s.GetID() != msg.id:
                     continue
 
                 capabilities = s.GetCapabilities()
@@ -504,7 +512,8 @@ class MavlinkManager():
                 if not frame_size:
                     break
 
-                self.mavlink_connection.mav.video_stream_settings_send(msg.id, capabilities,
+                self.mavlink_connection.mav.video_stream_settings_send(s.GetID(),
+                    bytearray(s.GetName().encode()), capabilities,
                     format, formats_array, frame_size[0], frame_size[1], bytearray(s.GetURI().encode()))
 
                 break
