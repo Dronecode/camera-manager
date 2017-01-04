@@ -259,8 +259,10 @@ class Stream():
     def GetPath(self):
         return self._cameraPath
 
-    def GetURI(self):
-        return "rtsp://" + stream_manager.GetIP()+ ":" + stream_manager.GetPort() + self._mountPath
+    def GetURI(self, address=None):
+        if not address:
+            address = stream_manager.GetIP()
+        return "rtsp://" + address + ":" + stream_manager.GetPort() + self._mountPath
 
     def Remove(self):
         stream_manager.RemoveStream(self._mountPath)
@@ -317,7 +319,7 @@ class StreamManager():
 
     def __init__(self):
         self._rtspServer = GstRtspServer.RTSPServer.new()
-        self._rtspServer.set_address("0.0.0.0") #TODO: Get the IP that the drones is using to connect to client
+        self._rtspServer.set_address("0.0.0.0")
         self._rtspServer.set_service("8554")
 
         self._rtspMountPoints = self._rtspServer.get_mount_points()
@@ -435,97 +437,117 @@ class StreamManager():
     def GetPort(self):
         return self._rtspServer.get_service()
 
-def handle_video_stream_get(msg):
-    if msg.command == mavutil.mavlink.VIDEO_STREAM_GET_CMD_STREAMS:
-        for s in stream_manager.GetStreamObjects():
-            mavlink_connection.mav.video_stream_uri_send(s.GetID(), bytearray(s.GetURI().encode()))
-    elif msg.command == mavutil.mavlink.VIDEO_STREAM_GET_CMD_SETTINGS:
+class MavlinkManager():
+    def __init__(self, stream_manager):
+        self.stream_manager = stream_manager
+
+    def setup_mavlink_connection(self, args):
+        if args.device_parts[0] == "udp":
+            mavlink_connection = mavutil.mavlink_connection("udpbcast:" + args.device_parts[1] + ":" + args.device_parts[2])
+
+            mavlink_connection.port.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            mavlink_connection.port.bind((args.device_parts[1], 0))
+            self.address = args.device_parts[1]
+        else:
+            mavlink_connection = mavutil.mavlink_connection(args.device, baud=args.baud)
+
+        mavlink_connection.mav.srcSystem = int(args.system_id)
+        mavlink_connection.mav.srcComponent = mavutil.mavlink.MAV_COMP_ID_VIDEO_STREAM
+
+        return mavlink_connection
+
+    def Start(self):
+        try:
+            self.mavlink_connection = self.setup_mavlink_connection(args)
+        except serialutil.SerialException:
+            print('Could not connect to device "' + args.device + '"')
+            os._exit(1)
+
+        hbthread = Thread(target=self.hbloop)
+        hbthread.daemon = True
+        hbthread.start()
+
+        mavthread = Thread(target=self.mavloop)
+        mavthread.daemon = True
+        mavthread.start()
+
+    def handle_video_stream_get(self, msg):
+        if msg.command == mavutil.mavlink.VIDEO_STREAM_GET_CMD_STREAMS:
+            for s in stream_manager.GetStreamObjects():
+                self.mavlink_connection.mav.video_stream_uri_send(s.GetID(), bytearray(s.GetURI(address = self.address).encode()))
+        elif msg.command == mavutil.mavlink.VIDEO_STREAM_GET_CMD_SETTINGS:
+            for s in stream_manager.GetStreamObjects():
+                if s.GetID() != msg.id:
+                    continue
+
+                capabilities = s.GetCapabilities()
+                if not capabilities:
+                    break
+                capabilities = int(capabilities['capabilities_union'])
+
+                format = s.GetFormat()
+                if not format:
+                    break
+                format = Stream.FourccToPixelFormat(format)
+
+                available_formats = s.GetFormats()
+                if not available_formats:
+                    break
+
+                formats_array = [0] * 20
+                for i, item in enumerate(available_formats):
+                    if i >= 20:
+                        break
+                    formats_array[i] = Stream.FourccToPixelFormat(item)
+
+                frame_size = s.GetFrameSize()
+                if not frame_size:
+                    break
+
+                self.mavlink_connection.mav.video_stream_settings_send(msg.id, capabilities,
+                    format, formats_array, frame_size[0], frame_size[1], bytearray(s.GetURI().encode()))
+
+                break
+
+    def handle_set_video_stream_settings(self, msg):
         for s in stream_manager.GetStreamObjects():
             if s.GetID() != msg.id:
                 continue
 
-            capabilities = s.GetCapabilities()
-            if not capabilities:
-                break
-            capabilities = int(capabilities['capabilities_union'])
+            if not s.SetFormat(msg.format):
+                return
 
-            format = s.GetFormat()
-            if not format:
-                break
-            format = Stream.FourccToPixelFormat(format)
+            if not s.SetFrameSize(msg.video_resolution_h, msg.video_resolution_v):
+                return
 
-            available_formats = s.GetFormats()
-            if not available_formats:
-                break
-
-            formats_array = [0] * 20
-            for i, item in enumerate(available_formats):
-                if i >= 20:
-                    break
-                formats_array[i] = Stream.FourccToPixelFormat(item)
-
-            frame_size = s.GetFrameSize()
-            if not frame_size:
-                break
-
-            mavlink_connection.mav.video_stream_settings_send(msg.id, capabilities,
-                format, formats_array, frame_size[0], frame_size[1], bytearray(s.GetURI().encode()))
+            s.SetMountPath(msg.mount_path)
 
             break
 
-def handle_set_video_stream_settings(msg):
-    for s in stream_manager.GetStreamObjects():
-        if s.GetID() != msg.id:
-            continue
+    def hbloop(self):
+        while(True):
+            self.mavlink_connection.mav.heartbeat_send(
+                    mavutil.mavlink.MAV_TYPE_GENERIC,
+                    mavutil.mavlink.MAV_AUTOPILOT_INVALID,
+                    mavutil.mavlink.MAV_MODE_PREFLIGHT,
+                    0,
+                    mavutil.mavlink.MAV_STATE_ACTIVE)
+            sleep(1)
 
-        if not s.SetFormat(msg.format):
-            return
+    def mavloop(self):
+        while(True):
+            msg = self.mavlink_connection.recv_match(blocking=False)
+            if not msg:
+                continue
 
-        if not s.SetFrameSize(msg.video_resolution_h, msg.video_resolution_v):
-            return
+            print(msg)
+            msg_type = msg.get_type()
+            if msg_type == "VIDEO_STREAM_GET":
+                self.handle_video_stream_get(msg)
+            elif msg_type == "SET_VIDEO_STREAM_SETTINGS":
+                self.handle_set_video_stream_settings(msg)
 
-        s.SetMountPath(msg.mount_path)
-
-        break
-
-def setup_mavlink_connection(args):
-    if args.device_parts[0] == "udp":
-        mavlink_connection = mavutil.mavlink_connection("udpbcast:" + args.device_parts[1] + ":" + args.device_parts[2])
-
-        mavlink_connection.port.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        mavlink_connection.port.bind((args.device_parts[1], 0))
-    else:
-        mavlink_connection = mavutil.mavlink_connection(args.device, baud=args.baud)
-
-    mavlink_connection.mav.srcSystem = int(args.system_id)
-    mavlink_connection.mav.srcComponent = mavutil.mavlink.MAV_COMP_ID_VIDEO_STREAM
-
-    return mavlink_connection
-
-def hbloop(mavlink_connection):
-    while(True):
-        mavlink_connection.mav.heartbeat_send(
-                mavutil.mavlink.MAV_TYPE_GENERIC,
-                mavutil.mavlink.MAV_AUTOPILOT_INVALID,
-                mavutil.mavlink.MAV_MODE_PREFLIGHT,
-                0,
-                mavutil.mavlink.MAV_STATE_ACTIVE)
-        sleep(1)
-
-def mavloop(mavlink_connection):
-    while(True):
-        msg = mavlink_connection.recv_match(blocking=False)
-        if not msg:
-            continue
-
-        print(msg)
-        msg_type = msg.get_type()
-        if msg_type == "VIDEO_STREAM_GET":
-            handle_video_stream_get(msg)
-        elif msg_type == "SET_VIDEO_STREAM_SETTINGS":
-            handle_set_video_stream_settings(msg)
-
-        sleep(0.01)
+            sleep(0.01)
 
 def parse_args():
     def valid_device(device):
@@ -551,19 +573,7 @@ if __name__ == "__main__":
 
     stream_manager = StreamManager()
     stream_manager.StartStreams()
-
-    try:
-        mavlink_connection = setup_mavlink_connection(args)
-    except serialutil.SerialException:
-        print('Could not connect to device "' + args.device + '"')
-        os._exit(1)
-
-    hbthread = Thread(target=hbloop, args=[mavlink_connection])
-    hbthread.daemon = True
-    hbthread.start()
-
-    mavthread = Thread(target=mavloop, args=[mavlink_connection])
-    mavthread.daemon = True
-    mavthread.start()
+    mavlink_manager = MavlinkManager(stream_manager)
+    mavlink_manager.Start()
 
     GObject.MainLoop().run()
