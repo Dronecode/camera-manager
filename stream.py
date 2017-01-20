@@ -328,15 +328,19 @@ class StreamManager():
         self._rtspMountPoints = self._rtspServer.get_mount_points()
 
     def StartStreams(self):
-        for cameraPath in glob.glob("/dev/video*"):
+        for cameraPath in sorted(glob.glob("/dev/video*")):
+            streamFormat = None
             for cameraFormat in Stream.GetFormatsImpl(cameraPath):
                 formatElements = Stream._formatsPipelineElements.get(cameraFormat)
                 if not formatElements:
                     continue # format not supported
 
-                streamFormat = cameraFormat
                 if not formatElements.get("converter"):
+                    streamFormat = cameraFormat
                     break # formats without converter are preferred
+                if not streamFormat:
+                    streamFormat = cameraFormat
+
 
             if streamFormat:
                 self.AddStream(cameraPath, streamFormat, "/stream" + cameraPath[10:])
