@@ -292,15 +292,19 @@ class Stream():
         return []
 
     def SetStream(self, streamFormat, mountPath, width, height):
-        if not self.BuildPipelineDescription(streamFormat):
+        pipeline = self.BuildPipelineDescription(streamFormat)
+        if not pipeline:
             return False
 
-        self.Remove()
+        factory, match = stream_manager._rtspServer.get_mount_points().match(mountPath)
+        if not factory:
+            return False
+        factory.set_launch(pipeline)
 
-        if mountPath[0] != '/':
-            mountPath = '/' + mountPath
-
-        stream_manager.AddStreamImpl(self._cameraPath, streamFormat, mountPath, width, height)
+        self._streamFormat = streamFormat
+        self._mountPath = mountPath
+        self._width = width
+        self._height = height
 
         return True
 
@@ -401,7 +405,6 @@ class StreamManager():
             return False
 
         self._streams.remove(stream)
-        stream.remove_from_connection()
 
         # The stream will keep alive until there's no one connected.
         self._rtspMountPoints.remove_factory(mountPath)
@@ -527,14 +530,22 @@ class MavlinkManager():
             if s.GetID() != msg.id:
                 continue
 
-            if not s.SetFormat(msg.format):
-                return
+            msg_format = s.GetFormat()
+            msg_height = s.GetFrameSize()[1]
+            msg_width = s.GetFrameSize()[0]
+            msg_mount_path = s.GetMountPath()
+            if msg.format:
+                msg_format = Stream.PixelFormatToFourcc(msg.format)
 
-            if not s.SetFrameSize(msg.video_resolution_h, msg.video_resolution_v):
-                return
+            if msg.video_resolution_h and msg.video_resolution_v:
+                msg_height = msg.video_resolution_h
+                msg_width = msg.video_resolution_v
 
-            s.SetMountPath(msg.mount_path)
+            mount_path = str(msg.mount_path.decode("utf-8"))
+            if mount_path:
+                mount_path = msg_mount_path
 
+            s.SetStream(msg_format, msg_mount_path, msg_width, msg_height)
             break
 
     def hbloop(self):
