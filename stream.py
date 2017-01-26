@@ -200,13 +200,16 @@ class Stream():
     def GetPipelineDescription(self):
         return self._pipelineDescription
 
+    @staticmethod
     def PixelFormatToFourcc(i):
         return chr(i & 0xFF) + chr((i & 0xFF00) >> 8) + chr((i & 0xFF0000) >> 16) + chr((i & 0xFF000000) >> 24)
 
+    @staticmethod
     def FourccToPixelFormat(f):
         a, b, c, d = bytearray(f.encode())
         return (a << 0) | (b << 8) | (c << 16) | (d << 24)
 
+    @staticmethod
     def GetFormatsImpl(path):
         try:
             v = open(path, "r")
@@ -229,6 +232,7 @@ class Stream():
 
         return formats
 
+    @staticmethod
     def GetCapabilitiesNames(capabilities):
         capabilitiesNames = []
 
@@ -487,8 +491,8 @@ class MavlinkManager():
                 if msg.id != 0 and s.GetID() != msg.id:
                     continue
 
-                self.mavlink_connection.mav.video_stream_uri_send(s.GetID(), bytearray(s.GetName().encode()),
-                    bytearray(s.GetURI(address = self.address).encode()))
+                self.mavlink_connection.mav.video_stream_uri_send(s.GetID(), s.GetName().encode(),
+                    s.GetURI(address = self.address).encode())
 
         elif msg.command == mavutil.mavlink.VIDEO_STREAM_GET_CMD_STREAM_SETTINGS:
             for s in stream_manager.GetStreamObjects():
@@ -520,8 +524,8 @@ class MavlinkManager():
                     break
 
                 self.mavlink_connection.mav.video_stream_settings_send(s.GetID(),
-                    bytearray(s.GetName().encode()), capabilities,
-                    format, formats_array, frame_size[0], frame_size[1], bytearray(s.GetURI().encode()))
+                    s.GetName().encode(), capabilities,
+                    format, formats_array, frame_size[0], frame_size[1], s.GetURI().encode())
 
                 break
 
