@@ -456,12 +456,13 @@ class MavlinkManager():
         self.stream_manager = stream_manager
 
     def setup_mavlink_connection(self, args):
-        if args.device_parts[0] == "udp":
-            mavlink_connection = mavutil.mavlink_connection("udpbcast:" + args.device_parts[1] + ":" + args.device_parts[2])
+        device_parts = args.device.split(':')
+        if device_parts[0] == "udp":
+            mavlink_connection = mavutil.mavlink_connection(args.target)
 
             mavlink_connection.port.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            mavlink_connection.port.bind((args.device_parts[1], 0))
-            self.address = args.device_parts[1]
+            mavlink_connection.port.bind((device_parts[1], 0))
+            self.address = device_parts[1]
         else:
             mavlink_connection = mavutil.mavlink_connection(args.device, baud=args.baud)
 
@@ -525,7 +526,7 @@ class MavlinkManager():
 
                 self.mavlink_connection.mav.video_stream_settings_send(s.GetID(),
                     s.GetName().encode(), capabilities,
-                    format, formats_array, frame_size[0], frame_size[1], s.GetURI().encode())
+                    format, formats_array, frame_size[0], frame_size[1], s.GetURI(address = self.address).encode())
 
                 break
 
@@ -578,14 +579,10 @@ class MavlinkManager():
             sleep(0.01)
 
 def parse_args():
-    def valid_device(device):
-        if len(device.split(':')) != 3:
-            raise ArgumentTypeError('Invalid device format. Use [protocol]:[address]:[port].')
-        return device
-
     parser = ArgumentParser(description=('A daemon that allows camera configuration handling'
         'via D-Bus methods and exports RTSP streams using GStreamer.'))
-    parser.add_argument('-d', '--device', default='udp::14550', help='Serial, UDP, TCP or file mavlink connection.', type=valid_device) #support multiple interfaces
+    parser.add_argument('-d', '--device', default='udp::', help='Serial, UDP, TCP or file mavlink connection.') #support multiple interfaces
+    parser.add_argument('-t', '--target', default='udpbcast::14550', help='Target device (may be broadcast address when using udp).')
     parser.add_argument('-b', '--baud', default='115200', help='Baud rate.')
     parser.add_argument('-s', '--system_id', default=8, help='System ID.')
 
@@ -595,7 +592,6 @@ if __name__ == "__main__":
     #TODO: Test serial, tcp and file support. And mavlink-route supporte
 
     args = parse_args()
-    args.device_parts = args.device.split(':')
 
     Gst.init(None)
 
