@@ -569,11 +569,12 @@ class MavlinkManager():
             if not msg:
                 continue
 
-            print(msg)
             msg_type = msg.get_type()
             if msg_type == "VIDEO_STREAM_GET":
+                print("Message received: " + str(msg))
                 self.handle_video_stream_get(msg)
             elif msg_type == "SET_VIDEO_STREAM_SETTINGS":
+                print("Message received: " + str(msg))
                 self.handle_set_video_stream_settings(msg)
 
             sleep(0.01)
