@@ -20,6 +20,7 @@
 #include <getopt.h>
 #include <stdio.h>
 
+#include "glib_mainloop.h"
 #include "log.h"
 
 static void help(FILE *fp)
@@ -61,12 +62,15 @@ static int parse_argv(int argc, char *argv[])
 
 int main(int argc, char *argv[])
 {
+    GlibMainloop mainloop;
+
     log_open();
 
     if (parse_argv(argc, argv) != 2)
         goto close_log;
 
     log_debug("Starting Camera Streaming Daemon");
+    mainloop.loop();
 
     log_close();
 
