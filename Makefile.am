@@ -108,7 +108,14 @@ camera_streaming_daemon_SOURCES = \
 	log.c \
 	log.h \
 	macro.h \
+	mainloop.cpp \
+	mainloop.h \
 	main.cpp
+
+camera_streaming_daemon_LDADD = mainloop.a  $(GLIB_LIBS)
+noinst_LIBRARIES = mainloop.a
+mainloop_a_SOURCES = glib_mainloop.cpp glib_mainloop.h mainloop.h
+mainloop_a_CXXFLAGS = ${AM_CXXFLAGS} ${GLIB_CFLAGS}
 
 # ------------------------------------------------------------------------------
 # coverity

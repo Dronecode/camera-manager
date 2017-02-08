@@ -1,6 +1,7 @@
 *.o
 *.lo
 *.la
+*.a
 /*.tar.xz
 /*.md5sum
 .deps/

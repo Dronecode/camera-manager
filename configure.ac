@@ -5,6 +5,8 @@ AC_INIT([camera-streaming-daemon],
 	[camera-streaming-daemon],
 	[])
 
+PKG_CHECK_MODULES(GLIB, [glib-2.0])
+
 AC_CONFIG_SRCDIR([main.cpp])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS(config.h)
