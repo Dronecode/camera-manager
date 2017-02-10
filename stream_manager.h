@@ -17,17 +17,23 @@
  */
 #pragma once
 
-#include <avahi-glib/glib-watch.h>
+#include <avahi-common/watch.h>
+#include <string>
+#include <vector>
 
-#include "mainloop.h"
+#include "avahi_publisher.h"
+#include "stream.h"
 
-class GlibMainloop : public Mainloop {
+class StreamManager {
 public:
-    GlibMainloop();
-    ~GlibMainloop();
-    void loop() override;
-    const AvahiPoll *get_avahi_poll_api() override;
+    StreamManager();
+    ~StreamManager();
+    void start();
+    void stop();
 
 private:
-    AvahiGLibPoll *avahi_poll;
+    void stream_discovery();
+    std::vector<Stream> streams;
+    bool is_running;
+    AvahiPublisher avahi_publisher;
 };

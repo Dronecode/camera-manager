@@ -19,6 +19,7 @@
 
 #include <glib.h>
 #include <signal.h>
+#include <stdexcept>
 
 #include "log.h"
 
@@ -43,6 +44,7 @@ static void setup_signal_handlers()
 }
 
 GlibMainloop::GlibMainloop()
+    : avahi_poll(nullptr)
 {
     gmainloop = g_main_loop_new(NULL, FALSE);
     mainloop = this;
@@ -51,12 +53,24 @@ GlibMainloop::GlibMainloop()
 
 GlibMainloop::~GlibMainloop()
 {
+    mainloop = nullptr;
+    if (avahi_poll) {
+        avahi_glib_poll_free(avahi_poll);
+        avahi_poll = nullptr;
+    }
+
     g_main_loop_unref(gmainloop);
     gmainloop = nullptr;
-    mainloop = nullptr;
 }
 
 void GlibMainloop::loop()
 {
     g_main_loop_run(gmainloop);
+}
+
+const AvahiPoll *GlibMainloop::get_avahi_poll_api()
+{
+    if (!avahi_poll)
+        avahi_poll = avahi_glib_poll_new(NULL, G_PRIORITY_DEFAULT);
+    return avahi_glib_poll_get(avahi_poll);
 }

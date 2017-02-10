@@ -59,7 +59,8 @@ AM_CFLAGS = \
 	-fdiagnostics-show-option \
 	-fvisibility=hidden \
 	-ffunction-sections \
-	-fdata-sections
+	-fdata-sections \
+	${AVAHI_CFLAGS}
 
 AM_CXXFLAGS = \
 	-pipe \
@@ -96,7 +97,8 @@ AM_CXXFLAGS = \
 	-fdiagnostics-show-option \
 	-fvisibility=hidden \
 	-ffunction-sections \
-	-fdata-sections
+	-fdata-sections \
+	${AVAHI_CFLAGS}
 
 AM_LDFLAGS = \
 	-Wl,--as-needed \
@@ -105,14 +107,18 @@ AM_LDFLAGS = \
 
 bin_PROGRAMS += camera-streaming-daemon
 camera_streaming_daemon_SOURCES = \
+	avahi_publisher.cpp \
+	avahi_publisher.h \
 	log.c \
 	log.h \
 	macro.h \
 	mainloop.cpp \
 	mainloop.h \
-	main.cpp
+	main.cpp \
+	stream_manager.h \
+	stream_manager.cpp
 
-camera_streaming_daemon_LDADD = mainloop.a  $(GLIB_LIBS)
+camera_streaming_daemon_LDADD = mainloop.a  $(GLIB_LIBS) $(AVAHI_LIBS)
 noinst_LIBRARIES = mainloop.a
 mainloop_a_SOURCES = glib_mainloop.cpp glib_mainloop.h mainloop.h
 mainloop_a_CXXFLAGS = ${AM_CXXFLAGS} ${GLIB_CFLAGS}
