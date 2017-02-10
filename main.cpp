@@ -22,6 +22,8 @@
 
 #include "glib_mainloop.h"
 #include "log.h"
+#include "stream_manager.h"
+#include "string.h"
 
 static void help(FILE *fp)
 {
@@ -62,14 +64,16 @@ static int parse_argv(int argc, char *argv[])
 
 int main(int argc, char *argv[])
 {
-    GlibMainloop mainloop;
-
     log_open();
+
+    GlibMainloop mainloop;
+    StreamManager stream;
 
     if (parse_argv(argc, argv) != 2)
         goto close_log;
 
     log_debug("Starting Camera Streaming Daemon");
+    stream.start();
     mainloop.loop();
 
     log_close();

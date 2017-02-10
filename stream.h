@@ -16,15 +16,8 @@
  * limitations under the License.
  */
 #pragma once
+#include <string>
 
-#include <avahi-common/watch.h>
-
-class Mainloop {
-public:
-    virtual void loop() = 0;
-    virtual const AvahiPoll *get_avahi_poll_api() = 0;
-    static Mainloop *get_mainloop() { return mainloop; };
-
-protected:
-    static Mainloop *mainloop;
+struct Stream {
+    std::string name;
 };

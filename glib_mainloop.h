@@ -17,6 +17,8 @@
  */
 #pragma once
 
+#include <avahi-glib/glib-watch.h>
+
 #include "mainloop.h"
 
 class GlibMainloop : public Mainloop {
@@ -24,4 +26,8 @@ public:
     GlibMainloop();
     ~GlibMainloop();
     void loop() override;
+
+private:
+    AvahiGLibPoll *avahi_poll;
+    const AvahiPoll *get_avahi_poll_api() override;
 };
