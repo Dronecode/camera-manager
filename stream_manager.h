@@ -18,13 +18,22 @@
 #pragma once
 
 #include <avahi-common/watch.h>
+#include <string>
+#include <vector>
 
-class Mainloop {
+#include "avahi_publisher.h"
+#include "stream.h"
+
+class StreamManager {
 public:
-    virtual void loop() = 0;
-    virtual const AvahiPoll *get_avahi_poll_api() = 0;
-    static Mainloop *get_mainloop() { return mainloop; };
+    StreamManager();
+    ~StreamManager();
+    void start();
+    void stop();
 
-protected:
-    static Mainloop *mainloop;
+private:
+    void stream_discovery();
+    std::vector<Stream> streams;
+    bool is_running;
+    AvahiPublisher avahi_publisher;
 };
