@@ -30,6 +30,7 @@
 StreamManager::StreamManager()
     : is_running(false)
     , avahi_publisher(streams, DEFAULT_SERVICE_PORT, DEFAULT_SERVICE_TYPE)
+    , rtsp_server(streams, DEFAULT_SERVICE_PORT)
 {
     stream_discovery();
 };
@@ -62,6 +63,7 @@ void StreamManager::start()
         return;
     is_running = true;
 
+    rtsp_server.start();
     avahi_publisher.start();
 }
 
@@ -72,4 +74,5 @@ void StreamManager::stop()
     is_running = false;
 
     avahi_publisher.stop();
+    rtsp_server.stop();
 }

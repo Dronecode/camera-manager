@@ -7,6 +7,7 @@ AC_INIT([camera-streaming-daemon],
 
 PKG_CHECK_MODULES(GLIB, [glib-2.0])
 PKG_CHECK_MODULES(AVAHI, [avahi-client, avahi-core, avahi-glib])
+PKG_CHECK_MODULES(GST, [gstreamer-rtsp-1.0, gstreamer-1.0, gstreamer-rtsp-server-1.0])
 
 AC_CONFIG_SRCDIR([main.cpp])
 AC_CONFIG_MACRO_DIR([m4])
