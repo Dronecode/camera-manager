@@ -17,25 +17,27 @@
  */
 #pragma once
 
-#include <avahi-common/watch.h>
-#include <string>
+#include <gst/gst.h>
+#include <gst/rtsp-server/rtsp-server.h>
 #include <vector>
 
-#include "avahi_publisher.h"
-#include "rtsp_server.h"
 #include "stream.h"
 
-class StreamManager {
+class RTSPServer {
 public:
-    StreamManager();
-    ~StreamManager();
+    RTSPServer(std::vector<Stream> &_streams, int _port);
+    ~RTSPServer();
     void start();
     void stop();
 
 private:
-    void stream_discovery();
-    std::vector<Stream> streams;
+    const std::vector<Stream> &streams;
     bool is_running;
-    AvahiPublisher avahi_publisher;
-    RTSPServer rtsp_server;
+    int port;
+
+    gint server_handle;
+    GstRTSPServer *server;
+    GstElement *create_element_from_url(const GstRTSPUrl *url);
+    bool create_pipeline(char *pipeline, int size, const GstRTSPUrl *url);
+    friend GstElement *stream_create_element(GstRTSPMediaFactory *factory, const GstRTSPUrl *url);
 };
