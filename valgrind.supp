@@ -1,0 +1,10 @@
+{
+   gst_init_memory_leak
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:malloc
+   fun:g_malloc
+   ...
+   fun:_dl_init
+   ...
+}
