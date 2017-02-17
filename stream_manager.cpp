@@ -52,7 +52,7 @@ void StreamManager::stream_discovery()
 
     while ((f = readdir(dir)) != NULL) {
         if (std::strncmp(VIDEO_PREFIX, f->d_name, sizeof(VIDEO_PREFIX) - 1) == 0)
-            streams.push_back(Stream{f->d_name});
+            streams.emplace_back(Stream{f->d_name});
     }
     closedir(dir);
 }
