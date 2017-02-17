@@ -60,7 +60,8 @@ AM_CFLAGS = \
 	-fvisibility=hidden \
 	-ffunction-sections \
 	-fdata-sections \
-	${AVAHI_CFLAGS}
+	${AVAHI_CFLAGS} \
+	${GST_CFLAGS}
 
 AM_CXXFLAGS = \
 	-pipe \
@@ -98,7 +99,8 @@ AM_CXXFLAGS = \
 	-fvisibility=hidden \
 	-ffunction-sections \
 	-fdata-sections \
-	${AVAHI_CFLAGS}
+	${AVAHI_CFLAGS} \
+	${GST_CFLAGS}
 
 AM_LDFLAGS = \
 	-Wl,--as-needed \
@@ -115,10 +117,12 @@ camera_streaming_daemon_SOURCES = \
 	mainloop.cpp \
 	mainloop.h \
 	main.cpp \
+	rtsp_server.cpp \
+	rtsp_server.h \
 	stream_manager.cpp \
 	stream_manager.h
 
-camera_streaming_daemon_LDADD = mainloop.a  $(GLIB_LIBS) $(AVAHI_LIBS)
+camera_streaming_daemon_LDADD = mainloop.a  $(GLIB_LIBS) $(AVAHI_LIBS) $(GST_LIBS)
 noinst_LIBRARIES = mainloop.a
 mainloop_a_SOURCES = glib_mainloop.cpp glib_mainloop.h mainloop.h
 mainloop_a_CXXFLAGS = ${AM_CXXFLAGS} ${GLIB_CFLAGS}
