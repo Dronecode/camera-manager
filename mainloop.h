@@ -24,6 +24,7 @@ public:
     virtual void loop() = 0;
     virtual const AvahiPoll *get_avahi_poll_api() = 0;
     static Mainloop *get_mainloop() { return mainloop; };
+    virtual void quit() = 0;
 
 protected:
     static Mainloop *mainloop;

@@ -107,7 +107,7 @@ AM_LDFLAGS = \
 	-Wl,--no-undefined \
 	-Wl,--gc-sections
 
-bin_PROGRAMS += camera-streaming-daemon
+bin_PROGRAMS += camera-streaming-daemon camera-client
 camera_streaming_daemon_SOURCES = \
 	avahi_publisher.cpp \
 	avahi_publisher.h \
@@ -122,7 +122,16 @@ camera_streaming_daemon_SOURCES = \
 	stream_manager.cpp \
 	stream_manager.h
 
+camera_client_SOURCES = \
+	camera_client_main.cpp \
+	log.c \
+	log.h \
+	mainloop.cpp \
+	mainloop.h
+
 camera_streaming_daemon_LDADD = mainloop.a  $(GLIB_LIBS) $(AVAHI_LIBS) $(GST_LIBS)
+camera_client_LDADD = mainloop.a $(GLIB_LIBS) $(AVAHI_LIBS)
+
 noinst_LIBRARIES = mainloop.a
 mainloop_a_SOURCES = glib_mainloop.cpp glib_mainloop.h mainloop.h
 mainloop_a_CXXFLAGS = ${AM_CXXFLAGS} ${GLIB_CFLAGS}
