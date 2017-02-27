@@ -26,6 +26,7 @@ public:
     GlibMainloop();
     ~GlibMainloop();
     void loop() override;
+    void quit() override;
     const AvahiPoll *get_avahi_poll_api() override;
 
 private:
