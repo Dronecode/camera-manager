@@ -16,8 +16,35 @@
  * limitations under the License.
  */
 #pragma once
+#include <gst/gst.h>
 #include <string>
+#include <vector>
 
-struct Stream {
-    std::string name;
+#include "log.h"
+
+class Stream {
+public:
+    struct FrameSize {
+    public:
+        uint32_t width, height;
+
+    private:
+        friend std::ostream &operator<<(std::ostream &os, const FrameSize &fs);
+    };
+
+    struct PixelFormat {
+    public:
+        uint32_t pixel_format;
+        std::vector<FrameSize> frame_sizes;
+
+    private:
+        friend std::ostream &operator<<(std::ostream &os, const PixelFormat &pf);
+    };
+
+public:
+    virtual ~Stream(){};
+    virtual const std::string get_path() const = 0;
+    virtual const std::string get_name() const = 0;
+    virtual GstElement *get_gstreamer_pipeline() const { return nullptr; }
+    virtual const std::vector<PixelFormat> &get_formats() const = 0;
 };

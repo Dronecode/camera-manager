@@ -45,7 +45,7 @@ static void resolve_callback(AvahiServiceResolver *resolver, AvahiIfIndex interf
         char address_str[AVAHI_ADDRESS_STR_MAX], *txt_str;
         avahi_address_snprint(address_str, sizeof(address_str), address);
 
-        log_info("Service resolved: '%s' (rtsp://%s:%u/%s)", name, address_str, port, name);
+        log_info("Service resolved: '%s' (rtsp://%s:%u%s)", name, address_str, port, name);
 
         txt_str = avahi_string_list_to_string(txt);
         log_info("TXT: [%s]", txt_str);

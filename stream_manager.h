@@ -18,6 +18,7 @@
 #pragma once
 
 #include <avahi-common/watch.h>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -34,7 +35,7 @@ public:
 
 private:
     void stream_discovery();
-    std::vector<Stream> streams;
+    std::vector<std::unique_ptr<Stream>> streams;
     bool is_running;
     AvahiPublisher avahi_publisher;
     RTSPServer rtsp_server;

@@ -22,10 +22,12 @@
 
 #include "log.h"
 #include "stream_manager.h"
+#include "stream_v4l2.h"
 
 #define VIDEO_PREFIX "video"
 #define DEFAULT_SERVICE_PORT 8554
 #define DEFAULT_SERVICE_TYPE "_rtsp._udp"
+#define DEVICE_PATH "/dev/"
 
 StreamManager::StreamManager()
     : is_running(false)
@@ -47,14 +49,19 @@ void StreamManager::stream_discovery()
 
     streams.clear();
     errno = 0;
-    if ((dir = opendir("/dev/")) == NULL) {
+    if ((dir = opendir(DEVICE_PATH)) == NULL) {
         log_error("Unable to load v4l2 cameras");
         return;
     }
 
     while ((f = readdir(dir)) != NULL) {
-        if (std::strncmp(VIDEO_PREFIX, f->d_name, sizeof(VIDEO_PREFIX) - 1) == 0)
-            streams.emplace_back(Stream{f->d_name});
+        if (std::strncmp(VIDEO_PREFIX, f->d_name, sizeof(VIDEO_PREFIX) - 1) == 0) {
+            std::string dev_path = DEVICE_PATH;
+            dev_path.append(f->d_name);
+            std::string path = "/";
+            path.append(f->d_name);
+            streams.emplace_back(std::make_unique<StreamV4l2>(path, dev_path));
+        }
     }
     closedir(dir);
 }
