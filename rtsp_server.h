@@ -35,7 +35,6 @@ private:
     bool is_running;
     int port;
 
-    gint server_handle;
     GstRTSPServer *server;
     GstElement *create_element_from_url(const GstRTSPUrl *url);
     bool create_pipeline(char *pipeline, int size, const GstRTSPUrl *url);

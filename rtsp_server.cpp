@@ -70,6 +70,8 @@ RTSPServer::~RTSPServer()
 
 void RTSPServer::start()
 {
+    gint server_handle;
+
     if (is_running)
         return;
     is_running = true;
@@ -102,10 +104,8 @@ void RTSPServer::stop()
         return;
     is_running = false;
 
-    g_source_remove(server_handle);
     g_object_unref(server);
 
-    server_handle = 0;
     server = nullptr;
 }
 
