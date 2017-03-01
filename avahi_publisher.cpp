@@ -17,13 +17,15 @@
  */
 #include <assert.h>
 #include <avahi-common/error.h>
+#include <sstream>
 #include <stdexcept>
 
 #include "avahi_publisher.h"
 #include "log.h"
 #include "mainloop.h"
 
-AvahiPublisher::AvahiPublisher(std::vector<Stream> &_streams, int _port, const char *_type)
+AvahiPublisher::AvahiPublisher(std::vector<std::unique_ptr<Stream>> &_streams, int _port,
+                               const char *_type)
     : is_running(false)
     , streams(_streams)
     , client(nullptr)
@@ -90,6 +92,24 @@ void AvahiPublisher::reset_services()
         avahi_entry_group_reset(group);
 }
 
+AvahiStringList *AvahiPublisher::txt_record_from_stream(const std::unique_ptr<Stream> &s)
+{
+    AvahiStringList *lst = NULL;
+    const std::vector<Stream::PixelFormat> &formats = s->get_formats();
+    for (int i = formats.size() - 1; i >= 0; i--) {
+        std::stringstream ss;
+        ss << "frame_size[" << i << "] = ";
+        ss << formats[i];
+        lst = avahi_string_list_add(lst, ss.str().c_str());
+    }
+
+    std::string name = "name=";
+    name.append(s->get_name());
+    lst = avahi_string_list_add(lst, name.c_str());
+
+    return lst;
+}
+
 void AvahiPublisher::publish_services(AvahiClient *c)
 {
     int ret;
@@ -103,13 +123,15 @@ void AvahiPublisher::publish_services(AvahiClient *c)
     }
 
     if (avahi_entry_group_is_empty(group)) {
-        for (auto const &value : streams) {
-            ret = avahi_entry_group_add_service(group, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC,
-                                                (AvahiPublishFlags)0, value.name.c_str(), type,
-                                                NULL, NULL, port, NULL);
+        for (auto const &s : streams) {
+            AvahiStringList *strlist = txt_record_from_stream(s);
+            ret = avahi_entry_group_add_service_strlst(group, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC,
+                                                       (AvahiPublishFlags)0, s->get_path().c_str(),
+                                                       type, NULL, NULL, port, strlist);
+            avahi_string_list_free(strlist);
             if (ret != 0) {
                 // TODO: handle error
-                log_error("Failed to add service %s", value.name.c_str());
+                log_error("Failed to add service %s", s->get_path().c_str());
             }
         }
 

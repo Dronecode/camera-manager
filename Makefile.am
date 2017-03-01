@@ -119,6 +119,10 @@ camera_streaming_daemon_SOURCES = \
 	main.cpp \
 	rtsp_server.cpp \
 	rtsp_server.h \
+	stream.cpp \
+	stream.h \
+	stream_v4l2.cpp \
+	stream_v4l2.h \
 	stream_manager.cpp \
 	stream_manager.h
 

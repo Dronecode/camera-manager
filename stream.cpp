@@ -15,29 +15,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#pragma once
-
-#include <gst/gst.h>
-#include <gst/rtsp-server/rtsp-server.h>
-#include <memory>
-#include <vector>
+#include <ostream>
 
 #include "stream.h"
 
-class RTSPServer {
-public:
-    RTSPServer(std::vector<std::unique_ptr<Stream>> &_streams, int _port);
-    ~RTSPServer();
-    void start();
-    void stop();
+std::ostream &operator<<(std::ostream &os, const Stream::FrameSize &fs)
+{
+    return os << fs.width << "x" << fs.height;
+}
 
-private:
-    const std::vector<std::unique_ptr<Stream>> &streams;
-    bool is_running;
-    int port;
-
-    GstRTSPServer *server;
-    GstElement *create_element_from_url(const GstRTSPUrl *url);
-    Stream *find_stream_by_path(const char *path);
-    friend GstElement *stream_create_element(GstRTSPMediaFactory *factory, const GstRTSPUrl *url);
-};
+std::ostream &operator<<(std::ostream &os, const Stream::PixelFormat &pf)
+{
+    os << PIXEL_FORMAT_FROM_FOURCC(pf.pixel_format);
+    os << "(";
+    for (unsigned int i = 0; i < pf.frame_sizes.size(); i++) {
+        if (i > 0)
+            os << ",";
+        os << pf.frame_sizes[i];
+    }
+    os << ")";
+    return os;
+}
