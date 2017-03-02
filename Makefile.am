@@ -107,8 +107,7 @@ AM_LDFLAGS = \
 	-Wl,--no-undefined \
 	-Wl,--gc-sections
 
-bin_PROGRAMS += camera-streaming-daemon camera-client
-camera_streaming_daemon_SOURCES = \
+base_files = \
 	avahi_publisher.cpp \
 	avahi_publisher.h \
 	log.c \
@@ -116,7 +115,6 @@ camera_streaming_daemon_SOURCES = \
 	macro.h \
 	mainloop.cpp \
 	mainloop.h \
-	main.cpp \
 	rtsp_server.cpp \
 	rtsp_server.h \
 	stream.cpp \
@@ -126,6 +124,18 @@ camera_streaming_daemon_SOURCES = \
 	stream_manager.cpp \
 	stream_manager.h
 
+bin_PROGRAMS += camera-streaming-daemon camera-client camera-sample-custom
+
+camera_streaming_daemon_SOURCES = \
+	${base_files} \
+	main.cpp
+
+camera_sample_custom_SOURCES = \
+	${base_files} \
+	samples/main_sample_custom.cpp \
+	samples/stream_custom.cpp \
+	samples/stream_custom.h
+
 camera_client_SOURCES = \
 	camera_client_main.cpp \
 	log.c \
@@ -134,6 +144,7 @@ camera_client_SOURCES = \
 	mainloop.h
 
 camera_streaming_daemon_LDADD = mainloop.a  $(GLIB_LIBS) $(AVAHI_LIBS) $(GST_LIBS)
+camera_sample_custom_LDADD = ${camera_streaming_daemon_LDADD}
 camera_client_LDADD = mainloop.a $(GLIB_LIBS) $(AVAHI_LIBS)
 
 noinst_LIBRARIES = mainloop.a
