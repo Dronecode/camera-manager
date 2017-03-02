@@ -23,7 +23,6 @@
 #include "glib_mainloop.h"
 #include "log.h"
 #include "stream_manager.h"
-#include "string.h"
 
 static void help(FILE *fp)
 {
