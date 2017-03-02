@@ -126,6 +126,10 @@ base_files = \
 
 bin_PROGRAMS += camera-streaming-daemon camera-client camera-sample-custom
 
+if HAVE_REALSENSE
+bin_PROGRAMS += camera-sample-realsense
+endif
+
 camera_streaming_daemon_SOURCES = \
 	${base_files} \
 	main.cpp
@@ -136,6 +140,12 @@ camera_sample_custom_SOURCES = \
 	samples/stream_custom.cpp \
 	samples/stream_custom.h
 
+camera_sample_realsense_SOURCES = \
+	${base_files} \
+	samples/main_sample_realsense.cpp \
+	samples/stream_realsense.cpp \
+	samples/stream_realsense.h
+
 camera_client_SOURCES = \
 	camera_client_main.cpp \
 	log.c \
@@ -145,6 +155,8 @@ camera_client_SOURCES = \
 
 camera_streaming_daemon_LDADD = mainloop.a  $(GLIB_LIBS) $(AVAHI_LIBS) $(GST_LIBS)
 camera_sample_custom_LDADD = ${camera_streaming_daemon_LDADD}
+camera_sample_realsense_LDADD = ${camera_streaming_daemon_LDADD}
+camera_sample_realsense_CXXFLAGS = ${AM_CXXFLAGS} -lrealsense #-I/usr/local/include -L/usr/local/lib64/ -L/usr/local/lib/
 camera_client_LDADD = mainloop.a $(GLIB_LIBS) $(AVAHI_LIBS)
 
 noinst_LIBRARIES = mainloop.a
