@@ -1,5 +1,5 @@
 /*
- * This file is part of the Camera Streaming Daemon
+ * This file is part of the Camera Streaming Daemon project
  *
  * Copyright (C) 2017  Intel Corporation. All rights reserved.
  *
@@ -15,29 +15,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#pragma once
 
-#include <avahi-common/watch.h>
-#include <memory>
-#include <string>
-#include <vector>
+#include <assert.h>
+#include <getopt.h>
+#include <stdio.h>
 
-#include "avahi_publisher.h"
-#include "rtsp_server.h"
-#include "stream.h"
+#include "glib_mainloop.h"
+#include "log.h"
+#include "samples/stream_custom.h"
+#include "stream_manager.h"
 
-class StreamManager {
-public:
-    StreamManager();
-    ~StreamManager();
-    void start();
-    void stop();
-    void addStream(Stream *stream);
+int main(int argc, char *argv[])
+{
+    log_open();
 
-private:
-    void stream_discovery();
-    std::vector<std::unique_ptr<Stream>> streams;
-    bool is_running;
-    AvahiPublisher avahi_publisher;
-    RTSPServer rtsp_server;
-};
+    GlibMainloop mainloop;
+    StreamManager stream;
+
+    log_debug("Starting Camera Streaming Daemon - Sample");
+    stream.addStream(new StreamCustom());
+    stream.start();
+    mainloop.loop();
+
+    log_close();
+
+    return 0;
+}

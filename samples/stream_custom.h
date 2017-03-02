@@ -16,28 +16,19 @@
  * limitations under the License.
  */
 #pragma once
-
-#include <avahi-common/watch.h>
-#include <memory>
 #include <string>
 #include <vector>
 
-#include "avahi_publisher.h"
-#include "rtsp_server.h"
+#include "log.h"
 #include "stream.h"
 
-class StreamManager {
+class StreamCustom : public Stream {
 public:
-    StreamManager();
-    ~StreamManager();
-    void start();
-    void stop();
-    void addStream(Stream *stream);
+    StreamCustom();
+    ~StreamCustom() {}
 
-private:
-    void stream_discovery();
-    std::vector<std::unique_ptr<Stream>> streams;
-    bool is_running;
-    AvahiPublisher avahi_publisher;
-    RTSPServer rtsp_server;
+    const std::string get_path() const override;
+    const std::string get_name() const override;
+    const std::vector<PixelFormat> &get_formats() const override;
+    GstElement *get_gstreamer_pipeline() const override;
 };

@@ -83,3 +83,8 @@ void StreamManager::stop()
     avahi_publisher.stop();
     rtsp_server.stop();
 }
+
+void StreamManager::addStream(Stream *stream)
+{
+    streams.push_back(std::unique_ptr<Stream>(stream));
+}
