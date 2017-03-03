@@ -18,19 +18,21 @@
 #pragma once
 #include <string>
 #include <vector>
+#include <map>
 
+#include "gstreamer_pipeline_builder.h"
 #include "log.h"
 #include "stream.h"
 
 class StreamV4l2 : public Stream {
 public:
-    StreamV4l2(std::string device_path, std::string device_name);
+    StreamV4l2(GstreamerPipelineBuilder &_gst_builder, std::string device_path, std::string device_name);
     ~StreamV4l2() {}
 
     const std::string get_path() const override;
     const std::string get_name() const override;
     const std::vector<PixelFormat> &get_formats() const override;
-    GstElement *get_gstreamer_pipeline() const override;
+    GstElement *get_gstreamer_pipeline(std::map<std::string, std::string> &params) const override;
 
 private:
     std::string name;
@@ -39,4 +41,5 @@ private:
     int path_len;
     std::vector<PixelFormat> formats;
     void get_v4l2_info();
+    GstreamerPipelineBuilder &gst_builder;
 };

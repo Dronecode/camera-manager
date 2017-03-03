@@ -24,11 +24,12 @@
 #include "stream_v4l2.h"
 #include <linux/videodev2.h>
 
-StreamV4l2::StreamV4l2(std::string _path, std::string _device_path)
+StreamV4l2::StreamV4l2(GstreamerPipelineBuilder &_gst_builder, std::string _path, std::string _device_path)
     : Stream()
     , name("")
     , path(_path)
     , device_path(_device_path)
+    , gst_builder(_gst_builder)
 {
     get_v4l2_info();
 }
@@ -84,21 +85,19 @@ void StreamV4l2::get_v4l2_info()
     close(fd);
 }
 
-GstElement *StreamV4l2::get_gstreamer_pipeline() const
+GstElement *StreamV4l2::get_gstreamer_pipeline(std::map<std::string, std::string> &params) const
 {
     GError *error = nullptr;
     GstElement *pipeline;
-    std::stringstream ss;
+    std::string source = "v4l2src device=";
+    source.append(device_path);
 
-    ss << "v4l2src device=";
-    ss << device_path;
-    ss << " ! video/x-raw ! videoconvert ! jpegenc ! rtpjpegpay name=pay0";
-
-    pipeline = gst_parse_launch(ss.str().c_str(), &error);
+    std::string pipeline_str = gst_builder.create_pipeline(source, params);
+    pipeline = gst_parse_launch(pipeline_str.c_str(), &error);
     if (!pipeline) {
         log_error("Error processing pipeline for device %s: %s\n", device_path.c_str(),
                   error ? error->message : "unknown error");
-        log_debug("Pipeline %s", ss.str().c_str());
+        log_debug("Pipeline %s", pipeline_str.c_str());
         if (error)
             g_clear_error(&error);
 

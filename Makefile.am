@@ -110,6 +110,8 @@ AM_LDFLAGS = \
 base_files = \
 	avahi_publisher.cpp \
 	avahi_publisher.h \
+	gstreamer_pipeline_builder.cpp \
+	gstreamer_pipeline_builder.h \
 	log.c \
 	log.h \
 	macro.h \

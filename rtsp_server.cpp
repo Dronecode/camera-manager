@@ -15,6 +15,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <string.h>
+#include <sstream>
+
 #include "rtsp_server.h"
 #include "log.h"
 
@@ -113,17 +116,49 @@ Stream *RTSPServer::find_stream_by_path(const char *path)
     return nullptr;
 }
 
+void RTSPServer::append_to_map(std::map<std::string, std::string> &map, const std::string &param)
+{
+    size_t j = param.find('=');
+    if (j == std::string::npos)
+        return;
+
+    map[param.substr(0, j)] = param.substr(j +1);
+}
+
+std::map<std::string, std::string> RTSPServer::parse_uri_query(const char *query)
+{
+    std::map<std::string, std::string> map;
+
+    if (!query || !query[0])
+        return map;
+
+    std::string query_str = query;
+    size_t i = 0, j;
+
+    j = query_str.find('&');
+    while (j != std::string::npos) {
+        append_to_map(map, query_str.substr(i, j - i));
+        i = j + 1;
+        j = query_str.find('&', j+1);
+    }
+    append_to_map(map, query_str.substr(i, j - i));
+
+    return map;
+}
+
 GstElement *RTSPServer::create_element_from_url(const GstRTSPUrl *url)
 {
     GstElement *pipeline;
     Stream *stream;
+    std::map<std::string, std::string> params;
 
     log_debug("RTSP request: %s (query: %s)", url->abspath, url->query);
     stream = find_stream_by_path(url->abspath);
     if (!stream)
         goto error;
 
-    pipeline = stream->get_gstreamer_pipeline();
+    params = parse_uri_query(url->query);
+    pipeline = stream->get_gstreamer_pipeline(params);
     if (!pipeline)
         goto error;
 

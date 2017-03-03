@@ -18,6 +18,7 @@
 #pragma once
 #include <gst/gst.h>
 #include <string>
+#include <map>
 #include <vector>
 
 #include "log.h"
@@ -55,6 +56,6 @@ public:
     virtual ~Stream(){};
     virtual const std::string get_path() const = 0;
     virtual const std::string get_name() const = 0;
-    virtual GstElement *get_gstreamer_pipeline() const { return nullptr; }
+    virtual GstElement *get_gstreamer_pipeline(std::map<std::string, std::string> &params) const { return nullptr; }
     virtual const std::vector<PixelFormat> &get_formats() const = 0;
 };
