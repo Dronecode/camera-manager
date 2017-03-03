@@ -15,12 +15,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <string.h>
+#include <sstream>
+
 #include "rtsp_server.h"
 #include "log.h"
-
-#include <string.h>
-
-#define MAX_PIPELINE 200
 
 #define STREAM_TYPE_RTSP_MEDIA_FACTORY stream_rtsp_media_factory_get_type()
 G_DECLARE_FINAL_TYPE(StreamRTSPMediaFactory, stream_rtsp_media_factory, STREAM, RTSP_MEDIA_FACTORY,
@@ -55,7 +54,7 @@ static GstRTSPMediaFactory *create_media_factory(RTSPServer *server)
     return (GstRTSPMediaFactory *)factory;
 }
 
-RTSPServer::RTSPServer(std::vector<Stream> &_streams, int _port)
+RTSPServer::RTSPServer(std::vector<std::unique_ptr<Stream>> &_streams, int _port)
     : streams(_streams)
     , is_running(false)
     , port(_port)
@@ -82,15 +81,14 @@ void RTSPServer::start()
     server = gst_rtsp_server_new();
     g_object_set(server, "service", "8554", nullptr);
 
-    mounts = gst_rtsp_server_get_mount_points(server);
-    factory = create_media_factory(this);
-
-    for (auto s : streams) {
-        std::string path = "/" + s.name;
-        gst_rtsp_mount_points_add_factory(mounts, path.c_str(), factory);
+    if (streams.size() > 0) {
+        mounts = gst_rtsp_server_get_mount_points(server);
+        factory = create_media_factory(this);
+        for (auto &s : streams)
+            gst_rtsp_mount_points_add_factory(mounts, s->get_path().c_str(), factory);
+        g_object_unref(mounts);
     }
 
-    g_object_unref(mounts);
     server_handle = gst_rtsp_server_attach(server, nullptr);
     if (!server_handle) {
         log_error("Unable to start rtsp server");
@@ -109,52 +107,64 @@ void RTSPServer::stop()
     server = nullptr;
 }
 
-bool RTSPServer::create_pipeline(char *pipeline, int size, const GstRTSPUrl *url)
+Stream *RTSPServer::find_stream_by_path(const char *path)
 {
-    if (strlen(url->abspath) <= 1 || url->abspath[0] != '/')
-        return false;
+    for (auto &s : streams)
+        if (s->get_path() == path)
+            return s.get();
 
-    for (auto s : streams) {
-        log_debug("%s", s.name.c_str());
-        if (s.name == url->abspath + 1) {
-            int ret = snprintf(pipeline, MAX_PIPELINE, "( v4l2src device=/dev/%s ! video/x-raw ! "
-                     "videoconvert ! jpegenc ! rtpjpegpay name=pay0 )", s.name.c_str());
-            if (ret >= MAX_PIPELINE) {
-                log_error("Creating pipeline failed. Pipeline size should be lower than %d", MAX_PIPELINE);
-                return false;
-            }
-            log_debug("created pipeline: %s", pipeline);
-            return true;
-        }
+    return nullptr;
+}
+
+void RTSPServer::append_to_map(std::map<std::string, std::string> &map, const std::string &param)
+{
+    size_t j = param.find('=');
+    if (j == std::string::npos)
+        return;
+
+    map[param.substr(0, j)] = param.substr(j +1);
+}
+
+std::map<std::string, std::string> RTSPServer::parse_uri_query(const char *query)
+{
+    std::map<std::string, std::string> map;
+
+    if (!query || !query[0])
+        return map;
+
+    std::string query_str = query;
+    size_t i = 0, j;
+
+    j = query_str.find('&');
+    while (j != std::string::npos) {
+        append_to_map(map, query_str.substr(i, j - i));
+        i = j + 1;
+        j = query_str.find('&', j+1);
     }
+    append_to_map(map, query_str.substr(i, j - i));
 
-    return false;
+    return map;
 }
 
 GstElement *RTSPServer::create_element_from_url(const GstRTSPUrl *url)
 {
-    char pipeline[MAX_PIPELINE];
-    GstElement *element;
-    GError *error = nullptr;
+    GstElement *pipeline;
+    Stream *stream;
+    std::map<std::string, std::string> params;
 
     log_debug("RTSP request: %s (query: %s)", url->abspath, url->query);
+    stream = find_stream_by_path(url->abspath);
+    if (!stream)
+        goto error;
 
-    if (!create_pipeline(pipeline, MAX_PIPELINE, url)) {
-        log_error("No gstreamer pipeline available for request (device: %s - query: %s)",
-                  url->abspath, url->query);
-        return nullptr;
-    }
+    params = parse_uri_query(url->query);
+    pipeline = stream->get_gstreamer_pipeline(params);
+    if (!pipeline)
+        goto error;
 
-    element = gst_parse_launch(pipeline, &error);
-    if (!element) {
-        log_error("Error processing pipeline: %s\n", error ? error->message : "unknown error");
-        log_debug("Pipeline %s", pipeline);
-        log_error("Request: (device: %s - query: %s)", url->abspath, url->query);
-        if (error)
-            g_clear_error(&error);
-
-        return nullptr;
-    }
-
-    return element;
+    return pipeline;
+error:
+    log_error("No gstreamer pipeline available for request (device_path: %s - query: %s)",
+              url->abspath, url->query);
+    return nullptr;
 }

@@ -66,7 +66,8 @@ int main(int argc, char *argv[])
     log_open();
 
     GlibMainloop mainloop;
-    StreamManager stream;
+    GstreamerPipelineBuilder pipeline;
+    StreamManager stream(pipeline);
 
     if (parse_argv(argc, argv) != 2)
         goto close_log;

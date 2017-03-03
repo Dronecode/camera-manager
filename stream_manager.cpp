@@ -22,15 +22,18 @@
 
 #include "log.h"
 #include "stream_manager.h"
+#include "stream_v4l2.h"
 
 #define VIDEO_PREFIX "video"
 #define DEFAULT_SERVICE_PORT 8554
 #define DEFAULT_SERVICE_TYPE "_rtsp._udp"
+#define DEVICE_PATH "/dev/"
 
-StreamManager::StreamManager()
+StreamManager::StreamManager(GstreamerPipelineBuilder &_gst_builder)
     : is_running(false)
     , avahi_publisher(streams, DEFAULT_SERVICE_PORT, DEFAULT_SERVICE_TYPE)
     , rtsp_server(streams, DEFAULT_SERVICE_PORT)
+    , gst_builder(_gst_builder)
 {
     stream_discovery();
 };
@@ -47,12 +50,17 @@ void StreamManager::stream_discovery()
 
     streams.clear();
     errno = 0;
-    if ((dir = opendir("/dev/")) == NULL)
+    if ((dir = opendir(DEVICE_PATH)) == NULL)
         throw std::system_error(errno, std::generic_category(), "Invalid access to video devices");
 
     while ((f = readdir(dir)) != NULL) {
-        if (std::strncmp(VIDEO_PREFIX, f->d_name, sizeof(VIDEO_PREFIX) - 1) == 0)
-            streams.emplace_back(Stream{f->d_name});
+        if (std::strncmp(VIDEO_PREFIX, f->d_name, sizeof(VIDEO_PREFIX) - 1) == 0) {
+            std::string dev_path = DEVICE_PATH;
+            dev_path.append(f->d_name);
+            std::string path = "/";
+            path.append(f->d_name);
+            streams.emplace_back(std::make_unique<StreamV4l2>(gst_builder, path, dev_path));
+        }
     }
     closedir(dir);
 }
@@ -75,4 +83,9 @@ void StreamManager::stop()
 
     avahi_publisher.stop();
     rtsp_server.stop();
+}
+
+void StreamManager::addStream(Stream *stream)
+{
+    streams.push_back(std::unique_ptr<Stream>(stream));
 }

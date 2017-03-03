@@ -75,3 +75,8 @@ const AvahiPoll *GlibMainloop::get_avahi_poll_api()
         avahi_poll = avahi_glib_poll_new(NULL, G_PRIORITY_DEFAULT);
     return avahi_glib_poll_get(avahi_poll);
 }
+
+void GlibMainloop::quit()
+{
+    g_main_loop_quit(gmainloop);
+}

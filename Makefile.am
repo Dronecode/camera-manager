@@ -107,22 +107,60 @@ AM_LDFLAGS = \
 	-Wl,--no-undefined \
 	-Wl,--gc-sections
 
-bin_PROGRAMS += camera-streaming-daemon
-camera_streaming_daemon_SOURCES = \
+base_files = \
 	avahi_publisher.cpp \
 	avahi_publisher.h \
+	gstreamer_pipeline_builder.cpp \
+	gstreamer_pipeline_builder.h \
 	log.c \
 	log.h \
 	macro.h \
 	mainloop.cpp \
 	mainloop.h \
-	main.cpp \
 	rtsp_server.cpp \
 	rtsp_server.h \
+	stream.cpp \
+	stream.h \
+	stream_v4l2.cpp \
+	stream_v4l2.h \
 	stream_manager.cpp \
 	stream_manager.h
 
+bin_PROGRAMS += camera-streaming-daemon camera-client camera-sample-custom
+
+if HAVE_REALSENSE
+bin_PROGRAMS += camera-sample-realsense
+endif
+
+camera_streaming_daemon_SOURCES = \
+	${base_files} \
+	main.cpp
+
+camera_sample_custom_SOURCES = \
+	${base_files} \
+	samples/main_sample_custom.cpp \
+	samples/stream_custom.cpp \
+	samples/stream_custom.h
+
+camera_sample_realsense_SOURCES = \
+	${base_files} \
+	samples/main_sample_realsense.cpp \
+	samples/stream_realsense.cpp \
+	samples/stream_realsense.h
+
+camera_client_SOURCES = \
+	camera_client_main.cpp \
+	log.c \
+	log.h \
+	mainloop.cpp \
+	mainloop.h
+
 camera_streaming_daemon_LDADD = mainloop.a  $(GLIB_LIBS) $(AVAHI_LIBS) $(GST_LIBS)
+camera_sample_custom_LDADD = ${camera_streaming_daemon_LDADD}
+camera_sample_realsense_LDADD = ${camera_streaming_daemon_LDADD}
+camera_sample_realsense_CXXFLAGS = ${AM_CXXFLAGS} -lrealsense #-I/usr/local/include -L/usr/local/lib64/ -L/usr/local/lib/
+camera_client_LDADD = mainloop.a $(GLIB_LIBS) $(AVAHI_LIBS)
+
 noinst_LIBRARIES = mainloop.a
 mainloop_a_SOURCES = glib_mainloop.cpp glib_mainloop.h mainloop.h
 mainloop_a_CXXFLAGS = ${AM_CXXFLAGS} ${GLIB_CFLAGS}

@@ -15,17 +15,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#pragma once
+#include <ostream>
 
-#include <avahi-common/watch.h>
+#include "stream.h"
 
-class Mainloop {
-public:
-    virtual void loop() = 0;
-    virtual const AvahiPoll *get_avahi_poll_api() = 0;
-    static Mainloop *get_mainloop() { return mainloop; };
-    virtual void quit() = 0;
+std::ostream &operator<<(std::ostream &os, const Stream::FrameSize &fs)
+{
+    return os << fs.width << "x" << fs.height;
+}
 
-protected:
-    static Mainloop *mainloop;
-};
+std::ostream &operator<<(std::ostream &os, const Stream::PixelFormat &pf)
+{
+    os << PIXEL_FORMAT_FROM_FOURCC(pf.pixel_format);
+    os << "(";
+    for (unsigned int i = 0; i < pf.frame_sizes.size(); i++) {
+        if (i > 0)
+            os << ",";
+        os << pf.frame_sizes[i];
+    }
+    os << ")";
+    return os;
+}

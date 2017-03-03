@@ -16,31 +16,30 @@
  * limitations under the License.
  */
 #pragma once
-
-#include <gst/gst.h>
-#include <gst/rtsp-server/rtsp-server.h>
-#include <memory>
+#include <string>
 #include <vector>
 #include <map>
 
+#include "gstreamer_pipeline_builder.h"
+#include "log.h"
 #include "stream.h"
 
-class RTSPServer {
+class StreamV4l2 : public Stream {
 public:
-    RTSPServer(std::vector<std::unique_ptr<Stream>> &_streams, int _port);
-    ~RTSPServer();
-    void start();
-    void stop();
+    StreamV4l2(GstreamerPipelineBuilder &_gst_builder, std::string device_path, std::string device_name);
+    ~StreamV4l2() {}
+
+    const std::string get_path() const override;
+    const std::string get_name() const override;
+    const std::vector<PixelFormat> &get_formats() const override;
+    GstElement *get_gstreamer_pipeline(std::map<std::string, std::string> &params) const override;
 
 private:
-    const std::vector<std::unique_ptr<Stream>> &streams;
-    bool is_running;
-    int port;
-
-    GstRTSPServer *server;
-    GstElement *create_element_from_url(const GstRTSPUrl *url);
-    Stream *find_stream_by_path(const char *path);
-    std::map<std::string, std::string> parse_uri_query(const char *query);
-    void append_to_map(std::map<std::string, std::string> &map, const std::string &param);
-    friend GstElement *stream_create_element(GstRTSPMediaFactory *factory, const GstRTSPUrl *url);
+    std::string name;
+    std::string path;
+    std::string device_path;
+    int path_len;
+    std::vector<PixelFormat> formats;
+    void get_v4l2_info();
+    GstreamerPipelineBuilder &gst_builder;
 };

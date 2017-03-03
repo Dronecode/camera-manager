@@ -16,16 +16,19 @@
  * limitations under the License.
  */
 #pragma once
+#include <string>
+#include <vector>
 
-#include <avahi-common/watch.h>
+#include "log.h"
+#include "stream.h"
 
-class Mainloop {
+class StreamRealSense : public Stream {
 public:
-    virtual void loop() = 0;
-    virtual const AvahiPoll *get_avahi_poll_api() = 0;
-    static Mainloop *get_mainloop() { return mainloop; };
-    virtual void quit() = 0;
+    StreamRealSense();
+    ~StreamRealSense() {}
 
-protected:
-    static Mainloop *mainloop;
+    const std::string get_path() const override;
+    const std::string get_name() const override;
+    const std::vector<PixelFormat> &get_formats() const override;
+    GstElement *get_gstreamer_pipeline(std::map<std::string, std::string> &params) const override;
 };

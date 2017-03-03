@@ -16,16 +16,15 @@
  * limitations under the License.
  */
 #pragma once
+#include <string>
+#include <map>
 
-#include <avahi-common/watch.h>
-
-class Mainloop {
+class GstreamerPipelineBuilder {
 public:
-    virtual void loop() = 0;
-    virtual const AvahiPoll *get_avahi_poll_api() = 0;
-    static Mainloop *get_mainloop() { return mainloop; };
-    virtual void quit() = 0;
-
-protected:
-    static Mainloop *mainloop;
+    virtual std::string create_caps(std::map<std::string, std::string> &params);
+    virtual std::string create_muxer(std::map<std::string, std::string> &params);
+    virtual std::string create_converter(std::map<std::string, std::string> &params);
+    virtual std::string create_encoder(std::map<std::string, std::string> &params);
+    virtual std::string create_pipeline(std::string source, std::map<std::string, std::string> &params);
+private:
 };

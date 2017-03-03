@@ -1,5 +1,5 @@
 /*
- * This file is part of the Camera Streaming Daemon
+ * This file is part of the Camera Streaming Daemon project
  *
  * Copyright (C) 2017  Intel Corporation. All rights reserved.
  *
@@ -15,17 +15,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#pragma once
 
-#include <avahi-common/watch.h>
+#include <assert.h>
+#include <getopt.h>
+#include <stdio.h>
 
-class Mainloop {
-public:
-    virtual void loop() = 0;
-    virtual const AvahiPoll *get_avahi_poll_api() = 0;
-    static Mainloop *get_mainloop() { return mainloop; };
-    virtual void quit() = 0;
+#include "glib_mainloop.h"
+#include "log.h"
+#include "samples/stream_custom.h"
+#include "stream_manager.h"
 
-protected:
-    static Mainloop *mainloop;
-};
+int main(int argc, char *argv[])
+{
+    log_open();
+
+    GlibMainloop mainloop;
+    GstreamerPipelineBuilder pipeline;
+    StreamManager stream(pipeline);
+
+    log_debug("Starting Camera Streaming Daemon - Sample");
+    stream.addStream(new StreamCustom());
+    stream.start();
+    mainloop.loop();
+
+    log_close();
+
+    return 0;
+}
