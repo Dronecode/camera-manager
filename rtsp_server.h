@@ -19,6 +19,7 @@
 
 #include <gst/gst.h>
 #include <gst/rtsp-server/rtsp-server.h>
+#include <map>
 #include <memory>
 #include <vector>
 
@@ -39,5 +40,7 @@ private:
     GstRTSPServer *server;
     GstElement *create_element_from_url(const GstRTSPUrl *url);
     Stream *find_stream_by_path(const char *path);
+    std::map<std::string, std::string> parse_uri_query(const char *query);
+    void append_to_map(std::map<std::string, std::string> &map, const std::string &param);
     friend GstElement *stream_create_element(GstRTSPMediaFactory *factory, const GstRTSPUrl *url);
 };

@@ -29,10 +29,11 @@
 #define DEFAULT_SERVICE_TYPE "_rtsp._udp"
 #define DEVICE_PATH "/dev/"
 
-StreamManager::StreamManager()
+StreamManager::StreamManager(GstreamerPipelineBuilder &_gst_builder)
     : is_running(false)
     , avahi_publisher(streams, DEFAULT_SERVICE_PORT, DEFAULT_SERVICE_TYPE)
     , rtsp_server(streams, DEFAULT_SERVICE_PORT)
+    , gst_builder(_gst_builder)
 {
     stream_discovery();
 };
@@ -60,7 +61,7 @@ void StreamManager::stream_discovery()
             dev_path.append(f->d_name);
             std::string path = "/";
             path.append(f->d_name);
-            streams.emplace_back(std::make_unique<StreamV4l2>(path, dev_path));
+            streams.emplace_back(std::make_unique<StreamV4l2>(gst_builder, path, dev_path));
         }
     }
     closedir(dir);

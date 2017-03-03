@@ -30,7 +30,8 @@ int main(int argc, char *argv[])
     log_open();
 
     GlibMainloop mainloop;
-    StreamManager stream;
+    GstreamerPipelineBuilder pipeline;
+    StreamManager stream(pipeline);
 
     log_debug("Starting Camera Streaming Daemon - Sample");
     stream.addStream(new StreamRealSense());

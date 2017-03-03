@@ -90,7 +90,8 @@ const std::vector<Stream::PixelFormat> &StreamRealSense::get_formats() const
     return formats;
 }
 
-GstElement *StreamRealSense::get_gstreamer_pipeline() const
+GstElement *
+StreamRealSense::get_gstreamer_pipeline(std::map<std::string, std::string> &params) const
 {
     /* librealsense */
     rs_error *e = 0;

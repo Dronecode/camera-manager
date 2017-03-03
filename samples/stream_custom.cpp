@@ -44,7 +44,7 @@ const std::vector<Stream::PixelFormat> &StreamCustom::get_formats() const
     return formats;
 }
 
-GstElement *StreamCustom::get_gstreamer_pipeline() const
+GstElement *StreamCustom::get_gstreamer_pipeline(std::map<std::string, std::string> &params) const
 {
     GError *error = nullptr;
     GstElement *pipeline;

@@ -23,12 +23,13 @@
 #include <vector>
 
 #include "avahi_publisher.h"
+#include "gstreamer_pipeline_builder.h"
 #include "rtsp_server.h"
 #include "stream.h"
 
 class StreamManager {
 public:
-    StreamManager();
+    StreamManager(GstreamerPipelineBuilder &gst_builder);
     ~StreamManager();
     void start();
     void stop();
@@ -40,4 +41,5 @@ private:
     bool is_running;
     AvahiPublisher avahi_publisher;
     RTSPServer rtsp_server;
+    GstreamerPipelineBuilder &gst_builder;
 };

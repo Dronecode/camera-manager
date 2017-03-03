@@ -1,5 +1,5 @@
 /*
- * This file is part of the Camera Streaming Daemon project
+ * This file is part of the Camera Streaming Daemon
  *
  * Copyright (C) 2017  Intel Corporation. All rights reserved.
  *
@@ -15,30 +15,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#pragma once
+#include <map>
+#include <string>
 
-#include <assert.h>
-#include <getopt.h>
-#include <stdio.h>
+class GstreamerPipelineBuilder {
+public:
+    virtual std::string create_caps(std::map<std::string, std::string> &params);
+    virtual std::string create_muxer(std::map<std::string, std::string> &params);
+    virtual std::string create_converter(std::map<std::string, std::string> &params);
+    virtual std::string create_encoder(std::map<std::string, std::string> &params);
+    virtual std::string create_pipeline(std::string source,
+                                        std::map<std::string, std::string> &params);
 
-#include "glib_mainloop.h"
-#include "log.h"
-#include "samples/stream_custom.h"
-#include "stream_manager.h"
-
-int main(int argc, char *argv[])
-{
-    log_open();
-
-    GlibMainloop mainloop;
-    GstreamerPipelineBuilder pipeline;
-    StreamManager stream(pipeline);
-
-    log_debug("Starting Camera Streaming Daemon - Sample");
-    stream.addStream(new StreamCustom());
-    stream.start();
-    mainloop.loop();
-
-    log_close();
-
-    return 0;
-}
+private:
+};
