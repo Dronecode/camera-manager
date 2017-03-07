@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <assert.h>
 #include <fcntl.h>
 #include <gst/app/gstappsrc.h>
 #include <librealsense/rs.h>
@@ -31,30 +32,63 @@
 #define ONE_METER (999)
 
 struct rgb {
-    unsigned char r;
-    unsigned char g;
-    unsigned char b;
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
 };
+
+struct Context {
+    rs_device *dev;
+    rs_context *rs_ctx;
+    struct rgb rgb_data[];
+};
+
+static void rainbow_scale(double value, uint8_t rgb[])
+{
+    rgb[0] = rgb[1] = rgb[2] = 0;
+
+    if (value <= 0.0)
+        return;
+
+    if (value < 0.25) { // RED to YELLOW
+        rgb[0] = 255;
+        rgb[1] = (uint8_t)255 * (value / 0.25);
+    } else if (value < 0.5) { // YELLOW to GREEN
+        rgb[0] = (uint8_t)255 * (1 - ((value - 0.25) / 0.25));
+        rgb[1] = 255;
+    } else if (value < 0.75) { // GREEN to CYAN
+        rgb[1] = 255;
+        rgb[2] = (uint8_t)255 * (value - 0.5 / 0.25);
+    } else if (value < 1.0) { // CYAN to BLUE
+        rgb[1] = (uint8_t)255 * (1 - ((value - 0.75) / 0.25));
+        rgb[2] = 255;
+    } else { // BLUE
+        rgb[2] = 255;
+    }
+}
 
 static void cb_need_data(GstAppSrc *appsrc, guint unused_size, gpointer user_data)
 {
     GstFlowReturn ret;
-    rs_device *dev = (rs_device *)user_data;
+    Context *ctx = (Context *)user_data;
 
-    rs_wait_for_frames(dev, NULL);
-    uint16_t *depth = (uint16_t *)rs_get_frame_data(dev, RS_STREAM_DEPTH, NULL);
-    struct rgb *rgb = (struct rgb *)rs_get_frame_data(dev, RS_STREAM_COLOR, NULL);
-    if (!rgb) {
-        log_error("Realsense error");
+    rs_wait_for_frames(ctx->dev, NULL);
+    uint16_t *depth = (uint16_t *)rs_get_frame_data(ctx->dev, RS_STREAM_DEPTH, NULL);
+    if (!depth) {
+        log_error("No depth data. Not building frame");
         return;
     }
 
     GstBuffer *buffer
-        = gst_buffer_new_wrapped_full((GstMemoryFlags)0, rgb, SIZE, 0, SIZE, NULL, NULL);
+        = gst_buffer_new_wrapped_full((GstMemoryFlags)0, ctx->rgb_data, SIZE, 0, SIZE, NULL, NULL);
+    assert(buffer);
     for (int i = 0, end = WIDTH * HEIGHT; i < end; ++i) {
-        rgb[i].r = depth[i] * 60 / ONE_METER;
-        rgb[i].g /= 4;
-        rgb[i].b /= 4;
+        uint8_t rainbow[3];
+        rainbow_scale((double)depth[i] * 0.001, rainbow);
+
+        ctx->rgb_data[i].r = rainbow[0];
+        ctx->rgb_data[i].g = rainbow[1];
+        ctx->rgb_data[i].b = rainbow[2];
     }
 
     g_signal_emit_by_name(appsrc, "push-buffer", buffer, &ret);
@@ -93,9 +127,12 @@ const std::vector<Stream::PixelFormat> &StreamRealSense::get_formats() const
 GstElement *
 StreamRealSense::create_gstreamer_pipeline(std::map<std::string, std::string> &params) const
 {
+    Context *ctx = (Context *)malloc(sizeof(Context) + SIZE);
+    assert(ctx);
+
     /* librealsense */
     rs_error *e = 0;
-    rs_context *ctx = rs_create_context(RS_API_VERSION, &e);
+    ctx->rs_ctx = rs_create_context(RS_API_VERSION, &e);
     if (e) {
         log_error("rs_error was raised when calling %s(%s): %s", rs_get_failed_function(e),
                   rs_get_failed_args(e), rs_get_error_message(e));
@@ -103,16 +140,15 @@ StreamRealSense::create_gstreamer_pipeline(std::map<std::string, std::string> &p
         log_error("Compiled for librealsense api version %d", RS_API_VERSION);
         return nullptr;
     }
-    rs_device *dev = rs_get_device(ctx, 0, NULL);
-    if (!dev) {
+    ctx->dev = rs_get_device(ctx->rs_ctx, 0, NULL);
+    if (!ctx->dev) {
         log_error("Unable to access realsense device");
         return nullptr;
     }
 
     /* Configure all streams to run at VGA resolution at 60 frames per second */
-    rs_enable_stream(dev, RS_STREAM_DEPTH, WIDTH, HEIGHT, RS_FORMAT_Z16, 60, NULL);
-    rs_enable_stream(dev, RS_STREAM_COLOR, WIDTH, HEIGHT, RS_FORMAT_RGB8, 60, NULL);
-    rs_start_device(dev, NULL);
+    rs_enable_stream(ctx->dev, RS_STREAM_DEPTH, WIDTH, HEIGHT, RS_FORMAT_Z16, 60, NULL);
+    rs_start_device(ctx->dev, NULL);
 
     /* gstreamer */
     GError *error = nullptr;
@@ -146,20 +182,21 @@ StreamRealSense::create_gstreamer_pipeline(std::map<std::string, std::string> &p
     cbs.need_data = cb_need_data;
     cbs.enough_data = cb_enough_data;
     cbs.seek_data = cb_seek_data;
-    gst_app_src_set_callbacks(GST_APP_SRC_CAST(appsrc), &cbs, dev, NULL);
+    gst_app_src_set_callbacks(GST_APP_SRC_CAST(appsrc), &cbs, ctx, NULL);
 
-    g_object_set_data(G_OBJECT(pipeline), "rs_context", ctx);
+    g_object_set_data(G_OBJECT(pipeline), "context", ctx);
 
     return pipeline;
 }
 
 void StreamRealSense::finalize_gstreamer_pipeline(GstElement *pipeline)
 {
-    rs_context *ctx = (rs_context *)g_object_get_data(G_OBJECT(pipeline), "rs_context");
+    Context *ctx = (Context *)g_object_get_data(G_OBJECT(pipeline), "context");
 
     if (!ctx) {
         log_error("Media not created by stream_realsense is being cleared with stream_realsense");
         return;
     }
-    rs_delete_context(ctx, NULL);
+    rs_delete_context(ctx->rs_ctx, NULL);
+    free(ctx);
 }
