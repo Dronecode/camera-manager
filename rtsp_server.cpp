@@ -59,6 +59,7 @@ RTSPServer::RTSPServer(std::vector<Stream> &_streams, int _port)
     : streams(_streams)
     , is_running(false)
     , port(_port)
+    , server(nullptr)
 {
     gst_init(nullptr, nullptr);
 }

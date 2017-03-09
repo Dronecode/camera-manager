@@ -25,6 +25,7 @@
 
 AvahiPublisher::AvahiPublisher(std::vector<Stream> &_streams, int _port, const char *_type)
     : is_running(false)
+    , avahi_poll(nullptr)
     , streams(_streams)
     , client(nullptr)
     , group(nullptr)
