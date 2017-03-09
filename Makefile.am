@@ -110,6 +110,8 @@ AM_LDFLAGS = \
 base_files = \
 	avahi_publisher.cpp \
 	avahi_publisher.h \
+	glib_mainloop.cpp \
+	glib_mainloop.h \
 	gstreamer_pipeline_builder.cpp \
 	gstreamer_pipeline_builder.h \
 	log.c \
@@ -152,18 +154,16 @@ camera_client_SOURCES = \
 	camera_client_main.cpp \
 	log.c \
 	log.h \
+	glib_mainloop.cpp \
+	glib_mainloop.h \
 	mainloop.cpp \
 	mainloop.h
 
-camera_streaming_daemon_LDADD = mainloop.a  $(GLIB_LIBS) $(AVAHI_LIBS) $(GST_LIBS)
+camera_streaming_daemon_LDADD = $(GLIB_LIBS) $(AVAHI_LIBS) $(GST_LIBS)
 camera_sample_custom_LDADD = ${camera_streaming_daemon_LDADD}
 camera_sample_realsense_LDADD = ${camera_streaming_daemon_LDADD}
-camera_sample_realsense_CXXFLAGS = ${AM_CXXFLAGS} -lrealsense #-I/usr/local/include -L/usr/local/lib64/ -L/usr/local/lib/
-camera_client_LDADD = mainloop.a $(GLIB_LIBS) $(AVAHI_LIBS)
-
-noinst_LIBRARIES = mainloop.a
-mainloop_a_SOURCES = glib_mainloop.cpp glib_mainloop.h mainloop.h
-mainloop_a_CXXFLAGS = ${AM_CXXFLAGS} ${GLIB_CFLAGS}
+camera_sample_realsense_CXXFLAGS = ${AM_CXXFLAGS} -lrealsense
+camera_client_LDADD = $(GLIB_LIBS) $(AVAHI_LIBS)
 
 # ------------------------------------------------------------------------------
 # coverity
