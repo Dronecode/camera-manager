@@ -132,9 +132,9 @@ void AvahiPublisher::start()
 
     client = avahi_client_new(Mainloop::get_mainloop()->get_avahi_poll_api(), (AvahiClientFlags)0,
                               avahi_client_cb, this, &error);
-    if (!client)
-        throw std::runtime_error(std::string("Failed to create avahi client: ")
-                                 + avahi_strerror(error));
+    if (!client) {
+        log_error("Unalbe to create avahi client. Video streams won't be published as avahi services.");
+    }
 }
 
 void AvahiPublisher::stop()

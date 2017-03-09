@@ -47,8 +47,10 @@ void StreamManager::stream_discovery()
 
     streams.clear();
     errno = 0;
-    if ((dir = opendir("/dev/")) == NULL)
-        throw std::system_error(errno, std::generic_category(), "Invalid access to video devices");
+    if ((dir = opendir("/dev/")) == NULL) {
+        log_error("Unable to load v4l2 cameras");
+        return;
+    }
 
     while ((f = readdir(dir)) != NULL) {
         if (std::strncmp(VIDEO_PREFIX, f->d_name, sizeof(VIDEO_PREFIX) - 1) == 0)
