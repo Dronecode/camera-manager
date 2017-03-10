@@ -39,7 +39,6 @@ private:
     std::string name;
     std::string path;
     std::string device_path;
-    int path_len;
     std::vector<PixelFormat> formats;
     void get_v4l2_info();
     GstreamerPipelineBuilder &gst_builder;
