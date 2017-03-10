@@ -4,8 +4,11 @@
 
 In order to compile you need the following packages:
 
-  - GCC or Clang compiler
+  - GCC compiler
   - C and C++ standard libraries
+  - GLib 2 (https://wiki.gnome.org/Projects/GLib)
+  - Avahi 0.6 or newer (https://github.com/lathiat/avahi)
+  - GStreamer 1.10 or newer (https://gstreamer.freedesktop.org/)
 
 #### Build ####
 
@@ -28,6 +31,9 @@ Install:
 
 ### Running ###
 
+Camera streaming daemon is composed of a single binary that can be run without any aditional parameter:
+
+    $ camera-streaming-daemon
 
 ### Contributing ###
 
