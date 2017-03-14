@@ -9,8 +9,6 @@ BUILT_FILES =
 ACLOCAL_AMFLAGS = -I m4 ${ACLOCAL_FLAGS}
 AM_MAKEFLAGS = --no-print-directory
 
-
-
 GCC_COLORS ?= 'yes'
 export GCC_COLORS
 
@@ -21,7 +19,6 @@ AM_CPPFLAGS = \
 AM_CFLAGS = \
 	-pipe \
 	-Wall \
-	-W \
 	-Wextra \
 	-Wno-inline \
 	-Wundef \
@@ -63,9 +60,9 @@ AM_CFLAGS = \
 	${GST_CFLAGS}
 
 AM_CXXFLAGS = \
+	-I$(top_srcdir)/src \
 	-pipe \
 	-Wall \
-	-W \
 	-Wextra \
 	-Wno-inline \
 	-Wundef \
@@ -107,36 +104,56 @@ AM_LDFLAGS = \
 	-Wl,--gc-sections
 
 base_files = \
-	src/avahi_publisher.cpp \
-	src/avahi_publisher.h \
-	src/glib_mainloop.cpp \
-	src/glib_mainloop.h \
-	src/gstreamer_pipeline_builder.cpp \
-	src/gstreamer_pipeline_builder.h \
-	src/log.c \
-	src/log.h \
-	src/macro.h \
-	src/mainloop.cpp \
-	src/mainloop.h \
-	src/rtsp_server.cpp \
-	src/rtsp_server.h \
-	src/stream.cpp \
-	src/stream.h \
-	src/stream_v4l2.cpp \
-	src/stream_v4l2.h \
-	src/stream_manager.cpp \
-	src/stream_manager.h
+	../src/avahi_publisher.cpp \
+	../src/avahi_publisher.h \
+	../src/glib_mainloop.cpp \
+	../src/glib_mainloop.h \
+	../src/gstreamer_pipeline_builder.cpp \
+	../src/gstreamer_pipeline_builder.h \
+	../src/log.c \
+	../src/log.h \
+	../src/macro.h \
+	../src/mainloop.cpp \
+	../src/mainloop.h \
+	../src/rtsp_server.cpp \
+	../src/rtsp_server.h \
+	../src/stream.cpp \
+	../src/stream.h \
+	../src/stream_v4l2.cpp \
+	../src/stream_v4l2.h \
+	../src/stream_manager.cpp \
+	../src/stream_manager.h
 
-bin_PROGRAMS += camera-streaming-daemon
 
-camera_streaming_daemon_SOURCES = \
+bin_PROGRAMS += camera-sample-client camera-sample-custom
+
+if HAVE_REALSENSE
+bin_PROGRAMS += camera-sample-realsense
+endif
+
+camera_sample_custom_SOURCES = \
 	${base_files} \
-	src/main.cpp
+	main_sample_custom.cpp \
+	stream_custom.cpp \
+	stream_custom.h
+
+camera_sample_realsense_SOURCES = \
+	${base_files} \
+	main_sample_realsense.cpp \
+	stream_realsense.cpp \
+	stream_realsense.h
+
+camera_sample_client_SOURCES = \
+	main_sample_client.cpp \
+	../src/log.c \
+	../src/log.h \
+	../src/glib_mainloop.cpp \
+	../src/glib_mainloop.h \
+	../src/mainloop.cpp \
+	../src/mainloop.h
 
 camera_streaming_daemon_LDADD = $(GLIB_LIBS) $(AVAHI_LIBS) $(GST_LIBS)
-
-# ------------------------------------------------------------------------------
-# coverity
-# ------------------------------------------------------------------------------
-
-#TODO
+camera_sample_custom_LDADD = ${camera_streaming_daemon_LDADD}
+camera_sample_realsense_LDADD = ${camera_streaming_daemon_LDADD}
+camera_sample_realsense_CXXFLAGS = ${AM_CXXFLAGS} -lrealsense
+camera_sample_client_LDADD = $(GLIB_LIBS) $(AVAHI_LIBS)

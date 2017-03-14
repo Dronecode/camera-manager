@@ -7,8 +7,8 @@
 .deps/
 .libs/
 .dirstamp
-/Makefile
-/Makefile.in
+Makefile
+Makefile.in
 
 /aclocal.m4
 /autom4te.cache
@@ -29,6 +29,6 @@ cscope.out
 tags
 
 /camera-streaming-daemon
-/camera-client
-/camera-sample-custom
-/camera-sample-realsense
+camera-sample-client
+camera-sample-custom
+camera-sample-realsense

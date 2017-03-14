@@ -1,15 +1,15 @@
 AC_PREREQ(2.64)
 AC_INIT([camera-streaming-daemon],
-	[1],
-	[],
-	[camera-streaming-daemon],
-	[])
+    [1],
+    [],
+    [camera-streaming-daemon],
+    [])
 
 PKG_CHECK_MODULES(GLIB, [glib-2.0])
 PKG_CHECK_MODULES(AVAHI, [avahi-client, avahi-core, avahi-glib])
 PKG_CHECK_MODULES(GST, [gstreamer-rtsp-1.0, gstreamer-1.0, gstreamer-rtsp-server-1.0 gstreamer-app-1.0])
 
-AC_CONFIG_SRCDIR([main.cpp])
+AC_CONFIG_SRCDIR([src/main.cpp])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS(config.h)
 AC_CONFIG_AUX_DIR([build-aux])
@@ -39,17 +39,17 @@ LT_INIT([disable-static pic-only])
 
 AC_MSG_CHECKING([whether _Static_assert() is supported])
 AC_COMPILE_IFELSE(
-	[AC_LANG_SOURCE([[_Static_assert(1, "Test");]])],
+    [AC_LANG_SOURCE([[_Static_assert(1, "Test");]])],
         [AC_DEFINE([HAVE_STATIC_ASSERT], [1], [Define if _Static_assert() is available])
-	 AC_MSG_RESULT([yes])],
-	[AC_MSG_RESULT([no])])
+     AC_MSG_RESULT([yes])],
+    [AC_MSG_RESULT([no])])
 
 AC_MSG_CHECKING([whether _Noreturn is supported])
 AC_COMPILE_IFELSE(
-	[AC_LANG_SOURCE([[_Noreturn int foo(void) { exit(0); }]])],
+    [AC_LANG_SOURCE([[_Noreturn int foo(void) { exit(0); }]])],
         [AC_DEFINE([HAVE_NORETURN], [1], [Define if _Noreturn is available])
-	 AC_MSG_RESULT([yes])],
-	[AC_MSG_RESULT([no])])
+     AC_MSG_RESULT([yes])],
+    [AC_MSG_RESULT([no])])
 
 
 #####################################################################
@@ -78,26 +78,27 @@ LDFLAGS+="-z noexecstack -z relro -z now"
 #####################################################################
 
 AC_CONFIG_FILES([
-	Makefile
+    Makefile
+    samples/Makefile
 ])
 
 #####################################################################
 
 AC_OUTPUT
 AC_MSG_RESULT([
-	$PACKAGE $VERSION
-	================
+    $PACKAGE $VERSION
+    ================
 
-	prefix:			${prefix}
-	sysconfdir:		${sysconfdir}
-	libdir:			${libdir}
-	rootlibdir:		${rootlibdir}
-	includedir:		${includedir}
-	bindir:			${bindir}
+    prefix:            ${prefix}
+    sysconfdir:        ${sysconfdir}
+    libdir:            ${libdir}
+    rootlibdir:        ${rootlibdir}
+    includedir:        ${includedir}
+    bindir:            ${bindir}
 
-	C compiler:		${CC}
-	C++ compiler:		${CXX}
-	CFLAGS: 		${CFLAGS}
-	CXXFLAGS: 		${CXXFLAGS}
-	LDFLAGS: 		${LDFLAGS}
+    C compiler:        ${CC}
+    C++ compiler:      ${CXX}
+    CFLAGS:            ${CFLAGS}
+    CXXFLAGS:          ${CXXFLAGS}
+    LDFLAGS:           ${LDFLAGS}
 ])
