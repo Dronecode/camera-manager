@@ -122,6 +122,10 @@ base_files = \
 	src/rtsp_server.h \
 	src/stream.cpp \
 	src/stream.h \
+	src/stream_builder.cpp \
+	src/stream_builder.h \
+	src/stream_builder_v4l2.cpp \
+	src/stream_builder_v4l2.h \
 	src/stream_v4l2.cpp \
 	src/stream_v4l2.h \
 	src/stream_manager.cpp \

@@ -15,28 +15,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#pragma once
+#include "stream_builder_custom.h"
+#include "stream_custom.h"
 
-#include <avahi-common/watch.h>
-#include <memory>
-#include <string>
-#include <vector>
+static StreamBuilderCustom stream_builder;
 
-#include "avahi_publisher.h"
-#include "rtsp_server.h"
-#include "stream.h"
+std::vector<Stream *> StreamBuilderCustom::build_streams()
+{
+    std::vector<Stream *> streams;
 
-class StreamManager {
-public:
-    StreamManager();
-    ~StreamManager();
-    void start();
-    void stop();
-    void addStream(Stream *stream);
+    streams.push_back(new StreamCustom());
 
-private:
-    std::vector<std::unique_ptr<Stream>> streams;
-    bool is_running;
-    AvahiPublisher avahi_publisher;
-    RTSPServer rtsp_server;
-};
+    return streams;
+}

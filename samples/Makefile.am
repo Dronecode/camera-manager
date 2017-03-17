@@ -119,6 +119,10 @@ base_files = \
 	../src/rtsp_server.h \
 	../src/stream.cpp \
 	../src/stream.h \
+	../src/stream_builder.cpp \
+	../src/stream_builder.h \
+	../src/stream_builder_v4l2.cpp \
+	../src/stream_builder_v4l2.h \
 	../src/stream_v4l2.cpp \
 	../src/stream_v4l2.h \
 	../src/stream_manager.cpp \
@@ -133,13 +137,17 @@ endif
 
 camera_sample_custom_SOURCES = \
 	${base_files} \
-	main_sample_custom.cpp \
+	../src/main.cpp \
+	stream_builder_custom.h \
+	stream_builder_custom.cpp \
 	stream_custom.cpp \
 	stream_custom.h
 
 camera_sample_realsense_SOURCES = \
 	${base_files} \
-	main_sample_realsense.cpp \
+	../src/main.cpp \
+	stream_builder_realsense.h \
+	stream_builder_realsense.cpp \
 	stream_realsense.cpp \
 	stream_realsense.h
 

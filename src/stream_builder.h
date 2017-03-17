@@ -16,27 +16,15 @@
  * limitations under the License.
  */
 #pragma once
+#include "stream_manager.h"
 
-#include <avahi-common/watch.h>
-#include <memory>
-#include <string>
-#include <vector>
-
-#include "avahi_publisher.h"
-#include "rtsp_server.h"
-#include "stream.h"
-
-class StreamManager {
+class StreamBuilder {
 public:
-    StreamManager();
-    ~StreamManager();
-    void start();
-    void stop();
-    void addStream(Stream *stream);
-
+    virtual std::vector<Stream *> build_streams() = 0;
+protected:
+    StreamBuilder();
+    virtual ~StreamBuilder();
 private:
-    std::vector<std::unique_ptr<Stream>> streams;
-    bool is_running;
-    AvahiPublisher avahi_publisher;
-    RTSPServer rtsp_server;
+    static std::vector<StreamBuilder*> builders;
+    friend class StreamManager;
 };

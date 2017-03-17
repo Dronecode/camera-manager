@@ -16,26 +16,21 @@
  * limitations under the License.
  */
 #include <assert.h>
-#include <cstring>
 #include <dirent.h>
 #include <system_error>
 
 #include "log.h"
 #include "stream_manager.h"
-#include "stream_v4l2.h"
+#include "stream_builder.h"
 
-#define VIDEO_PREFIX "video"
 #define DEFAULT_SERVICE_PORT 8554
 #define DEFAULT_SERVICE_TYPE "_rtsp._udp"
-#define DEVICE_PATH "/dev/"
 
-StreamManager::StreamManager(GstreamerPipelineBuilder &_gst_builder)
+StreamManager::StreamManager()
     : is_running(false)
     , avahi_publisher(streams, DEFAULT_SERVICE_PORT, DEFAULT_SERVICE_TYPE)
     , rtsp_server(streams, DEFAULT_SERVICE_PORT)
-    , gst_builder(_gst_builder)
 {
-    stream_discovery();
 };
 
 StreamManager::~StreamManager()
@@ -43,35 +38,15 @@ StreamManager::~StreamManager()
     stop();
 }
 
-void StreamManager::stream_discovery()
-{
-    DIR *dir;
-    struct dirent *f;
-
-    streams.clear();
-    errno = 0;
-    if ((dir = opendir(DEVICE_PATH)) == NULL) {
-        log_error("Unable to load v4l2 cameras");
-        return;
-    }
-
-    while ((f = readdir(dir)) != NULL) {
-        if (std::strncmp(VIDEO_PREFIX, f->d_name, sizeof(VIDEO_PREFIX) - 1) == 0) {
-            std::string dev_path = DEVICE_PATH;
-            dev_path.append(f->d_name);
-            std::string path = "/";
-            path.append(f->d_name);
-            streams.emplace_back(std::make_unique<StreamV4l2>(gst_builder, path, dev_path));
-        }
-    }
-    closedir(dir);
-}
-
 void StreamManager::start()
 {
     if (is_running)
         return;
     is_running = true;
+
+    for (StreamBuilder *builder : StreamBuilder::builders)
+        for (Stream *s : builder->build_streams())
+            streams.emplace_back(std::unique_ptr<Stream>{s});
 
     rtsp_server.start();
     avahi_publisher.start();
