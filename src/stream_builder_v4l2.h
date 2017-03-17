@@ -17,26 +17,17 @@
  */
 #pragma once
 
-#include <avahi-common/watch.h>
-#include <memory>
-#include <string>
-#include <vector>
+#include "stream_builder.h"
+#include "gstreamer_pipeline_builder.h"
 
-#include "avahi_publisher.h"
-#include "rtsp_server.h"
-#include "stream.h"
-
-class StreamManager {
+class StreamBuilderV4l2 final : public StreamBuilder {
 public:
-    StreamManager();
-    ~StreamManager();
-    void start();
-    void stop();
-    void addStream(Stream *stream);
+    StreamBuilderV4l2() : StreamBuilder() {
+    }
+    ~StreamBuilderV4l2() {}
+
+    std::vector<Stream *> build_streams();
 
 private:
-    std::vector<std::unique_ptr<Stream>> streams;
-    bool is_running;
-    AvahiPublisher avahi_publisher;
-    RTSPServer rtsp_server;
+    GstreamerPipelineBuilder gst_builder;
 };

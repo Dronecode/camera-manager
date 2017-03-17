@@ -15,28 +15,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#pragma once
+#include "stream_builder_realsense.h"
+#include "stream_realsense.h"
 
-#include <avahi-common/watch.h>
-#include <memory>
-#include <string>
-#include <vector>
+static StreamBuilderRealsense stream_builder;
 
-#include "avahi_publisher.h"
-#include "rtsp_server.h"
-#include "stream.h"
+std::vector<Stream *> StreamBuilderRealsense::build_streams()
+{
+    std::vector<Stream *> streams;
 
-class StreamManager {
-public:
-    StreamManager();
-    ~StreamManager();
-    void start();
-    void stop();
-    void addStream(Stream *stream);
+    streams.push_back(new StreamRealSense());
 
-private:
-    std::vector<std::unique_ptr<Stream>> streams;
-    bool is_running;
-    AvahiPublisher avahi_publisher;
-    RTSPServer rtsp_server;
-};
+    return streams;
+}

@@ -1,5 +1,5 @@
 /*
- * This file is part of the Camera Streaming Daemon project
+ * This file is part of the Camera Streaming Daemon
  *
  * Copyright (C) 2017  Intel Corporation. All rights reserved.
  *
@@ -15,30 +15,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#pragma once
 
-#include <assert.h>
-#include <getopt.h>
-#include <stdio.h>
+#include "stream_builder.h"
 
-#include "glib_mainloop.h"
-#include "log.h"
-#include "samples/stream_realsense.h"
-#include "stream_manager.h"
+class StreamBuilderRealsense final : public StreamBuilder {
+public:
+    StreamBuilderRealsense() : StreamBuilder() {
+    }
+    ~StreamBuilderRealsense() {}
 
-int main(int argc, char *argv[])
-{
-    log_open();
-
-    GlibMainloop mainloop;
-    GstreamerPipelineBuilder pipeline;
-    StreamManager stream(pipeline);
-
-    log_debug("Starting Camera Streaming Daemon - Sample");
-    stream.addStream(new StreamRealSense());
-    stream.start();
-    mainloop.loop();
-
-    log_close();
-
-    return 0;
-}
+    std::vector<Stream *> build_streams();
+};

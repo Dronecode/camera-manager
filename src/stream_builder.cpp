@@ -1,5 +1,5 @@
 /*
- * This file is part of the Camera Streaming Daemon project
+ * This file is part of the Camera Streaming Daemon
  *
  * Copyright (C) 2017  Intel Corporation. All rights reserved.
  *
@@ -15,30 +15,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <algorithm>
+#include <vector>
 
-#include <assert.h>
-#include <getopt.h>
-#include <stdio.h>
+#include "stream_builder.h"
 
-#include "glib_mainloop.h"
-#include "log.h"
-#include "samples/stream_custom.h"
-#include "stream_manager.h"
+std::vector<StreamBuilder*> StreamBuilder::builders;
 
-int main(int argc, char *argv[])
+StreamBuilder::StreamBuilder()
 {
-    log_open();
+    builders.push_back(this);
+}
 
-    GlibMainloop mainloop;
-    GstreamerPipelineBuilder pipeline;
-    StreamManager stream(pipeline);
-
-    log_debug("Starting Camera Streaming Daemon - Sample");
-    stream.addStream(new StreamCustom());
-    stream.start();
-    mainloop.loop();
-
-    log_close();
-
-    return 0;
+StreamBuilder::~StreamBuilder()
+{
+    StreamBuilder *b = this;
+    std::vector<StreamBuilder *>::iterator it = std::find(builders.begin(), builders.end(), b);
+    if (it != builders.end()) {
+        std::swap(*it, builders.back());
+        builders.pop_back();
+    }
 }
