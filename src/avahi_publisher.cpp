@@ -148,8 +148,13 @@ void AvahiPublisher::start()
 {
     if (is_running)
         return;
-    is_running = true;
 
+    if (streams.size() == 0) {
+        log_debug("No streams found. Not publishing avahi services");
+        return;
+    }
+
+    is_running = true;
     int error;
 
     client = avahi_client_new(Mainloop::get_mainloop()->get_avahi_poll_api(), (AvahiClientFlags)0,
