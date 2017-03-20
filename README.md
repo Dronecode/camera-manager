@@ -6,7 +6,7 @@ In order to compile you need the following packages:
 
   - GCC compiler
   - C and C++ standard libraries
-  - GLib 2 (https://wiki.gnome.org/Projects/GLib)
+  - GLib 2.44 or greater (https://wiki.gnome.org/Projects/GLib)
   - Avahi 0.6 or newer (https://github.com/lathiat/avahi)
   - GStreamer 1.10 or newer (https://gstreamer.freedesktop.org/)
 
