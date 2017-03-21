@@ -22,9 +22,11 @@ class StreamBuilder {
 public:
     virtual std::vector<Stream *> build_streams() = 0;
     virtual ~StreamBuilder();
+
 protected:
     StreamBuilder();
+
 private:
-    static std::vector<StreamBuilder*> builders;
+    static std::vector<StreamBuilder *> builders;
     friend class StreamManager;
 };

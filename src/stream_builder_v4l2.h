@@ -17,12 +17,14 @@
  */
 #pragma once
 
-#include "stream_builder.h"
 #include "gstreamer_pipeline_builder.h"
+#include "stream_builder.h"
 
 class StreamBuilderV4l2 final : public StreamBuilder {
 public:
-    StreamBuilderV4l2() : StreamBuilder() {
+    StreamBuilderV4l2()
+        : StreamBuilder()
+    {
     }
     ~StreamBuilderV4l2() {}
 

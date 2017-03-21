@@ -21,7 +21,9 @@
 
 class StreamBuilderRealsense final : public StreamBuilder {
 public:
-    StreamBuilderRealsense() : StreamBuilder() {
+    StreamBuilderRealsense()
+        : StreamBuilder()
+    {
     }
     ~StreamBuilderRealsense() {}
 
