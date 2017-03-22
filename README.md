@@ -1,5 +1,7 @@
 ## Camera Streaming Daemon ##
 
+[![Build Status](https://travis-ci.org/01org/camera-streaming-daemon.svg?branch=master)](https://travis-ci.org/01org/camera-streaming-daemon)
+
 ### Compilation and installation ###
 
 In order to compile you need the following packages:
