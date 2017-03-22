@@ -21,37 +21,72 @@
 #include "rtsp_server.h"
 #include "log.h"
 
-#define STREAM_TYPE_RTSP_MEDIA_FACTORY stream_rtsp_media_factory_get_type()
-G_DECLARE_FINAL_TYPE(StreamRTSPMediaFactory, stream_rtsp_media_factory, STREAM, RTSP_MEDIA_FACTORY,
-                     GstRTSPMediaFactory)
-struct _StreamRTSPMediaFactory {
-    GstRTSPMediaFactory parent;
-    RTSPServer *rtsp_server;
-};
+static void (*media_dispose)(GObject *obj) = nullptr;
+static GstRTSPMedia *(*factory_construct)(GstRTSPMediaFactory *factory, const GstRTSPUrl *url)
+    = nullptr;
 
-G_DEFINE_TYPE(StreamRTSPMediaFactory, stream_rtsp_media_factory, GST_TYPE_RTSP_MEDIA_FACTORY)
+static void stream_media_dispose(GObject *obj)
+{
+    Stream *stream = (Stream *)g_object_get_data(obj, "stream");
+    GObject *element = nullptr;
+    g_object_get(obj, "element", &element, NULL);
+
+    if (stream && element)
+        stream->finalize_gstreamer_pipeline(GST_ELEMENT(element));
+
+    if (media_dispose)
+        media_dispose(obj);
+}
 
 GstElement *stream_create_element(GstRTSPMediaFactory *factory, const GstRTSPUrl *url)
 {
-    return ((StreamRTSPMediaFactory *)factory)->rtsp_server->create_element_from_url(url);
+    RTSPServer *rtsp_server = (RTSPServer *)g_object_get_data(G_OBJECT(factory), "rtsp_server");
+    if (!rtsp_server) {
+        log_error("create_element called in invalid media factory.");
+        return nullptr;
+    }
+    return rtsp_server->create_element_from_url(url);
 }
 
-static void stream_rtsp_media_factory_class_init(StreamRTSPMediaFactoryClass *klass)
+GstRTSPMedia *stream_construct(GstRTSPMediaFactory *factory, const GstRTSPUrl *url)
 {
-    GstRTSPMediaFactoryClass *factory = (GstRTSPMediaFactoryClass *)(klass);
-    factory->create_element = stream_create_element;
+    if (!factory_construct)
+        return nullptr;
+
+    GstRTSPMedia *media = factory_construct(factory, url);
+    if (!media)
+        return nullptr;
+
+    RTSPServer *rtsp_server = (RTSPServer *)g_object_get_data(G_OBJECT(factory), "rtsp_server");
+    if (!rtsp_server)
+        return nullptr;
+
+    Stream *stream = rtsp_server->find_stream_by_path(url->abspath);
+    g_object_set_data(G_OBJECT(media), "stream", stream);
+
+    if (!media_dispose) {
+        GstRTSPMediaClass *media_class = GST_RTSP_MEDIA_GET_CLASS(media);
+        media_dispose = G_OBJECT_CLASS(media_class)->dispose;
+        G_OBJECT_CLASS(media_class)->dispose = stream_media_dispose;
+    }
+    return media;
 }
 
-static void stream_rtsp_media_factory_init(StreamRTSPMediaFactory *self)
+static GstRTSPMediaFactory *create_media_factory(RTSPServer *rtsp_server)
 {
-}
+    GstRTSPMediaFactory *factory = gst_rtsp_media_factory_new();
+    if (!factory)
+        return nullptr;
 
-static GstRTSPMediaFactory *create_media_factory(RTSPServer *server)
-{
-    StreamRTSPMediaFactory *factory
-        = (StreamRTSPMediaFactory *)g_object_new(STREAM_TYPE_RTSP_MEDIA_FACTORY, nullptr);
-    factory->rtsp_server = server;
-    return (GstRTSPMediaFactory *)factory;
+    g_object_set_data(G_OBJECT(factory), "rtsp_server", rtsp_server);
+    if (!factory_construct) {
+        GstRTSPMediaFactoryClass *factory_class = GST_RTSP_MEDIA_FACTORY_GET_CLASS(factory);
+        factory_class->create_element = stream_create_element;
+        factory_construct = factory_class->construct;
+        factory_class->construct = stream_construct;
+    }
+
+    return factory;
 }
 
 RTSPServer::RTSPServer(std::vector<std::unique_ptr<Stream>> &_streams, int _port)
@@ -76,25 +111,37 @@ void RTSPServer::start()
         return;
     is_running = true;
 
-    GstRTSPMountPoints *mounts;
-    GstRTSPMediaFactory *factory;
+    GstRTSPMountPoints *mounts = nullptr;
+    GstRTSPMediaFactory *factory = nullptr;
 
     server = gst_rtsp_server_new();
     g_object_set(server, "service", "8554", nullptr);
 
     if (streams.size() > 0) {
         mounts = gst_rtsp_server_get_mount_points(server);
+        if (!mounts)
+            goto error;
         factory = create_media_factory(this);
+        if (!factory)
+            goto error_factory;
+
         for (auto &s : streams)
             gst_rtsp_mount_points_add_factory(mounts, s->get_path().c_str(), factory);
         g_object_unref(mounts);
     }
 
     server_handle = gst_rtsp_server_attach(server, nullptr);
-    if (!server_handle) {
-        log_error("Unable to start rtsp server");
-        stop();
-    }
+    if (!server_handle)
+        goto error;
+    return;
+
+error_factory:
+    g_object_unref(mounts);
+error:
+    g_object_unref(server);
+    log_error("Unable to start rtsp server");
+    is_running = false;
+    server = nullptr;
 }
 
 void RTSPServer::stop()

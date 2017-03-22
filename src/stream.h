@@ -51,4 +51,14 @@ public:
         return nullptr;
     }
     virtual const std::vector<PixelFormat> &get_formats() const = 0;
+
+    /**
+     * Called when gstreamer pipeline is finalized so all needed cleanup can be
+     * performed.
+     *
+     * @param pipeline The pipeline that will be finalized
+     *
+     * @note: No need to free or g_object_unref the @a pipeline.
+     */
+    virtual void finalize_gstreamer_pipeline(GstElement *pipeline){};
 };
