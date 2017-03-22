@@ -1,0 +1,16 @@
+language: cpp
+sudo: required
+
+services: docker
+
+before_install:
+ - docker pull ubuntu
+ - docker run --cidfile /tmp/id -it -d ubuntu /bin/bash
+ - tar cf csd.tar * && docker cp csd.tar $(cat /tmp/id):/tmp/
+ - docker exec -i $(cat /tmp/id) /bin/bash -c "apt-get update -qq && apt-get install -y -q libavahi-glib-dev libavahi-client-dev libavahi-core-dev libgstreamer1.0-dev libgstrtspserver-1.0-dev libgstreamer-plugins-base1.0-dev build-essential autoconf libtool wget"
+   # newer libgstrtspserver packages
+ - docker exec -i $(cat /tmp/id) /bin/bash -c "wget http://security.ubuntu.com/ubuntu/pool/universe/g/gst-rtsp-server1.0/libgstrtspserver-1.0-0_1.8.3-1_amd64.deb && wget http://security.ubuntu.com/ubuntu/pool/universe/g/gst-rtsp-server1.0/libgstrtspserver-1.0-dev_1.8.3-1_amd64.deb && wget http://security.ubuntu.com/ubuntu/pool/universe/g/gst-rtsp-server1.0/gir1.2-gst-rtsp-server-1.0_1.8.3-1_amd64.deb && dpkg -i *.deb"
+
+script:  
+ - docker exec -i $(cat /tmp/id) /bin/bash -c "mkdir /tmp/csd && tar vxf /tmp/csd.tar -C /tmp/csd && cd /tmp/csd/ && ./autogen.sh"
+ - docker exec -i $(cat /tmp/id) /bin/bash -c "cd /tmp/csd && ./configure && make -j"
