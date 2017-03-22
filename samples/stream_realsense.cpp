@@ -148,5 +148,18 @@ StreamRealSense::get_gstreamer_pipeline(std::map<std::string, std::string> &para
     cbs.seek_data = cb_seek_data;
     gst_app_src_set_callbacks(GST_APP_SRC_CAST(appsrc), &cbs, dev, NULL);
 
+    g_object_set_data(G_OBJECT(pipeline), "rs_context", ctx);
+
     return pipeline;
+}
+
+void StreamRealSense::finalize_gstreamer_pipeline(GstElement *pipeline)
+{
+    rs_context *ctx = (rs_context *)g_object_get_data(G_OBJECT(pipeline), "rs_context");
+
+    if (!ctx) {
+        log_error("Media not created by stream_realsense is being cleared with stream_realsense");
+        return;
+    }
+    rs_delete_context(ctx, NULL);
 }
