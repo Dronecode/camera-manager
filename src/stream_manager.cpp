@@ -43,8 +43,10 @@ void StreamManager::start()
     is_running = true;
 
     for (StreamBuilder *builder : StreamBuilder::builders)
-        for (Stream *s : builder->build_streams())
+        for (Stream *s : builder->build_streams()) {
+            log_debug("Adding stream %s (%s)", s->get_path().c_str(), s->get_name().c_str());
             streams.emplace_back(std::unique_ptr<Stream>{s});
+        }
 
     rtsp_server.start();
     avahi_publisher.start();
