@@ -46,7 +46,7 @@ public:
     virtual ~Stream(){};
     virtual const std::string get_path() const = 0;
     virtual const std::string get_name() const = 0;
-    virtual GstElement *get_gstreamer_pipeline(std::map<std::string, std::string> &params) const
+    virtual GstElement *create_gstreamer_pipeline(std::map<std::string, std::string> &params) const
     {
         return nullptr;
     }

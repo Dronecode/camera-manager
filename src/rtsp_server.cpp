@@ -206,7 +206,7 @@ GstElement *RTSPServer::create_element_from_url(const GstRTSPUrl *url)
         goto error;
 
     params = parse_uri_query(url->query);
-    pipeline = stream->get_gstreamer_pipeline(params);
+    pipeline = stream->create_gstreamer_pipeline(params);
     if (!pipeline)
         goto error;
 

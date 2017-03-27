@@ -86,7 +86,7 @@ void StreamV4l2::get_v4l2_info()
     close(fd);
 }
 
-GstElement *StreamV4l2::get_gstreamer_pipeline(std::map<std::string, std::string> &params) const
+GstElement *StreamV4l2::create_gstreamer_pipeline(std::map<std::string, std::string> &params) const
 {
     GError *error = nullptr;
     GstElement *pipeline;

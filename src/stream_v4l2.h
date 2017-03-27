@@ -33,7 +33,7 @@ public:
     const std::string get_path() const override;
     const std::string get_name() const override;
     const std::vector<PixelFormat> &get_formats() const override;
-    GstElement *get_gstreamer_pipeline(std::map<std::string, std::string> &params) const override;
+    GstElement *create_gstreamer_pipeline(std::map<std::string, std::string> &params) const override;
 
 private:
     std::string name;
