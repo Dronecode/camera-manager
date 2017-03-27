@@ -43,4 +43,6 @@ private:
     std::map<std::string, std::string> parse_uri_query(const char *query);
     void append_to_map(std::map<std::string, std::string> &map, const std::string &param);
     friend GstElement *stream_create_element(GstRTSPMediaFactory *factory, const GstRTSPUrl *url);
+    friend void stream_construct(GObject *obj);
+    friend GstRTSPMedia *stream_construct(GstRTSPMediaFactory *factory, const GstRTSPUrl *url);
 };

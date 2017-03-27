@@ -71,7 +71,7 @@ static void browse_callback(AvahiServiceBrowser *sb, AvahiIfIndex interface, Ava
 
     case AVAHI_BROWSER_NEW:
         if (!(avahi_service_resolver_new(client, interface, protocol, name, type, domain,
-                                         AVAHI_PROTO_UNSPEC, (AvahiLookupFlags)0, resolve_callback,
+                                         AVAHI_PROTO_INET, (AvahiLookupFlags)0, resolve_callback,
                                          client)))
             log_error("Failed to start resolver for service. name: '%s' in domain: %s. "
                       "error: %s",
@@ -116,7 +116,7 @@ int main(int argc, char *argv[])
         goto error;
     }
 
-    if (!(sb = avahi_service_browser_new(client, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, "_rtsp._udp",
+    if (!(sb = avahi_service_browser_new(client, AVAHI_IF_UNSPEC, AVAHI_PROTO_INET, "_rtsp._udp",
                                          NULL, (AvahiLookupFlags)0, browse_callback, client))) {
         log_error("Failed to create avahi service browser: %s\n", avahi_strerror(error));
         goto error;

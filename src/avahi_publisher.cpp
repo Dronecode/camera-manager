@@ -126,7 +126,7 @@ void AvahiPublisher::publish_services(AvahiClient *c)
     if (avahi_entry_group_is_empty(group)) {
         for (auto const &s : streams) {
             AvahiStringList *strlist = txt_record_from_stream(s);
-            ret = avahi_entry_group_add_service_strlst(group, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC,
+            ret = avahi_entry_group_add_service_strlst(group, AVAHI_IF_UNSPEC, AVAHI_PROTO_INET,
                                                        (AvahiPublishFlags)0, s->get_path().c_str(),
                                                        type, NULL, NULL, port, strlist);
             avahi_string_list_free(strlist);

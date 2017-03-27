@@ -21,7 +21,9 @@
 
 class StreamBuilderCustom final : public StreamBuilder {
 public:
-    StreamBuilderCustom() : StreamBuilder() {
+    StreamBuilderCustom()
+        : StreamBuilder()
+    {
     }
     ~StreamBuilderCustom() {}
 

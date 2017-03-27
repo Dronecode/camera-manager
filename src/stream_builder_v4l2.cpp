@@ -31,7 +31,6 @@ std::vector<Stream *> StreamBuilderV4l2::build_streams()
     struct dirent *f;
     std::vector<Stream *> streams;
 
-    errno = 0;
     if ((dir = opendir(DEVICE_PATH)) == NULL) {
         log_error("Unable to load v4l2 cameras");
         return streams;

@@ -20,7 +20,7 @@
 
 #include "stream_builder.h"
 
-std::vector<StreamBuilder*> StreamBuilder::builders;
+std::vector<StreamBuilder *> StreamBuilder::builders;
 
 StreamBuilder::StreamBuilder()
 {

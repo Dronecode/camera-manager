@@ -20,8 +20,8 @@
 #include <system_error>
 
 #include "log.h"
-#include "stream_manager.h"
 #include "stream_builder.h"
+#include "stream_manager.h"
 
 #define DEFAULT_SERVICE_PORT 8554
 #define DEFAULT_SERVICE_TYPE "_rtsp._udp"
@@ -29,9 +29,7 @@
 StreamManager::StreamManager()
     : is_running(false)
     , avahi_publisher(streams, DEFAULT_SERVICE_PORT, DEFAULT_SERVICE_TYPE)
-    , rtsp_server(streams, DEFAULT_SERVICE_PORT)
-{
-};
+    , rtsp_server(streams, DEFAULT_SERVICE_PORT){};
 
 StreamManager::~StreamManager()
 {
@@ -45,8 +43,10 @@ void StreamManager::start()
     is_running = true;
 
     for (StreamBuilder *builder : StreamBuilder::builders)
-        for (Stream *s : builder->build_streams())
+        for (Stream *s : builder->build_streams()) {
+            log_debug("Adding stream %s (%s)", s->get_path().c_str(), s->get_name().c_str());
             streams.emplace_back(std::unique_ptr<Stream>{s});
+        }
 
     rtsp_server.start();
     avahi_publisher.start();
