@@ -109,6 +109,8 @@ AM_LDFLAGS = \
 base_files = \
 	src/avahi_publisher.cpp \
 	src/avahi_publisher.h \
+	src/conf.cpp \
+	src/conf.h \
 	src/glib_mainloop.cpp \
 	src/glib_mainloop.h \
 	src/gstreamer_pipeline_builder.cpp \

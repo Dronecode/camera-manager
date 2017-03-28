@@ -38,7 +38,17 @@ int log_internal(int level, int error, const char *file, int line, const char *f
 
 #define log_debug(...) log_internal(LOG_DEBUG, 0, __FILE__, __LINE__, __VA_ARGS__)
 #define log_info(...) log_internal(LOG_INFO, 0, __FILE__, __LINE__, __VA_ARGS__)
+#define log_notice(...) log_internal(LOG_NOTICE, 0, __FILE__, __LINE__, __VA_ARGS__)
+#define log_warning(...) log_internal(LOG_WARNING, 0, __FILE__, __LINE__, __VA_ARGS__)
 #define log_error(...) log_internal(LOG_ERR, 0, __FILE__, __LINE__, __VA_ARGS__)
+
+#define assert_or_return(exp, ...)                          \
+    do {                                                    \
+        if (__builtin_expect(!(exp), 0)) {                  \
+            log_warning("Expresssion `" #exp "` is false"); \
+            return __VA_ARGS__;                             \
+        }                                                   \
+    } while (0)
 
 #ifdef __cplusplus
 }
