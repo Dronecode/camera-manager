@@ -36,7 +36,7 @@
 #define COLOR_WHITE "\033[37;1m"
 #define COLOR_RESET "\033[0m"
 
-static int log_max_level = LOG_DEBUG;
+static int log_max_level = LOG_INFO;
 static int log_target_fd = STDERR_FILENO;
 static bool log_show_colors;
 

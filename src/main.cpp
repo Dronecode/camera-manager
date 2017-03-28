@@ -27,6 +27,7 @@
 #include "log.h"
 #include "settings.h"
 #include "stream_manager.h"
+#include "util.h"
 
 #define DEFAULT_CONFFILE "/etc/csd/main.conf"
 #define DEFAULT_CONF_DIR "/etc/csd/config.d"
@@ -38,14 +39,18 @@ struct options {
 
 static void help(FILE *fp)
 {
-    fprintf(fp,
-            "%s [OPTIONS...]\n\n"
-            "  -c --conf-file                .conf file with configurations for "
-            "camera-streaming-daemon.\n"
-            "  -d --conf-dir <dir>          Directory where to look for .conf files overriding\n"
-            "                               default conf file.\n"
-            "  -h --help                    Print this message\n",
-            program_invocation_short_name);
+    fprintf(
+        fp,
+        "%s [OPTIONS...]\n\n"
+        "  -c --conf-file                   .conf file with configurations for "
+        "camera-streaming-daemon.\n"
+        "  -d --conf-dir <dir>              Directory where to look for .conf files overriding\n"
+        "                                   default conf file.\n"
+        "  -g --debug-log-level <level>     Set debug log level. Levels are\n"
+        "                                   <error|warning|notice|info|debug>\n"
+        "  -v --verbose                     Verbose. Same as --debug-log-level=debug\n"
+        "  -h --help                        Print this message\n",
+        program_invocation_short_name);
 }
 
 static const char *get_default_file_name()
@@ -144,17 +149,34 @@ fail:
     return ret;
 }
 
+static int log_level_from_str(const char *str)
+{
+    if (strcaseeq(str, "error"))
+        return LOG_ERR;
+    if (strcaseeq(str, "warning"))
+        return LOG_WARNING;
+    if (strcaseeq(str, "notice"))
+        return LOG_NOTICE;
+    if (strcaseeq(str, "info"))
+        return LOG_INFO;
+    if (strcaseeq(str, "debug"))
+        return LOG_DEBUG;
+
+    return -EINVAL;
+}
+
 static int parse_argv(int argc, char *argv[], struct options *opt)
 {
-    static const struct option options[] = {
-        {"conf-file", required_argument, NULL, 'c'}, {"conf-dir", required_argument, NULL, 'd'},
-    };
+    static const struct option options[] = {{"conf-file", required_argument, NULL, 'c'},
+                                            {"conf-dir", required_argument, NULL, 'd'},
+                                            {"debug-log-level", required_argument, NULL, 'g'},
+                                            {"verbose", no_argument, NULL, 'v'}};
     int c;
 
     assert(argc >= 0);
     assert(argv);
 
-    while ((c = getopt_long(argc, argv, "hd:c:d:", options, NULL)) >= 0) {
+    while ((c = getopt_long(argc, argv, "hd:c:d:g:v", options, NULL)) >= 0) {
         switch (c) {
         case 'h':
             help(stdout);
@@ -165,6 +187,20 @@ static int parse_argv(int argc, char *argv[], struct options *opt)
         }
         case 'd': {
             opt->conf_dir = optarg;
+            break;
+        }
+        case 'g': {
+            int lvl = log_level_from_str(optarg);
+            if (lvl == -EINVAL) {
+                log_error("Invalid argument for debug-log-level = %s", optarg);
+                help(stderr);
+                return -EINVAL;
+            }
+            log_set_max_level(lvl);
+            break;
+        }
+        case 'v': {
+            log_set_max_level(LOG_DEBUG);
             break;
         }
         case '?':
