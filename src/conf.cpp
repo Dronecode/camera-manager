@@ -39,244 +39,138 @@ struct section {
     struct section *next;
 };
 
-ConfFile::~ConfFile()
+ConfFile::ConfFile(const char *filename)
+    : _filename(filename)
+    , _entry(nullptr)
+    , _last_section(nullptr)
+    , _n(0)
+    , _line(0)
 {
-    struct section *section;
-    struct config *config;
+    assert(filename);
 
-    section = _sections;
-    while (section) {
-        struct section *tmp = section;
-
-        config = section->configs;
-        while (config) {
-            struct config *tmp_config = config;
-            free(config->key);
-            // config->value is on the same allocation as config->key, no need to free it
-            config = config->next;
-            free(tmp_config);
-        }
-
-        free(section->name);
-        section = section->next;
-        free(tmp);
-    }
+    _file = fopen(filename, "re");
 }
 
-int ConfFile::parse_file()
+ConfFile::~ConfFile()
 {
-    FILE *file;
-    char *entry = NULL;
-    int line = 0, ret = 0;
-    size_t n = 0;
+    free(_entry);
+    free(_last_section);
+    if (_file)
+        fclose(_file);
+}
+
+int ConfFile::next(const char **section, size_t *section_len, const char **key, size_t *key_len,
+                   const char **value, size_t *value_len)
+{
+    assert(section);
+    assert(section_len);
+    assert(key);
+    assert(key_len);
+
+    int ret = EOF;
     ssize_t read;
+    const char *str;
+    size_t len = 0;
 
-    assert(_filename);
-
-    file = fopen(_filename, "re");
-    if (!file) {
-        log_error("Could not open conf file '%s' (%m)", _filename);
+    if (!_file) {
+        log_error("Could not open conf file '%s'", _filename);
         return -EIO;
     }
 
-    while ((read = getline(&entry, &n, file)) >= 0) {
-        line++;
+    while ((read = getline(&_entry, &_n, _file)) >= 0) {
+        _line++;
+        len = strlen(_entry);
+        if (!len)
+            continue;
 
-        _trim(entry);
-
-        switch (entry[0]) {
+        str = _entry;
+        _trim(&str, &len);
+        switch (str[0]) {
         case ';':
         case '#':
         case '\0':
             // Discards comment or blank line
-            free(entry);
             break;
         case '[':
-            ret = _add_section(entry, line);
-            if (ret < 0) {
+            free(_last_section);
+            _last_section = _entry;
+            _entry = NULL;
+            ret = _trim_section(&str, &len);
+            if (ret < 0)
                 goto end;
-            }
+            *section = str;
+            *section_len = len;
             break;
         default:
-            ret = _add_config(entry, line);
-            if (ret < 0) {
+            *key = str;
+            *key_len = len;
+            ret = _parse_key_value(key, key_len, value, value_len);
+            if (ret < 0)
                 goto end;
-            }
+            return 0;
         }
-
-        entry = NULL;
-    }
-
-    _current_section = nullptr;
-
-    if (!_sections || !_sections->configs) {
-        free(entry);
-        log_error("Invalid conf file %s", _filename);
-        return -EINVAL;
     }
 
 end:
-    free(entry);
-    fclose(file);
     return ret;
 }
 
-const char *ConfFile::first_section()
+int ConfFile::_trim_section(const char **entry, size_t *len)
 {
-    _current_section = _sections;
-    return _current_section->name;
-}
-
-const char *ConfFile::next_section()
-{
-    if (!_current_section->next)
-        return NULL;
-
-    _current_section = _current_section->next;
-    return _current_section->name;
-}
-
-int ConfFile::_add_section(char *entry, int line)
-{
-    struct section *section;
-
-    char *end = strchr(entry, ']');
-    if (!end) {
-        log_error("On file %s: Line %d: Unfinished section name. Expected ']'", _filename, line);
-        return -EINVAL;
-    }
-
-    if (*(end + 1) != '\0') {
-        log_error("On file %s: Line %d: Unexpected characters after session name", _filename, line);
+    if ((*entry)[*len - 1] != ']') {
+        log_error("On file %s: Line %d: Unfinished section name. Expected ']'", _filename, _line);
         return -EINVAL;
     }
 
     // So section name is the string between '[]'
-    *entry = ' ';
-    *end = '\0';
-    _trim(entry);
-
-    // Ensure section is not duplicated. If it is,
-    // just make parser add on known section
-    section = _sections;
-    while (section) {
-        if (strcaseeq(section->name, entry)) {
-            _current_section = section;
-            free(entry);
-            return 0;
-        }
-        section = section->next;
-    }
-
-    // Section is new.
-    section = (struct section *)calloc(1, sizeof(struct section));
-    assert_or_return(section, -ENOMEM);
-
-    section->name = entry;
-    section->next = _sections;
-    _sections = section;
-
-    _current_section = section;
+    (*entry)++;
+    *len -= 2;
+    _trim(entry, len);
 
     return 0;
 }
 
-int ConfFile::_add_config(char *entry, int line)
+int ConfFile::_parse_key_value(const char **key, size_t *key_len, const char **value,
+                               size_t *value_len)
 {
-    char *equal_pos;
-    struct config *config;
+    const char *equal_pos;
 
-    if (!(equal_pos = strchr(entry, '='))) {
-        log_error("On file %s: Line %d: Missing '=' on config", _filename, line);
+    if (!(equal_pos = (const char *)memchr(*key, '=', *key_len))) {
+        log_error("On file %s: Line %d: Missing '=' on config", _filename, _line);
         return -EINVAL;
     }
 
-    if (equal_pos == entry) {
-        log_error("On file %s: Line %d: Missing name on config", _filename, line);
+    if (equal_pos == *key) {
+        log_error("On file %s: Line %d: Missing name on config", _filename, _line);
         return -EINVAL;
     }
 
-    if (equal_pos == (entry + strlen(entry) - 1)) {
-        log_error("On file %s: Line %d: Missing value on config", _filename, line);
+    if (equal_pos == (*key + *key_len - 1)) {
+        log_error("On file %s: Line %d: Missing value on config", _filename, _line);
         return -EINVAL;
     }
 
-    config = (struct config *)malloc(sizeof(struct config));
-    assert_or_return(config, -ENOMEM);
+    *value = equal_pos + 1;
+    *value_len = *key_len - (equal_pos - *key) - 1;
+    *key_len = equal_pos - *key;
 
-    config->key = entry;
-    config->value = equal_pos + 1;
-    *equal_pos = '\0';
-
-    _trim(config->key);
-    _trim(config->value);
-
-    config->next = _current_section->configs;
-    _current_section->configs = config;
+    _trim(value, value_len);
+    _trim(key, key_len);
 
     return 0;
 }
 
-const char *ConfFile::next_from_section(const char *section_name, const char *key)
+void ConfFile::_trim(const char **str, size_t *len)
 {
-    struct section *section;
-    struct config *config;
-
-    if (!_current_section)
-        _current_section = _sections;
-
-    if (!_current_section) {
-        return NULL;
-    }
-
-    if (!strcaseeq(section_name, _current_section->name)) {
-        section = _sections;
-
-        while (section) {
-            if (strcaseeq(section->name, section_name)) {
-                _current_section = section;
-                _current_section->current_config = NULL;
-                break;
-            }
-            section = section->next;
-        }
-
-        if (!section) {
-            return NULL;
-        }
-    }
-
-    if (!_current_section->current_config
-        || !strcaseeq(_current_section->current_config->key, key)) {
-        config = _current_section->configs;
-    } else {
-        config = _current_section->current_config->next;
-    }
-
-    while (config) {
-        if (strcaseeq(config->key, key)) {
-            _current_section->current_config = config;
-            return config->value;
-        }
-        config = config->next;
-    }
-
-    return NULL;
-}
-
-void ConfFile::_trim(char *str)
-{
-    char *s = str;
-    char *end;
+    const char *s = *str;
+    const char *end = s + *len;
 
     while (isspace(*s))
         s++;
 
-    end = s + strlen(s);
     while (end != s && isspace(*(end - 1)))
         end--;
 
-    *end = '\0';
-
-    memmove(str, s, end - s + 1);
+    *len = end - s;
+    *str = s;
 }

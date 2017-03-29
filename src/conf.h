@@ -16,25 +16,28 @@
  * limitations under the License.
  */
 #pragma once
+#include <ctype.h>
+#include <stdio.h>
+#include <string>
 
 class ConfFile {
 public:
-    ConfFile(const char *filename)
-        : _filename{filename} {};
+    ConfFile(const char *filename);
 
     ~ConfFile();
 
-    int parse_file();
-    const char *next_from_section(const char *section_name, const char *key);
-    const char *first_section();
-    const char *next_section();
+    int next(const char **section, size_t *section_len, const char **key, size_t *key_len,
+             const char **value, size_t *value_len);
+
+    int next(std::string &section_str, std::string &key_str, std::string &value_str);
 
 private:
+    void _trim(const char **str, size_t *len);
+    int _trim_section(const char **entry, size_t *len);
+    int _parse_key_value(const char **key, size_t *key_len, const char **value, size_t *value_len);
+    FILE *_file;
     const char *_filename;
-    struct section *_sections = nullptr;
-    struct section *_current_section = nullptr;
-
-    int _add_section(char *entry, int line);
-    int _add_config(char *entry, int line);
-    void _trim(char *str);
+    char *_entry, *_last_section;
+    size_t _n;
+    int _line;
 };
