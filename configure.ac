@@ -71,7 +71,7 @@ AC_SUBST([rootlibdir], [$with_rootlibdir])
 DEFAULT_FLAGS=" -fstack-protector-all -fPIE -fPIC -O2 -D_FORTIFY_SOURCE=2 -pthread -Wformat -Wformat-security"
 CFLAGS+=$DEFAULT_FLAGS
 CXXFLAGS+=$DEFAULT_FLAGS
-LDFLAGS+="-z noexecstack -z relro -z now"
+LDFLAGS+=" -z noexecstack -z relro -z now"
 
 #####################################################################
 # Generate files from *.in
