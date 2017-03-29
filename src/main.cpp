@@ -22,28 +22,37 @@
 
 #include "glib_mainloop.h"
 #include "log.h"
+#include "settings.h"
 #include "stream_manager.h"
 
 static void help(FILE *fp)
 {
     fprintf(fp, "%s [OPTIONS...]\n\n"
+                "  -c --conf-file                .conf file with configurations for "
+                "camera-streaming-daemon.\n"
                 "  -h --help                    Print this message\n",
             program_invocation_short_name);
 }
 
 static int parse_argv(int argc, char *argv[])
 {
-    static const struct option options[] = {{}};
+    static const struct option options[] = {
+        {"conf-dir", required_argument, NULL, 'd'},
+    };
     int c;
 
     assert(argc >= 0);
     assert(argv);
 
-    while ((c = getopt_long(argc, argv, "h", options, NULL)) >= 0) {
+    while ((c = getopt_long(argc, argv, "hc:", options, NULL)) >= 0) {
         switch (c) {
         case 'h':
             help(stdout);
             return 0;
+        case 'c': {
+            Settings::get_instance().import_conf_file(optarg);
+            break;
+        }
         case '?':
         default:
             help(stderr);
