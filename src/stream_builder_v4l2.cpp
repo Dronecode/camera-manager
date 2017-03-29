@@ -69,6 +69,7 @@ std::vector<Stream *> StreamBuilderV4l2::build_streams(ConfFile &conf)
         return streams;
     }
 
+    gst_builder.apply_configs(conf);
     while ((f = readdir(dir)) != NULL) {
         if (std::strncmp(VIDEO_PREFIX, f->d_name, sizeof(VIDEO_PREFIX) - 1) == 0) {
             std::string dev_path = DEVICE_PATH;
