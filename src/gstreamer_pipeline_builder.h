@@ -19,8 +19,13 @@
 #include <map>
 #include <string>
 
+#include "conf_file.h"
+
 class GstreamerPipelineBuilder {
 public:
+    GstreamerPipelineBuilder();
+    virtual ~GstreamerPipelineBuilder() {}
+    virtual void apply_configs(ConfFile &conf);
     virtual std::string create_caps(std::map<std::string, std::string> &params);
     virtual std::string create_muxer(std::map<std::string, std::string> &params);
     virtual std::string create_converter(std::map<std::string, std::string> &params);
@@ -29,4 +34,7 @@ public:
                                         std::map<std::string, std::string> &params);
 
 private:
+    struct options {
+        std::string encoder, converter, muxer;
+    } opt;
 };
