@@ -20,19 +20,24 @@
 
 #include "stream_builder.h"
 
-std::vector<StreamBuilder *> StreamBuilder::builders;
-
 StreamBuilder::StreamBuilder()
 {
-    builders.push_back(this);
+    get_builders().push_back(this);
 }
 
 StreamBuilder::~StreamBuilder()
 {
     StreamBuilder *b = this;
+    std::vector<StreamBuilder *> &builders = get_builders();
     std::vector<StreamBuilder *>::iterator it = std::find(builders.begin(), builders.end(), b);
     if (it != builders.end()) {
         std::swap(*it, builders.back());
         builders.pop_back();
     }
+}
+
+std::vector<StreamBuilder *> &StreamBuilder::get_builders()
+{
+    static std::vector<StreamBuilder *> builders;
+    return builders;
 }
