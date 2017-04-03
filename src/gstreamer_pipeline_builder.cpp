@@ -19,6 +19,7 @@
 
 #include "gstreamer_pipeline_builder.h"
 #include "log.h"
+#include "settings.h"
 
 std::string GstreamerPipelineBuilder::create_caps(std::map<std::string, std::string> &params)
 {
@@ -42,16 +43,28 @@ std::string GstreamerPipelineBuilder::create_caps(std::map<std::string, std::str
 
 std::string GstreamerPipelineBuilder::create_muxer(std::map<std::string, std::string> &params)
 {
+    // TODO: support different muxers for different formats
+    std::string muxer = Settings::get_instance().get_sections()["gstreamer"]["muxer"];
+    if (muxer.size() > 0)
+        return muxer;
     return "rtpjpegpay";
 }
 
 std::string GstreamerPipelineBuilder::create_converter(std::map<std::string, std::string> &params)
 {
+    // TODO: support different converters for different formats
+    std::string converter = Settings::get_instance().get_sections()["gstreamer"]["converter"];
+    if (converter.size() > 0)
+        return converter;
     return "videoconvert";
 }
 
 std::string GstreamerPipelineBuilder::create_encoder(std::map<std::string, std::string> &params)
 {
+    // TODO: support different encoders for different formats
+    std::string encoder = Settings::get_instance().get_sections()["gstreamer"]["encoder"];
+    if (encoder.size() > 0)
+        return encoder;
     return "jpegenc";
 }
 

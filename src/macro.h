@@ -32,3 +32,5 @@
         _i->iov_base = _s;        \
         _i->iov_len = strlen(_s); \
     } while (0)
+
+#define strcaseeq(a, b) (strcasecmp((a), (b)) == 0)

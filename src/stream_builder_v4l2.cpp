@@ -16,7 +16,9 @@
  * limitations under the License.
  */
 #include <cstring>
+#include <set>
 
+#include "settings.h"
 #include "stream_builder_v4l2.h"
 #include "stream_v4l2.h"
 
@@ -30,6 +32,8 @@ std::vector<Stream *> StreamBuilderV4l2::build_streams()
     DIR *dir;
     struct dirent *f;
     std::vector<Stream *> streams;
+    std::set<std::string> blacklist
+        = Settings::get_instance().get_value_as_set("v4l2", "blacklist");
 
     if ((dir = opendir(DEVICE_PATH)) == NULL) {
         log_error("Unable to load v4l2 cameras");
@@ -39,6 +43,9 @@ std::vector<Stream *> StreamBuilderV4l2::build_streams()
     while ((f = readdir(dir)) != NULL) {
         if (std::strncmp(VIDEO_PREFIX, f->d_name, sizeof(VIDEO_PREFIX) - 1) == 0) {
             std::string dev_path = DEVICE_PATH;
+            // Don't add stream if it is in a blacklist
+            if (blacklist.find(f->d_name) != blacklist.end())
+                continue;
             dev_path.append(f->d_name);
             std::string path = "/";
             path.append(f->d_name);
