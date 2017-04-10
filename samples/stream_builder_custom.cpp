@@ -20,7 +20,7 @@
 
 static StreamBuilderCustom stream_builder;
 
-std::vector<Stream *> StreamBuilderCustom::build_streams()
+std::vector<Stream *> StreamBuilderCustom::build_streams(ConfFile &conf)
 {
     std::vector<Stream *> streams;
 

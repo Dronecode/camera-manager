@@ -28,7 +28,7 @@ public:
     }
     ~StreamBuilderV4l2() {}
 
-    std::vector<Stream *> build_streams();
+    std::vector<Stream *> build_streams(ConfFile &conf);
 
 private:
     GstreamerPipelineBuilder gst_builder;
