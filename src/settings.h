@@ -1,5 +1,5 @@
 /*
- * This file is part of the Camera Streaming Daemon
+ * This file is part of the MAVLink Router project
  *
  * Copyright (C) 2017  Intel Corporation. All rights reserved.
  *
@@ -16,17 +16,20 @@
  * limitations under the License.
  */
 #pragma once
-#include "stream_manager.h"
+#include <map>
+#include <set>
 
-class StreamBuilder {
+class Settings {
 public:
-    virtual std::vector<Stream *> build_streams(ConfFile &conf) = 0;
-    virtual ~StreamBuilder();
-    static std::vector<StreamBuilder *> &get_builders();
+    ~Settings(){};
+    static Settings &get_instance() { return settings; };
 
-protected:
-    StreamBuilder();
+    int import_conf_file(const char *filename);
+    std::map<std::string, std::map<std::string, std::string>> &get_sections() { return sections; };
+    std::set<std::string> get_value_as_set(std::string section, std::string key);
 
 private:
-    friend class StreamManager;
+    std::map<std::string, std::map<std::string, std::string>> sections;
+    Settings() {}
+    static Settings settings;
 };

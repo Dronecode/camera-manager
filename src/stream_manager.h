@@ -23,6 +23,7 @@
 #include <vector>
 
 #include "avahi_publisher.h"
+#include "conf_file.h"
 #include "rtsp_server.h"
 #include "stream.h"
 
@@ -30,6 +31,7 @@ class StreamManager {
 public:
     StreamManager();
     ~StreamManager();
+    void init_streams(ConfFile &conf);
     void start();
     void stop();
     void addStream(Stream *stream);
