@@ -15,8 +15,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <cstring>
 
+#include <assert.h>
+#include <cstring>
+#include <set>
+#include <sys/types.h>
+
+#include "conf_file.h"
 #include "stream_builder_v4l2.h"
 #include "stream_v4l2.h"
 
@@ -25,20 +30,52 @@
 
 static StreamBuilderV4l2 stream_builder;
 
-std::vector<Stream *> StreamBuilderV4l2::build_streams()
+static int parse_stl_set(const char *val, size_t val_len, void *storage, size_t storage_len)
+{
+    assert(val);
+    assert(val_len);
+    assert(storage);
+
+    std::set<std::string> *value_set = (std::set<std::string> *)storage;
+    char *end;
+
+    while ((end = (char *)memchr((void *)val, ' ', val_len))) {
+        if (end - val)
+            value_set->insert(std::string(val, end - val));
+        val_len = val_len - (end - val) - 1;
+        val = end + 1;
+    }
+    if (val_len)
+        value_set->insert(std::string(val, val_len));
+
+    return 0;
+}
+
+std::vector<Stream *> StreamBuilderV4l2::build_streams(ConfFile &conf)
 {
     DIR *dir;
     struct dirent *f;
     std::vector<Stream *> streams;
+    std::set<std::string> blacklist;
+
+    static const ConfFile::OptionsTable option_table[] = {
+        {"blacklist", false, parse_stl_set, 0, 0},
+    };
+
+    conf.extract_options("v4l2", option_table, 1, (void *)&blacklist);
 
     if ((dir = opendir(DEVICE_PATH)) == NULL) {
         log_error("Unable to load v4l2 cameras");
         return streams;
     }
 
+    gst_builder.apply_configs(conf);
     while ((f = readdir(dir)) != NULL) {
         if (std::strncmp(VIDEO_PREFIX, f->d_name, sizeof(VIDEO_PREFIX) - 1) == 0) {
             std::string dev_path = DEVICE_PATH;
+            // Don't add stream if it is in a blacklist
+            if (blacklist.find(f->d_name) != blacklist.end())
+                continue;
             dev_path.append(f->d_name);
             std::string path = "/";
             path.append(f->d_name);

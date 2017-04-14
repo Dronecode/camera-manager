@@ -27,5 +27,5 @@ public:
     }
     ~StreamBuilderRealsense() {}
 
-    std::vector<Stream *> build_streams();
+    std::vector<Stream *> build_streams(ConfFile &conf);
 };

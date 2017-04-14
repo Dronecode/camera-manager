@@ -20,7 +20,7 @@
 
 static StreamBuilderRealsense stream_builder;
 
-std::vector<Stream *> StreamBuilderRealsense::build_streams()
+std::vector<Stream *> StreamBuilderRealsense::build_streams(ConfFile &conf)
 {
     std::vector<Stream *> streams;
 

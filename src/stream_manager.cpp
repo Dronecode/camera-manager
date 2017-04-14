@@ -42,15 +42,19 @@ void StreamManager::start()
         return;
     is_running = true;
 
+    rtsp_server.start();
+    avahi_publisher.start();
+}
+
+void StreamManager::init_streams(ConfFile &conf)
+{
     for (StreamBuilder *builder : StreamBuilder::get_builders())
-        for (Stream *s : builder->build_streams()) {
+        for (Stream *s : builder->build_streams(conf)) {
             log_debug("Adding stream %s (%s)", s->get_path().c_str(), s->get_name().c_str());
             streams.emplace_back(std::unique_ptr<Stream>{s});
         }
     StreamBuilder::get_builders().clear();
 
-    rtsp_server.start();
-    avahi_publisher.start();
 }
 
 void StreamManager::stop()

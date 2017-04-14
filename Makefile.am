@@ -109,6 +109,8 @@ AM_LDFLAGS = \
 base_files = \
 	src/avahi_publisher.cpp \
 	src/avahi_publisher.h \
+	src/conf_file.cpp \
+	src/conf_file.h \
 	src/glib_mainloop.cpp \
 	src/glib_mainloop.h \
 	src/gstreamer_pipeline_builder.cpp \
@@ -129,7 +131,9 @@ base_files = \
 	src/stream_v4l2.cpp \
 	src/stream_v4l2.h \
 	src/stream_manager.cpp \
-	src/stream_manager.h
+	src/stream_manager.h \
+	src/util.c \
+	src/util.h
 
 bin_PROGRAMS += camera-streaming-daemon
 
