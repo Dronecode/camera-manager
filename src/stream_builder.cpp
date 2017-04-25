@@ -29,11 +29,7 @@ StreamBuilder::~StreamBuilder()
 {
     StreamBuilder *b = this;
     std::vector<StreamBuilder *> &builders = get_builders();
-    std::vector<StreamBuilder *>::iterator it = std::find(builders.begin(), builders.end(), b);
-    if (it != builders.end()) {
-        std::swap(*it, builders.back());
-        builders.pop_back();
-    }
+    builders.erase(std::remove(builders.begin(), builders.end(), b), builders.end());
 }
 
 std::vector<StreamBuilder *> &StreamBuilder::get_builders()
