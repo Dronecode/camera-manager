@@ -28,8 +28,8 @@
 #include "settings.h"
 #include "stream_manager.h"
 
-#define DEFAULT_CONFFILE "/etc/camera-streaming-daemon/main.conf"
-#define DEFAULT_CONF_DIR "/etc/camera-streaming-daemon/config.d"
+#define DEFAULT_CONFFILE "/etc/csd/main.conf"
+#define DEFAULT_CONF_DIR "/etc/csd/config.d"
 
 struct options {
     const char *filename;
