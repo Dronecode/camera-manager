@@ -15,6 +15,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <algorithm>
+#include <assert.h>
 #include <glib-unix.h>
 #include <glib.h>
 #include <signal.h>
@@ -23,6 +25,11 @@
 #include "log.h"
 
 static GMainLoop *gmainloop = nullptr;
+
+struct fd_handler {
+    bool (*cb)(const void *data, int flags);
+    const void *data;
+};
 
 static gboolean exit_signal_handler(gpointer mainloop)
 {
@@ -79,4 +86,71 @@ const AvahiPoll *GlibMainloop::get_avahi_poll_api()
 void GlibMainloop::quit()
 {
     g_main_loop_quit(gmainloop);
+}
+
+unsigned int GlibMainloop::add_timeout(unsigned int timeout_msec, bool (*cb)(void *),
+                                       const void *data)
+{
+    assert(cb);
+
+    return g_timeout_add(timeout_msec, (GSourceFunc)cb, (void *)data);
+}
+
+void GlibMainloop::del_timeout(unsigned int timeout_handler)
+{
+    g_source_remove(timeout_handler);
+}
+
+static gboolean fd_io_cb(gint fd, GIOCondition condition, gpointer user_data)
+{
+    int flags = 0;
+    struct fd_handler *handler;
+
+    assert(user_data);
+    handler = (struct fd_handler *)user_data;
+
+    log_debug("Poll IO fd: %d flag: %d", fd, condition);
+
+    if (condition & G_IO_IN)
+        flags |= Mainloop::IO_IN;
+    if (condition & G_IO_OUT)
+        flags |= Mainloop::IO_OUT;
+
+    return handler->cb(handler->data, flags);
+}
+
+static void fd_del_cb(void *data)
+{
+    assert(data);
+
+    delete (struct fd_handler *)data;
+}
+
+int GlibMainloop::add_fd(int fd, int flags, bool (*cb)(const void *data, int flags), const void *data)
+{
+    struct fd_handler *handler;
+    int glib_flags = 0;
+
+    assert(cb);
+
+    if (flags & Mainloop::IO_IN)
+        glib_flags |= G_IO_IN;
+    if (flags & Mainloop::IO_OUT)
+        glib_flags |= G_IO_OUT;
+
+    if (!glib_flags) {
+        log_error("No valid flags are set. flags=%d", flags);
+        return -EINVAL;
+    }
+
+    handler = new fd_handler{cb, data};
+    log_debug("Adding fd: %d glib_flags: %d", fd, glib_flags);
+    return g_unix_fd_add_full(0, fd, (GIOCondition)glib_flags, fd_io_cb, handler, fd_del_cb);
+}
+
+void GlibMainloop::remove_fd(int handler)
+{
+    assert(handler > 0);
+
+    g_source_remove(handler);
 }

@@ -18,13 +18,21 @@
 #pragma once
 
 #include <avahi-common/watch.h>
+#include <functional>
 
 class Mainloop {
 public:
     virtual void loop() = 0;
     virtual const AvahiPoll *get_avahi_poll_api() = 0;
     static Mainloop *get_mainloop() { return mainloop; };
+    virtual unsigned int add_timeout(unsigned int timeout_msec, bool (*cb)(void *),
+                                     const void *data) = 0;
+    virtual void del_timeout(unsigned int timeout_handler) = 0;
+    virtual int add_fd(int fd, int flags, bool (*cb)(const void *data, int flags), const void *data) = 0;
+    virtual void remove_fd(int handler) = 0;
     virtual void quit() = 0;
+
+    enum io_flags { IO_IN = 1, IO_OUT = 2 };
 
 protected:
     static Mainloop *mainloop;

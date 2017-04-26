@@ -18,6 +18,7 @@
 #pragma once
 
 #include <avahi-glib/glib-watch.h>
+#include <vector>
 
 #include "mainloop.h"
 
@@ -28,6 +29,12 @@ public:
     void loop() override;
     void quit() override;
     const AvahiPoll *get_avahi_poll_api() override;
+
+    unsigned int add_timeout(unsigned int timeout_msec, bool (*cb)(void *),
+                             const void *data) override;
+    void del_timeout(unsigned int timeout_handler) override;
+    int add_fd(int fd, int flags, bool (*cb)(const void *data, int flags), const void *data) override;
+    void remove_fd(int handler) override;
 
 private:
     AvahiGLibPoll *avahi_poll;
