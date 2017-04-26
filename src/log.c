@@ -36,7 +36,7 @@
 #define COLOR_WHITE "\033[37;1m"
 #define COLOR_RESET "\033[0m"
 
-static int log_max_level = LOG_DEBUG;
+static int log_max_level = LOG_INFO;
 static int log_target_fd = STDERR_FILENO;
 static bool log_show_colors;
 
@@ -121,6 +121,9 @@ int log_internal(int level, int error, const char *file, int line, const char *f
 {
     va_list ap;
     int r;
+    int _level = (level);
+    if (log_get_max_level() < LOG_PRI(_level))
+        return -error;
 
     va_start(ap, format);
     r = log_internalv(level, error, file, line, format, ap);
