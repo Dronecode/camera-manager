@@ -121,6 +121,9 @@ int log_internal(int level, int error, const char *file, int line, const char *f
 {
     va_list ap;
     int r;
+    int _level = (level);
+    if (log_get_max_level() < LOG_PRI(_level))
+        return -error;
 
     va_start(ap, format);
     r = log_internalv(level, error, file, line, format, ap);
