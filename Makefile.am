@@ -135,13 +135,13 @@ base_files = \
 	src/util.c \
 	src/util.h
 
-bin_PROGRAMS += camera-streaming-daemon
+bin_PROGRAMS += csd
 
-camera_streaming_daemon_SOURCES = \
+csd_SOURCES = \
 	${base_files} \
 	src/main.cpp
 
-camera_streaming_daemon_LDADD = $(GLIB_LIBS) $(AVAHI_LIBS) $(GST_LIBS)
+csd_LDADD = $(GLIB_LIBS) $(AVAHI_LIBS) $(GST_LIBS)
 
 .PHONY: samples
 samples:

@@ -28,7 +28,7 @@ Makefile.in
 cscope.out
 tags
 
-/camera-streaming-daemon
+/csd
 camera-sample-client
 camera-sample-custom
 camera-sample-realsense
