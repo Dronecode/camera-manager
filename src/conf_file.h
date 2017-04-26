@@ -1,5 +1,5 @@
 /*
- * This file is part of the MAVLink Router project
+ * This file is part of the Camera Streaming Daemon project
  *
  * Copyright (C) 2017  Intel Corporation. All rights reserved.
  *
