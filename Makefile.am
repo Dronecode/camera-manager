@@ -14,8 +14,22 @@ AM_MAKEFLAGS = --no-print-directory
 GCC_COLORS ?= 'yes'
 export GCC_COLORS
 
+BUILT_SOURCES = include/mavlink/ardupilotmega/mavlink.h
+
+clean-local:
+	rm -rf $(top_builddir)/include/mavlink
+
+include/mavlink/ardupilotmega/mavlink.h: modules/mavlink/pymavlink/tools/mavgen.py modules/mavlink/message_definitions/v1.0/ardupilotmega.xml
+	$(AM_V_GEN)python2 $(srcdir)/modules/mavlink/pymavlink/tools/mavgen.py \
+		-o include/mavlink \
+		--lang C \
+		--wire-protocol 2.0 \
+		$(srcdir)/modules/mavlink/message_definitions/v1.0/ardupilotmega.xml
+
 AM_CPPFLAGS = \
 	-include $(top_builddir)/config.h \
+	-I$(top_builddir)/include/mavlink \
+	-I$(top_builddir)/include/mavlink/ardupilotmega \
 	-DSYSCONFDIR=\""$(sysconfdir)"\"
 
 AM_CFLAGS = \
@@ -120,8 +134,12 @@ base_files = \
 	src/macro.h \
 	src/mainloop.cpp \
 	src/mainloop.h \
+	src/pollable.cpp \
+	src/pollable.h \
 	src/rtsp_server.cpp \
 	src/rtsp_server.h \
+	src/socket.cpp \
+	src/socket.h \
 	src/stream.cpp \
 	src/stream.h \
 	src/stream_builder.cpp \
