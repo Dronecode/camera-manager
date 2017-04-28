@@ -18,6 +18,7 @@ Makefile.in
 /config.log
 /config.status
 /configure
+/include/mavlink
 /libtool
 /perf.data
 /perf.data.old

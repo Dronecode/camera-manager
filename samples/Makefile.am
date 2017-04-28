@@ -117,8 +117,12 @@ base_files = \
 	../src/macro.h \
 	../src/mainloop.cpp \
 	../src/mainloop.h \
+	../src/pollable.cpp \
+	../src/pollable.h \
 	../src/rtsp_server.cpp \
 	../src/rtsp_server.h \
+	../src/socket.cpp \
+	../src/socket.h \
 	../src/stream.cpp \
 	../src/stream.h \
 	../src/stream_builder.cpp \
