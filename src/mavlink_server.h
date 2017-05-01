@@ -17,30 +17,30 @@
  */
 #pragma once
 
-#include <avahi-common/watch.h>
+#include <map>
+#include <mavlink.h>
 #include <memory>
-#include <string>
 #include <vector>
 
-#include "avahi_publisher.h"
-#include "conf_file.h"
-#include "mavlink_server.h"
-#include "rtsp_server.h"
+#include "socket.h"
 #include "stream.h"
 
-class StreamManager {
+class MavlinkServer {
 public:
-    StreamManager();
-    ~StreamManager();
-    void init_streams(ConfFile &conf);
+    MavlinkServer(std::vector<std::unique_ptr<Stream>> &streams);
+    ~MavlinkServer();
     void start();
     void stop();
-    void addStream(Stream *stream);
 
 private:
-    std::vector<std::unique_ptr<Stream>> streams;
-    bool is_running;
-    AvahiPublisher avahi_publisher;
-    RTSPServer rtsp_server;
-    MavlinkServer mavlink_server;
+    const std::vector<std::unique_ptr<Stream>> &_streams;
+    bool _is_running;
+    unsigned int _timeout_handler;
+    UDPSocket _udp;
+
+    void _message_received(const struct buffer &buf);
+    void _handle_mavlink_message(mavlink_message_t *msg);
+    void _handle_camera_info_request(unsigned int camera_id);
+    int _get_system_id();
+    friend bool _heartbeat_cb(void *data);
 };

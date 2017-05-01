@@ -32,4 +32,5 @@ tags
 /csd
 camera-sample-client
 camera-sample-custom
+camera-sample-mavlink-client
 camera-sample-realsense

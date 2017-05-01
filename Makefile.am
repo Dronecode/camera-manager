@@ -134,6 +134,8 @@ base_files = \
 	src/macro.h \
 	src/mainloop.cpp \
 	src/mainloop.h \
+	src/mavlink_server.cpp \
+	src/mavlink_server.h \
 	src/pollable.cpp \
 	src/pollable.h \
 	src/rtsp_server.cpp \
