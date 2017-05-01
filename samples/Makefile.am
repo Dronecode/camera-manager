@@ -14,6 +14,8 @@ export GCC_COLORS
 
 AM_CPPFLAGS = \
 	-include $(top_builddir)/config.h \
+	-I$(top_builddir)/include/mavlink \
+	-I$(top_builddir)/include/mavlink/ardupilotmega \
 	-DSYSCONFDIR=\""$(sysconfdir)"\"
 
 AM_CFLAGS = \
@@ -117,6 +119,8 @@ base_files = \
 	../src/macro.h \
 	../src/mainloop.cpp \
 	../src/mainloop.h \
+	../src/mavlink_server.cpp \
+	../src/mavlink_server.h \
 	../src/pollable.cpp \
 	../src/pollable.h \
 	../src/rtsp_server.cpp \
@@ -137,7 +141,7 @@ base_files = \
 	../src/util.h
 
 
-bin_PROGRAMS += camera-sample-client camera-sample-custom
+bin_PROGRAMS += camera-sample-mavlink-client camera-sample-client camera-sample-custom
 
 if HAVE_REALSENSE
 bin_PROGRAMS += camera-sample-realsense
@@ -168,7 +172,23 @@ camera_sample_client_SOURCES = \
 	../src/mainloop.cpp \
 	../src/mainloop.h
 
+camera_sample_mavlink_client_SOURCES = \
+	main_sample_mavlink_client.cpp \
+	../src/log.cpp \
+	../src/log.h \
+	../src/glib_mainloop.cpp \
+	../src/glib_mainloop.h \
+	../src/mainloop.cpp \
+	../src/mainloop.h \
+	../src/pollable.cpp \
+	../src/pollable.h \
+	../src/socket.cpp \
+	../src/socket.h \
+	../src/util.c \
+	../src/util.h
+
 camera_streaming_daemon_LDADD = $(GLIB_LIBS) $(AVAHI_LIBS) $(GST_LIBS)
 camera_sample_custom_LDADD = ${camera_streaming_daemon_LDADD}
 camera_sample_realsense_LDADD = ${camera_streaming_daemon_LDADD}
 camera_sample_client_LDADD = $(GLIB_LIBS) $(AVAHI_LIBS)
+camera_sample_mavlink_client_LDADD = $(GLIB_LIBS) $(AVAHI_LIBS)
