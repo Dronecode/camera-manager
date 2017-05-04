@@ -129,7 +129,7 @@ base_files = \
 	../src/stream_v4l2.h \
 	../src/stream_manager.cpp \
 	../src/stream_manager.h \
-	../src/util.cpp \
+	../src/util.c \
 	../src/util.h
 
 
