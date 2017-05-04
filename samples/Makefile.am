@@ -112,7 +112,7 @@ base_files = \
 	../src/glib_mainloop.h \
 	../src/gstreamer_pipeline_builder.cpp \
 	../src/gstreamer_pipeline_builder.h \
-	../src/log.c \
+	../src/log.cpp \
 	../src/log.h \
 	../src/macro.h \
 	../src/mainloop.cpp \
@@ -157,7 +157,7 @@ camera_sample_realsense_SOURCES = \
 
 camera_sample_client_SOURCES = \
 	main_sample_client.cpp \
-	../src/log.c \
+	../src/log.cpp \
 	../src/log.h \
 	../src/glib_mainloop.cpp \
 	../src/glib_mainloop.h \

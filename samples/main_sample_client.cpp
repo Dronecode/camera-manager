@@ -100,7 +100,7 @@ static void client_callback(AvahiClient *client, AvahiClientState state, void *u
 
 int main(int argc, char *argv[])
 {
-    log_open();
+    Log::open();
 
     AvahiClient *client = NULL;
     AvahiServiceBrowser *sb = NULL;
@@ -128,7 +128,7 @@ error:
         avahi_service_browser_free(sb);
     if (client)
         avahi_client_free(client);
-    log_close();
+    Log::close();
 
     return 0;
 }

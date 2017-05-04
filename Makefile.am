@@ -115,7 +115,7 @@ base_files = \
 	src/glib_mainloop.h \
 	src/gstreamer_pipeline_builder.cpp \
 	src/gstreamer_pipeline_builder.h \
-	src/log.c \
+	src/log.cpp \
 	src/log.h \
 	src/macro.h \
 	src/mainloop.cpp \

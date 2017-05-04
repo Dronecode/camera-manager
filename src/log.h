@@ -20,28 +20,46 @@
 #include <errno.h>
 #include <stdarg.h>
 #include <stdlib.h>
-#include <syslog.h>
 
 #include "macro.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+class Log {
+public:
+    enum class Level {
+        ERROR = 0,
+        WARNING,
+        NOTICE,
+        INFO,
+        DEBUG,
+    };
 
-int log_open(void);
-int log_close(void);
+    static int open();
+    static int close();
 
-int log_get_max_level(void) _pure_;
-void log_set_max_level(int level);
-int log_internal(int level, int error, const char *file, int line, const char *format, ...)
-    _printf_format_(5, 6);
+    static Level get_max_level() _pure_ { return _max_level; }
+    static void set_max_level(Level level);
 
-#define log_debug(...) log_internal(LOG_DEBUG, 0, __FILE__, __LINE__, __VA_ARGS__)
-#define log_info(...) log_internal(LOG_INFO, 0, __FILE__, __LINE__, __VA_ARGS__)
-#define log_notice(...) log_internal(LOG_NOTICE, 0, __FILE__, __LINE__, __VA_ARGS__)
-#define log_warning(...) log_internal(LOG_WARNING, 0, __FILE__, __LINE__, __VA_ARGS__)
-#define log_error(...) log_internal(LOG_ERR, 0, __FILE__, __LINE__, __VA_ARGS__)
+    static void logv(Level level, const char *format, va_list ap);
+    static void log(Level level, const char *format, ...) _printf_format_(2, 3);
 
-#ifdef __cplusplus
-}
-#endif
+protected:
+    static const char *_get_color(Level level);
+
+    static int _target_fd;
+    static Level _max_level;
+    static bool _show_colors;
+};
+
+#define log_debug(...) Log::log(Log::Level::DEBUG, __VA_ARGS__)
+#define log_info(...) Log::log(Log::Level::INFO, __VA_ARGS__)
+#define log_notice(...) Log::log(Log::Level::NOTICE, __VA_ARGS__)
+#define log_warning(...) Log::log(Log::Level::WARNING, __VA_ARGS__)
+#define log_error(...) Log::log(Log::Level::ERROR, __VA_ARGS__)
+
+#define assert_or_return(exp, ...)                              \
+    do {                                                        \
+        if (__builtin_expect(!(exp), 0)) {                      \
+            log_warning("Expresssion `" #exp "` is false");     \
+            return __VA_ARGS__;                                 \
+        }                                                       \
+    } while (0)

@@ -152,15 +152,13 @@ fail:
 static int log_level_from_str(const char *str)
 {
     if (strcaseeq(str, "error"))
-        return LOG_ERR;
+        return (int)Log::Level::ERROR;
     if (strcaseeq(str, "warning"))
-        return LOG_WARNING;
-    if (strcaseeq(str, "notice"))
-        return LOG_NOTICE;
+        return (int)Log::Level::WARNING;
     if (strcaseeq(str, "info"))
-        return LOG_INFO;
+        return (int)Log::Level::INFO;
     if (strcaseeq(str, "debug"))
-        return LOG_DEBUG;
+        return (int)Log::Level::DEBUG;
 
     return -EINVAL;
 }
@@ -196,11 +194,11 @@ static int parse_argv(int argc, char *argv[], struct options *opt)
                 help(stderr);
                 return -EINVAL;
             }
-            log_set_max_level(lvl);
+            Log::set_max_level((Log::Level)lvl);
             break;
         }
         case 'v': {
-            log_set_max_level(LOG_DEBUG);
+            Log::set_max_level(Log::Level::DEBUG);
             break;
         }
         case '?':
@@ -228,7 +226,7 @@ static int parse_argv(int argc, char *argv[], struct options *opt)
 int main(int argc, char *argv[])
 {
     struct options opt = {0};
-    log_open();
+    Log::open();
 
     ConfFile *conf;
     GlibMainloop mainloop;
@@ -246,11 +244,11 @@ int main(int argc, char *argv[])
     stream.start();
     mainloop.loop();
 
-    log_close();
+    Log::close();
 
     return 0;
 
 close_log:
-    log_close();
+    Log::close();
     return EXIT_FAILURE;
 }
