@@ -17,25 +17,30 @@
  */
 #pragma once
 
-#include <avahi-glib/glib-watch.h>
+#include <map>
+#include <mavlink.h>
+#include <memory>
 #include <vector>
 
-#include "mainloop.h"
+#include "socket.h"
+#include "stream.h"
 
-class GlibMainloop : public Mainloop {
+class MavlinkServer {
 public:
-    GlibMainloop();
-    ~GlibMainloop();
-    void loop() override;
-    void quit() override;
-    const AvahiPoll *get_avahi_poll_api() override;
-
-    unsigned int add_timeout(unsigned int timeout_msec, bool (*cb)(void *),
-                             const void *data) override;
-    void del_timeout(unsigned int timeout_handler) override;
-    int add_fd(int fd, int flags, bool (*cb)(void *data, int flags), void *data) override;
-    void remove_fd(int handler) override;
+    MavlinkServer(std::vector<std::unique_ptr<Stream>> &_streams);
+    ~MavlinkServer();
+    void start();
+    void stop();
 
 private:
-    AvahiGLibPoll *avahi_poll;
+    const std::vector<std::unique_ptr<Stream>> &streams;
+    bool is_running;
+    unsigned int timeout_handler;
+    UDPSocket udp, udp_broadcast;
+
+    void message_received(const struct buffer &buf);
+    void handle_mavlink_message(mavlink_message_t *msg);
+    void handle_camera_info_request(unsigned int camera_id);
+    int getSystemID();
+    friend bool heartbeat_cb(void *data);
 };

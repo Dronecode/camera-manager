@@ -17,25 +17,26 @@
  */
 #pragma once
 
-#include <avahi-glib/glib-watch.h>
-#include <vector>
+#include <arpa/inet.h>
 
-#include "mainloop.h"
+#include "pollable.h"
 
-class GlibMainloop : public Mainloop {
+class Socket : public Pollable {
 public:
-    GlibMainloop();
-    ~GlibMainloop();
-    void loop() override;
-    void quit() override;
-    const AvahiPoll *get_avahi_poll_api() override;
+    Socket(){};
+    virtual ~Socket(){};
+};
 
-    unsigned int add_timeout(unsigned int timeout_msec, bool (*cb)(void *),
-                             const void *data) override;
-    void del_timeout(unsigned int timeout_handler) override;
-    int add_fd(int fd, int flags, bool (*cb)(void *data, int flags), void *data) override;
-    void remove_fd(int handler) override;
+class UDPSocket : public Socket {
+public:
+    UDPSocket();
+    ~UDPSocket();
+
+    int open(const char *addr, unsigned long port, bool to_bind);
+
+    int do_write(const struct buffer &buf) override;
+    int do_read(const struct buffer &buf) override;
 
 private:
-    AvahiGLibPoll *avahi_poll;
+    struct sockaddr_in sockaddr;
 };

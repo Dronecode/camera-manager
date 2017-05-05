@@ -29,7 +29,8 @@
 StreamManager::StreamManager()
     : is_running(false)
     , avahi_publisher(streams, DEFAULT_SERVICE_PORT, DEFAULT_SERVICE_TYPE)
-    , rtsp_server(streams, DEFAULT_SERVICE_PORT){};
+    , rtsp_server(streams, DEFAULT_SERVICE_PORT)
+    , mavlink_server(streams){};
 
 StreamManager::~StreamManager()
 {
@@ -44,6 +45,7 @@ void StreamManager::start()
 
     rtsp_server.start();
     avahi_publisher.start();
+    mavlink_server.start();
 }
 
 void StreamManager::init_streams(ConfFile &conf)
@@ -51,10 +53,9 @@ void StreamManager::init_streams(ConfFile &conf)
     for (StreamBuilder *builder : StreamBuilder::get_builders())
         for (Stream *s : builder->build_streams(conf)) {
             log_debug("Adding stream %s (%s)", s->get_path().c_str(), s->get_name().c_str());
-            streams.emplace_back(std::unique_ptr<Stream>{s});
+            addStream(s);
         }
     StreamBuilder::get_builders().clear();
-
 }
 
 void StreamManager::stop()
@@ -65,9 +66,14 @@ void StreamManager::stop()
 
     avahi_publisher.stop();
     rtsp_server.stop();
+    mavlink_server.stop();
 }
 
 void StreamManager::addStream(Stream *stream)
 {
+    static unsigned int next_id = 0;
+    assert(next_id < UINT_MAX);
+
+    stream->id = ++next_id;
     streams.push_back(std::unique_ptr<Stream>(stream));
 }

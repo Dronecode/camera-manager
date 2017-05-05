@@ -81,8 +81,11 @@ void StreamV4l2::get_v4l2_info()
         fmt.index++;
     }
 
-    if (ioctl(fd, VIDIOC_QUERYCAP, &cap) != -1)
+    if (ioctl(fd, VIDIOC_QUERYCAP, &cap) != -1) {
         name = (const char *)cap.card;
+    } else {
+        name = path.substr(1);
+    }
     close(fd);
 }
 

@@ -18,6 +18,7 @@ Makefile.in
 /config.log
 /config.status
 /configure
+/include/mavlink
 /libtool
 /perf.data
 /perf.data.old
@@ -31,4 +32,5 @@ tags
 /csd
 camera-sample-client
 camera-sample-custom
+camera-sample-mavlink-client
 camera-sample-realsense

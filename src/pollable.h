@@ -18,29 +18,34 @@
 #pragma once
 
 #include <avahi-common/watch.h>
-#include <memory>
-#include <string>
-#include <vector>
+#include <functional>
 
-#include "avahi_publisher.h"
-#include "conf_file.h"
-#include "mavlink_server.h"
-#include "rtsp_server.h"
-#include "stream.h"
+struct buffer {
+    unsigned int len;
+    uint8_t *data;
+};
 
-class StreamManager {
+class Pollable {
 public:
-    StreamManager();
-    ~StreamManager();
-    void init_streams(ConfFile &conf);
-    void start();
-    void stop();
-    void addStream(Stream *stream);
+    Pollable();
+    virtual ~Pollable() {}
+
+    int write(const struct buffer &buf);
+    void monitor_read(bool monitor);
+    void set_read_callback(std::function<void(const struct buffer &buf)> cb);
+
+protected:
+    int fd;
+    virtual int do_write(const struct buffer &buf) = 0;
+    virtual int do_read(const struct buffer &buf) = 0;
 
 private:
-    std::vector<std::unique_ptr<Stream>> streams;
-    bool is_running;
-    AvahiPublisher avahi_publisher;
-    RTSPServer rtsp_server;
-    MavlinkServer mavlink_server;
+    int read_handler, write_handler;
+    void *buf_data;
+    size_t buf_data_len;
+    struct buffer read_buf, write_buf;
+
+    static bool can_read(void *data, int flags);
+    static bool can_write(void *data, int flags);
+    std::function<void(const struct buffer &buf)> read_cb;
 };
