@@ -30,6 +30,7 @@
 MavlinkServer::MavlinkServer(std::vector<std::unique_ptr<Stream>> &streams)
     : _streams(streams)
     , _is_running(false)
+    , _timeout_handler(0)
 {
 }
 
@@ -133,7 +134,8 @@ void MavlinkServer::stop()
         return;
     _is_running = false;
 
-    Mainloop::get_mainloop()->del_timeout(_timeout_handler);
+    if (_timeout_handler > 0)
+        Mainloop::get_mainloop()->del_timeout(_timeout_handler);
 }
 
 int MavlinkServer::_get_system_id()
