@@ -20,7 +20,7 @@ clean-local:
 	rm -rf $(top_builddir)/include/mavlink
 
 include/mavlink/ardupilotmega/mavlink.h: modules/mavlink/pymavlink/tools/mavgen.py modules/mavlink/message_definitions/v1.0/ardupilotmega.xml
-	$(AM_V_GEN)python2 $(srcdir)/modules/mavlink/pymavlink/tools/mavgen.py \
+	$(AM_V_GEN)$(PYTHON) $(srcdir)/modules/mavlink/pymavlink/tools/mavgen.py \
 		-o include/mavlink \
 		--lang C \
 		--wire-protocol 2.0 \
