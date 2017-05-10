@@ -25,6 +25,11 @@ include/mavlink/ardupilotmega/mavlink.h: modules/mavlink/pymavlink/tools/mavgen.
 		--lang C \
 		--wire-protocol 2.0 \
 		$(srcdir)/modules/mavlink/message_definitions/v1.0/ardupilotmega.xml
+#if SYSTEMD
+systemdsystemunitdir = @SYSTEMD_SYSTEMUNITDIR@
+systemdsystemunit_DATA = csd.service
+#endif
+
 
 AM_CPPFLAGS = \
 	-include $(top_builddir)/config.h \
@@ -157,11 +162,21 @@ base_files = \
 
 bin_PROGRAMS += csd
 
+SED_PROCESS = $(AM_V_GEN) $(MKDIR_P) $(dir $@) && \
+	$(SED) -e 's,@bindir\@,$(bindir),g' \
+	< $< > $@
+
+%.service: %.service.in Makefile
+	$(SED_PROCESS)
+
+
 csd_SOURCES = \
 	${base_files} \
 	src/main.cpp
 
 csd_LDADD = $(GLIB_LIBS) $(AVAHI_LIBS) $(GST_LIBS)
+
+CLEANFILES += csd.service
 
 .PHONY: samples
 samples:
