@@ -97,7 +97,6 @@ LDFLAGS+=" -z noexecstack -z relro -z now"
 
 AC_CONFIG_FILES([
     Makefile
-    samples/Makefile
 ])
 
 #####################################################################

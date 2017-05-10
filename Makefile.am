@@ -9,8 +9,6 @@ BUILT_FILES =
 ACLOCAL_AMFLAGS = -I m4 ${ACLOCAL_FLAGS}
 AM_MAKEFLAGS = --no-print-directory
 
-
-
 GCC_COLORS ?= 'yes'
 export GCC_COLORS
 
@@ -18,6 +16,7 @@ BUILT_SOURCES = include/mavlink/ardupilotmega/mavlink.h
 
 clean-local:
 	rm -rf $(top_builddir)/include/mavlink
+	rm -rf $(EXTRA_PROGRAMS)
 
 include/mavlink/ardupilotmega/mavlink.h: modules/mavlink/pymavlink/tools/mavgen.py modules/mavlink/message_definitions/v1.0/ardupilotmega.xml
 	$(AM_V_GEN)$(PYTHON) $(srcdir)/modules/mavlink/pymavlink/tools/mavgen.py \
@@ -32,9 +31,9 @@ systemdsystemunit_DATA = csd.service
 
 
 AM_CPPFLAGS = \
-	-include $(top_builddir)/config.h \
-	-I$(top_builddir)/include/mavlink \
-	-I$(top_builddir)/include/mavlink/ardupilotmega \
+	-include $(abs_top_builddir)/config.h \
+	-I$(abs_top_builddir)/include/mavlink \
+	-I$(abs_top_builddir)/include/mavlink/ardupilotmega \
 	-DSYSCONFDIR=\""$(sysconfdir)"\"
 
 AM_CFLAGS = \
@@ -82,6 +81,8 @@ AM_CFLAGS = \
 	${GST_CFLAGS}
 
 AM_CXXFLAGS = \
+	-I$(top_builddir)/src \
+	-I$(srcdir)/ \
 	-pipe \
 	-Wall \
 	-W \
@@ -125,7 +126,7 @@ AM_LDFLAGS = \
 	-Wl,--no-undefined \
 	-Wl,--gc-sections
 
-base_files = \
+BASE_FILES = \
 	src/avahi_publisher.cpp \
 	src/avahi_publisher.h \
 	src/conf_file.cpp \
@@ -171,16 +172,68 @@ SED_PROCESS = $(AM_V_GEN) $(MKDIR_P) $(dir $@) && \
 
 
 csd_SOURCES = \
-	${base_files} \
+	${BASE_FILES} \
 	src/main.cpp
 
 csd_LDADD = $(GLIB_LIBS) $(AVAHI_LIBS) $(GST_LIBS)
 
 CLEANFILES += csd.service
 
+#Samples
+EXTRA_PROGRAMS = samples/camera-sample-custom samples/camera-sample-client samples/camera-sample-mavlink-client
+
+if HAVE_REALSENSE
+EXTRA_PROGRAMS += samples/camera-sample-realsense
+endif
+
+samples_camera_sample_custom_LDADD = ${csd_LDADD}
+samples_camera_sample_realsense_LDADD = ${csd_LDADD}
+samples_camera_sample_client_LDADD = $(GLIB_LIBS) $(AVAHI_LIBS)
+samples_camera_sample_mavlink_client_LDADD = $(GLIB_LIBS) $(AVAHI_LIBS)
+
+samples_camera_sample_custom_SOURCES = \
+	$(BASE_FILES) \
+	src/main.cpp \
+	samples/stream_builder_custom.h \
+	samples/stream_builder_custom.cpp \
+	samples/stream_custom.cpp \
+	samples/stream_custom.h
+
+samples_camera_sample_realsense_SOURCES = \
+	$(BASE_FILES) \
+	src/main.cpp \
+	samples/stream_builder_realsense.h \
+	samples/stream_builder_realsense.cpp \
+	samples/stream_realsense.cpp \
+	samples/stream_realsense.h
+
+samples_camera_sample_client_SOURCES = \
+	samples/main_sample_client.cpp \
+	src/log.cpp \
+	src/log.h \
+	src/glib_mainloop.cpp \
+	src/glib_mainloop.h \
+	src/mainloop.cpp \
+	src/mainloop.h
+
+samples_camera_sample_mavlink_client_SOURCES = \
+	samples/main_sample_mavlink_client.cpp \
+	src/log.cpp \
+	src/log.h \
+	src/glib_mainloop.cpp \
+	src/glib_mainloop.h \
+	src/mainloop.cpp \
+	src/mainloop.h \
+	src/pollable.cpp \
+	src/pollable.h \
+	src/socket.cpp \
+	src/socket.h \
+	src/util.c \
+	src/util.h
+
 .PHONY: samples
-samples:
-	@$(MAKE) -C samples
+samples: include/mavlink/ardupilotmega/mavlink.h
+	$(MAKE) $(EXTRA_PROGRAMS)
 
 
 # ------------------------------------------------------------------------------
