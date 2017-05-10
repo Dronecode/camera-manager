@@ -50,7 +50,7 @@ void MavlinkServer::_handle_camera_info_request(unsigned int camera_id)
         if (camera_id == 0 || camera_id == s->id) {
             mavlink_msg_camera_information_pack(
                 _get_system_id(), MAV_COMP_ID_CAMERA, &msg, 0, s->id, 1,
-                (const uint8_t *)s->get_name().c_str() /* TODO: Get vendor name. */,
+                (const uint8_t *)"",
                 (const uint8_t *)s->get_name().c_str(), 0, 0, 0, 0, 0, 0, 0);
         }
 
