@@ -1,0 +1,10 @@
+[Unit]
+Description=Camera Streaming Daemon
+
+[Service]
+Type=simple
+ExecStart=@bindir@/camera-streaming-daemon
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

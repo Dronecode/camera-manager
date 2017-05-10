@@ -29,6 +29,14 @@ Build system follows the usual configure/build/install cycle. Configuration is n
     $ ./autogen.sh && ./configure \
         --sysconfdir=/etc --localstatedir=/var --libdir=/usr/lib64 \
         --prefix=/usr
+
+By default systemd integration is enabled. In a system without systemd it can
+be disabled --disable-systemd. The default systemd system directory
+is taken via pkg-config. To use another directory update the above
+path, use --with-systemdsystemunitdir.
+
+Installation location can be changed using --prefix option while configuring.
+
 Build:
 
     $ make
