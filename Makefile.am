@@ -25,6 +25,11 @@ include/mavlink/ardupilotmega/mavlink.h: modules/mavlink/pymavlink/tools/mavgen.
 		--lang C \
 		--wire-protocol 2.0 \
 		$(srcdir)/modules/mavlink/message_definitions/v1.0/ardupilotmega.xml
+#if SYSTEMD
+systemdsystemunitdir = @SYSTEMD_SYSTEMUNITDIR@
+systemdsystemunit_DATA = camera-streaming-daemon.service
+#endif
+
 
 AM_CPPFLAGS = \
 	-include $(top_builddir)/config.h \
@@ -156,6 +161,14 @@ base_files = \
 	src/util.h
 
 bin_PROGRAMS += csd
+
+SED_PROCESS = $(AM_V_GEN) $(MKDIR_P) $(dir $@) && \
+	$(SED) -e 's,@bindir\@,$(bindir),g' \
+	< $< > $@
+
+%.service: %.service.in Makefile
+	$(SED_PROCESS)
+
 
 csd_SOURCES = \
 	${base_files} \

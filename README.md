@@ -29,6 +29,15 @@ Build system follows the usual configure/build/install cycle. Configuration is n
     $ ./autogen.sh && ./configure \
         --sysconfdir=/etc --localstatedir=/var --libdir=/usr/lib64 \
         --prefix=/usr
+
+Disable systemd using --disable-systemd. By default, systemd is enabled.
+Default systemd system directory and user directory is taken as :
+        systemdsystemunitdir = /lib/systemd/system
+        systemduserunitdir = /usr/lib/systemd/user
+To update the above path, use --with-systemdsystemunitdir and --with-systemduserunitdir.
+
+Installation location can be changed using --prefix option while configuring.
+
 Build:
 
     $ make
