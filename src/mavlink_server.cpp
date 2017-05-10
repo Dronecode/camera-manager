@@ -45,7 +45,6 @@ void MavlinkServer::_handle_camera_info_request(unsigned int camera_id)
     struct buffer buf = {0, buffer};
     mavlink_message_t msg;
 
-    log_debug("camera id %d", camera_id);
     for (auto const &s : _streams) {
         if (camera_id == 0 || camera_id == s->id) {
             mavlink_msg_camera_information_pack(
@@ -111,8 +110,6 @@ bool _heartbeat_cb(void *data)
     buf.len = mavlink_msg_to_send_buffer(buf.data, &msg);
     if (!buf.len || server->_udp.write(buf) < 0)
         log_error("Sending HEARTBEAT failed.");
-    else
-        log_debug("HEARTBEAT");
 
     return true;
 }
