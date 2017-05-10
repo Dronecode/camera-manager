@@ -42,5 +42,6 @@ private:
     void _handle_mavlink_message(mavlink_message_t *msg);
     void _handle_camera_info_request(unsigned int camera_id);
     int _get_system_id();
+    bool _send_mavlink_message(mavlink_message_t &msg);
     friend bool _heartbeat_cb(void *data);
 };

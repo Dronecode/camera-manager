@@ -26,6 +26,7 @@
 
 #define DEFAULT_MAVLINK_PORT 14550
 #define DEFAULT_MAVLINK_BROADCAST_ADDR "255.255.255.255"
+#define MAX_MAVLINK_MESSAGE_SIZE 1024
 
 MavlinkServer::MavlinkServer(std::vector<std::unique_ptr<Stream>> &streams)
     : _streams(streams)
@@ -41,8 +42,6 @@ MavlinkServer::~MavlinkServer()
 
 void MavlinkServer::_handle_camera_info_request(unsigned int camera_id)
 {
-    uint8_t buffer[1024];
-    struct buffer buf = {0, buffer};
     mavlink_message_t msg;
 
     for (auto const &s : _streams) {
@@ -53,8 +52,7 @@ void MavlinkServer::_handle_camera_info_request(unsigned int camera_id)
                 (const uint8_t *)s->get_name().c_str(), 0, 0, 0, 0, 0, 0, 0);
         }
 
-        buf.len = mavlink_msg_to_send_buffer(buf.data, &msg);
-        if (!buf.len || _udp.write(buf) < 0) {
+        if (!_send_mavlink_message(msg)) {
             log_error("Sending camera information failed for camera %d.", s->id);
             return;
         }
@@ -95,20 +93,25 @@ void MavlinkServer::_message_received(const struct buffer &buf)
     }
 }
 
+bool MavlinkServer::_send_mavlink_message(mavlink_message_t &msg)
+{
+    uint8_t buffer[MAX_MAVLINK_MESSAGE_SIZE];
+    struct buffer buf = {0, buffer};
+
+    buf.len = mavlink_msg_to_send_buffer(buf.data, &msg);
+
+    return buf.len > 0 && _udp.write(buf) > 0;
+}
+
 bool _heartbeat_cb(void *data)
 {
     assert(data);
-    uint8_t buffer[1024];
-    struct buffer buf = {0, buffer};
-
     MavlinkServer *server = (MavlinkServer *)data;
     mavlink_message_t msg;
 
     mavlink_msg_heartbeat_pack(1, MAV_COMP_ID_CAMERA, &msg, MAV_TYPE_GENERIC, MAV_AUTOPILOT_INVALID,
                                MAV_MODE_PREFLIGHT, 0, MAV_STATE_ACTIVE);
-    // TODO: pack this in one function. Maybe in a class called MAVLinkSocket.
-    buf.len = mavlink_msg_to_send_buffer(buf.data, &msg);
-    if (!buf.len || server->_udp.write(buf) < 0)
+    if (!server->_send_mavlink_message(msg))
         log_error("Sending HEARTBEAT failed.");
 
     return true;
