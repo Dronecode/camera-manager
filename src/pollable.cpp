@@ -98,7 +98,7 @@ int Pollable::write(const struct buffer &buf)
     int r;
     r = _do_write(buf);
     if (r >= 0)
-        return 0;
+        return r;
 
     if (_write_buf.data) {
         delete[] _write_buf.data;
