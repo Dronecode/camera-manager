@@ -18,6 +18,7 @@ AC_SEARCH_LIBS([rs_create_context], [realsense], [AM_CONDITIONAL([HAVE_REALSENSE
 AC_USE_SYSTEM_EXTENSIONS
 AC_SYS_LARGEFILE
 AC_PREFIX_DEFAULT([/usr])
+PKG_PROG_PKG_CONFIG
 AM_MAINTAINER_MODE([enable])
 AM_INIT_AUTOMAKE([check-news foreign 1.11 silent-rules tar-pax no-dist-gzip dist-xz subdir-objects color-tests parallel-tests])
 AM_SILENT_RULES([yes])
@@ -60,11 +61,27 @@ AC_COMPILE_IFELSE(
 AC_ARG_WITH([rootlibdir],
         AS_HELP_STRING([--with-rootlibdir=DIR], [rootfs directory to install shared libraries]),
         [], [with_rootlibdir=$libdir])
+AC_ARG_WITH([systemdsystemunitdir],
+			AC_HELP_STRING([--with-systemdsystemunitdir=DIR],
+			[path to systemd system unit directory]),
+					[path_systemunitdir=${withval}])
+if (test "${enable_systemd}" != "no" && test -z "${path_systemunitdir}"); then
+	AC_MSG_CHECKING([systemd system unit dir])
+	path_systemunitdir="`$PKG_CONFIG --variable=systemdsystemunitdir systemd`"
+	if (test -z "${path_systemunitdir}"); then
+		AC_MSG_ERROR([systemd system unit directory is required])
+	fi
+	AC_MSG_RESULT([${path_systemunitdir}])
+fi
+
 AC_SUBST([rootlibdir], [$with_rootlibdir])
 
 #####################################################################
 # --enable-
 #####################################################################
+AC_ARG_ENABLE(systemd, AC_HELP_STRING([--disable-systemd],
+		[disable systemd integration]), [enable_systemd=${enableval}])
+AM_CONDITIONAL(SYSTEMD, test "${enable_systemd}" != "no")
 
 #####################################################################
 # Default CFLAGS and LDFLAGS
@@ -84,6 +101,9 @@ AC_CONFIG_FILES([
 ])
 
 #####################################################################
+AC_SUBST(SYSTEMD_SYSTEMUNITDIR, [${path_systemunitdir}])
+
+AC_SUBST(SYSTEMD_USERUNITDIR, [${path_userunitdir}])
 
 AC_OUTPUT
 AC_MSG_RESULT([
