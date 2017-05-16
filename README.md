@@ -15,7 +15,9 @@ In order to compile you need the following packages:
  - GStreamer 1.4 or newer (https://gstreamer.freedesktop.org/)
  - GStreamer RTSP Server 1.4 or newer (https://gstreamer.freedesktop.org/modules/gst-rtsp-server.html)
 
-The following commands should install many of these required packages:
+### Installing Pre-Requisites on Ubuntu
+
+The following commands should install many of these required packages on Ubuntu:
 
     $ sudo apt-get install libavahi-client-dev libavahi-core-dev libavahi-glib-dev
     $ sudo apt-get install gstreamer-1.0
