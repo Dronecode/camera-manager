@@ -51,7 +51,7 @@ Install:
 
 Camera streaming daemon is composed of a single binary that can be run without any aditional parameter:
 
-    $ camera-streaming-daemon
+    $ csd
 
 ## Testing
 
