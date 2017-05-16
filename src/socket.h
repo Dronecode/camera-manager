@@ -21,10 +21,30 @@
 
 #include "pollable.h"
 
+struct buffer {
+    unsigned int len;
+    uint8_t *data;
+};
+
 class Socket : public Pollable {
 public:
-    Socket(){};
-    virtual ~Socket(){};
+    Socket();
+    virtual ~Socket();
+
+    int write(const struct buffer &buf, const struct sockaddr_in &sockaddr);
+    void set_read_callback(
+        std::function<void(const struct buffer &buf, const struct sockaddr_in &sockaddr)> cb);
+
+protected:
+    bool _can_read() override;
+    bool _can_write() override;
+    virtual int _do_write(const struct buffer &buf, const struct sockaddr_in &sockaddr) = 0;
+    virtual int _do_read(const struct buffer &buf, struct sockaddr_in &sockaddr) = 0;
+
+private:
+    std::function<void(const struct buffer &buf, const struct sockaddr_in &sockaddr)> _read_cb;
+    struct buffer _write_buf;
+    struct sockaddr_in sockaddr_buf;
 };
 
 class UDPSocket : public Socket {
@@ -32,12 +52,10 @@ public:
     UDPSocket();
     ~UDPSocket();
 
-    int open(const char *addr, unsigned long port, bool to_bind);
+    int open(bool broadcast);
+    int bind(const char *addr, unsigned long port);
 
 protected:
-    int _do_write(const struct buffer &buf) override;
-    int _do_read(const struct buffer &buf) override;
-
-private:
-    struct sockaddr_in sockaddr;
+    int _do_write(const struct buffer &buf, const struct sockaddr_in &sockaddr) override;
+    int _do_read(const struct buffer &buf, struct sockaddr_in &sockaddr) override;
 };

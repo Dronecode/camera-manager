@@ -20,30 +20,21 @@
 #include <avahi-common/watch.h>
 #include <functional>
 
-struct buffer {
-    unsigned int len;
-    uint8_t *data;
-};
-
 class Pollable {
 public:
     Pollable();
     virtual ~Pollable() {}
 
-    int write(const struct buffer &buf);
     void monitor_read(bool monitor);
-    void set_read_callback(std::function<void(const struct buffer &buf)> cb);
+    void monitor_write(bool monitor);
 
 protected:
     int _fd;
-    virtual int _do_write(const struct buffer &buf) = 0;
-    virtual int _do_read(const struct buffer &buf) = 0;
+    virtual bool _can_read() = 0;
+    virtual bool _can_write() = 0;
 
 private:
     int _read_handler, _write_handler;
-    struct buffer _read_buf, _write_buf;
-
-    static bool _can_read(const void *data, int flags);
-    static bool _can_write(const void *data, int flags);
-    std::function<void(const struct buffer &buf)> _read_cb;
+    static bool _can_read_cb(const void *data, int flags);
+    static bool _can_write_cb(const void *data, int flags);
 };
