@@ -19,11 +19,95 @@
 #include <arpa/inet.h>
 #include <assert.h>
 #include <fcntl.h>
+#include <string.h>
 #include <sys/socket.h>
 #include <unistd.h>
 
 #include "log.h"
 #include "socket.h"
+
+#define DEFAULT_BUF_SIZE 1024
+
+Socket::Socket()
+    : _read_cb([](const struct buffer &buf, const struct sockaddr_in &sockaddr) {})
+    , _write_buf{0, nullptr}
+{
+}
+
+Socket::~Socket()
+{
+    if (_write_buf.data)
+        free(_write_buf.data);
+}
+
+int Socket::write(const struct buffer &buf, const struct sockaddr_in &sockaddr)
+{
+    int r;
+    r = _do_write(buf, sockaddr);
+    if (r >= 0)
+        return r;
+
+    if (_write_buf.data) {
+        delete[] _write_buf.data;
+        log_warning("There was another packet to be sent. Dropping that packet.");
+    }
+
+    _write_buf = {buf.len, new uint8_t[buf.len]};
+    memcpy(_write_buf.data, buf.data, buf.len);
+    sockaddr_buf = sockaddr;
+    monitor_write(true);
+
+    return 0;
+}
+
+void Socket::set_read_callback(
+    std::function<void(const struct buffer &buf, const struct sockaddr_in &sockaddr)> cb)
+{
+    _read_cb = cb;
+}
+
+bool Socket::_can_read()
+{
+    struct buffer read_buf {
+        DEFAULT_BUF_SIZE, new uint8_t[DEFAULT_BUF_SIZE]
+    };
+    struct sockaddr_in sockaddr = {};
+    int r = _do_read(read_buf, sockaddr);
+
+    if (r == -EAGAIN) {
+        log_debug("Read packet failed. Trying again.");
+        return true;
+    }
+    if (r < 0) {
+        log_debug("Read failed. Droping packet.");
+        return false;
+    }
+    if (r > 0) {
+        read_buf.len = (unsigned int)r;
+        _read_cb(read_buf, sockaddr);
+    }
+    return true;
+}
+
+bool Socket::_can_write()
+{
+    int r;
+
+    if (!_write_buf.data)
+        return false;
+
+    r = _do_write(_write_buf, sockaddr_buf);
+    if (r == -EAGAIN) {
+        log_debug("Write package failed. Trying again.");
+        return true;
+    } else if (r < 0) {
+        log_error("Write package failed. Droping packet.");
+    }
+
+    delete[] _write_buf.data;
+    _write_buf = {0, nullptr};
+    return false;
+}
 
 UDPSocket::UDPSocket()
 {
@@ -31,13 +115,18 @@ UDPSocket::UDPSocket()
 
 UDPSocket::~UDPSocket()
 {
-    ::close(_fd);
+    close();
 }
 
-int UDPSocket::open(const char *ip, unsigned long port, bool to_bind)
+void UDPSocket::close()
 {
-    assert(ip);
+    if (_fd >= 0)
+        ::close(_fd);
+    _fd = -1;
+}
 
+int UDPSocket::open(bool broadcast)
+{
     const int broadcast_val = 1;
 
     _fd = socket(AF_INET, SOCK_DGRAM, 0);
@@ -46,16 +135,7 @@ int UDPSocket::open(const char *ip, unsigned long port, bool to_bind)
         return -1;
     }
 
-    sockaddr.sin_family = AF_INET;
-    sockaddr.sin_addr.s_addr = inet_addr(ip);
-    sockaddr.sin_port = htons(port);
-
-    if (to_bind) {
-        if (bind(_fd, (struct sockaddr *)&sockaddr, sizeof(sockaddr)) < 0) {
-            log_error("Error binding socket (%m)");
-            goto fail;
-        }
-    } else {
+    if (broadcast) {
         if (setsockopt(_fd, SOL_SOCKET, SO_BROADCAST, &broadcast_val, sizeof(broadcast_val))) {
             log_error("Error enabling broadcast in socket (%m)");
             goto fail;
@@ -67,9 +147,7 @@ int UDPSocket::open(const char *ip, unsigned long port, bool to_bind)
         goto fail;
     }
 
-    if (to_bind)
-        sockaddr.sin_port = 0;
-    log_info("Open UDP [%d] %s:%lu %c", _fd, ip, port, to_bind ? '*' : ' ');
+    log_info("Open UDP [%d]", _fd);
 
     monitor_read(true);
     return _fd;
@@ -82,10 +160,34 @@ fail:
     return -1;
 }
 
-int UDPSocket::_do_write(const struct buffer &buf)
+int UDPSocket::bind(const char *ip, unsigned long port)
+{
+    assert(ip);
+
+    struct sockaddr_in sockaddr = {};
+
+    sockaddr.sin_family = AF_INET;
+    sockaddr.sin_addr.s_addr = inet_addr(ip);
+    sockaddr.sin_port = htons(port);
+
+    if (_fd < 0) {
+        log_error("Trying to bind an invalid _fd");
+        return -EINVAL;
+    }
+
+    if (::bind(_fd, (struct sockaddr *)&sockaddr, sizeof(sockaddr)) < 0) {
+        log_error("Error binding socket (%m)");
+        return -1;
+    }
+
+    log_info("Bind UDP [%d] %s:%lu", _fd, ip, port);
+    return 0;
+}
+
+int UDPSocket::_do_write(const struct buffer &buf, const struct sockaddr_in &sockaddr)
 {
     if (_fd < 0) {
-        log_error("Trying to write invalid _fd");
+        log_error("Trying to write to an invalid _fd");
         return -EINVAL;
     }
 
@@ -111,7 +213,7 @@ int UDPSocket::_do_write(const struct buffer &buf)
     return r;
 }
 
-int UDPSocket::_do_read(const struct buffer &buf)
+int UDPSocket::_do_read(const struct buffer &buf, struct sockaddr_in &sockaddr)
 {
     socklen_t addrlen = sizeof(sockaddr);
     ssize_t r = ::recvfrom(_fd, buf.data, buf.len, 0, (struct sockaddr *)&sockaddr, &addrlen);

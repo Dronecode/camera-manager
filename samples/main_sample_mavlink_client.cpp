@@ -31,7 +31,7 @@ struct Context {
     int connected_camera_sysid = 0;
 };
 
-static bool send_camera_request(UDPSocket &udp)
+static bool send_camera_request(Context &ctx, const struct sockaddr_in &addr)
 {
     uint8_t buffer[BUF_LEN];
     struct buffer buf = {0, buffer};
@@ -41,7 +41,7 @@ static bool send_camera_request(UDPSocket &udp)
                                   MAV_CMD_REQUEST_CAMERA_INFORMATION, 0, 1, 0, 0, 0, 0, 0, 0);
 
     buf.len = mavlink_msg_to_send_buffer(buf.data, &msg);
-    if (!buf.len || udp.write(buf) < 0) {
+    if (!buf.len || ctx.udp.write(buf, addr) < 0) {
         log_error("Sending camera request failed.");
         return false;
     }
@@ -49,7 +49,7 @@ static bool send_camera_request(UDPSocket &udp)
     return true;
 }
 
-static void handle_mavlink_message(struct Context &ctx, mavlink_message_t &msg)
+static void handle_mavlink_message(struct Context &ctx, const struct sockaddr_in &addr, mavlink_message_t &msg)
 {
     if (msg.compid != MAV_COMP_ID_CAMERA)
         return;
@@ -60,7 +60,7 @@ static void handle_mavlink_message(struct Context &ctx, mavlink_message_t &msg)
 
         log_info("Camera Daemon found: sysid: %d", msg.sysid);
         ctx.connected_camera_sysid = msg.sysid;
-        send_camera_request(ctx.udp);
+        send_camera_request(ctx, addr);
     } else if (msg.msgid == MAVLINK_MSG_ID_CAMERA_INFORMATION) {
         mavlink_camera_information_t info;
         mavlink_msg_camera_information_decode(&msg, &info);
@@ -68,29 +68,33 @@ static void handle_mavlink_message(struct Context &ctx, mavlink_message_t &msg)
     }
 }
 
-static void message_received(struct Context &ctx, const struct buffer &buf)
+static void message_received(struct Context &ctx, const struct sockaddr_in &addr, const struct buffer &buf)
 {
     mavlink_message_t msg;
     mavlink_status_t status;
 
     for (unsigned int i = 0; i < buf.len; ++i) {
         if (mavlink_parse_char(MAVLINK_COMM_0, buf.data[i], &msg, &status)) {
-            handle_mavlink_message(ctx, msg);
+            handle_mavlink_message(ctx, addr, msg);
         }
     }
 }
 
 int main(int argc, char *argv[])
 {
-    Context ctx;
+    Context ctx = {};
     GlibMainloop mainloop;
 
     Log::open();
     Log::set_max_level(Log::Level::DEBUG);
     log_debug("Camera Streaming MAVLink Client");
 
-    ctx.udp.open("0.0.0.0", 14550, true);
-    ctx.udp.set_read_callback([&ctx](const struct buffer &buf) { message_received(ctx, buf); });
+    ctx.udp.open(false);
+    ctx.udp.bind("0.0.0.0", 14550);
+    ctx.udp.set_read_callback([&ctx](const struct buffer &buf, const struct sockaddr_in &sockaddr) {
+        message_received(ctx, sockaddr, buf);
+    });
+
     mainloop.loop();
 
     Log::close();

@@ -17,66 +17,41 @@
  */
 
 #include <assert.h>
-#include <string.h>
 
 #include "log.h"
 #include "mainloop.h"
 #include "pollable.h"
 
-#define DEFAULT_BUF_SIZE 1024
-
 Pollable::Pollable()
-    : _fd(0)
+    : _fd(-1)
     , _read_handler(0)
     , _write_handler(0)
-    , _read_buf{DEFAULT_BUF_SIZE, new uint8_t[DEFAULT_BUF_SIZE]}
-    , _write_buf{0, nullptr}
-    , _read_cb([](const struct buffer &buf) {})
 {
 }
 
-bool Pollable::_can_read(const void *data, int flags)
+bool Pollable::_can_read_cb(const void *data, int flags)
 {
     assert(data);
 
     Pollable *p = (Pollable *)data;
 
-    int r = p->_do_read(p->_read_buf);
-    if (r == -EAGAIN) {
-        log_debug("Read package failed. Trying again.");
+    if (p->_can_read())
         return true;
-    }
-    if (r < 0) {
-        p->_read_handler = 0;
-        return false;
-    }
-    if (r > 0) {
-        struct buffer tmp_buf = {(unsigned int)r, p->_read_buf.data};
-        p->_read_cb(tmp_buf);
-    }
-    return true;
+
+    p->monitor_read(false);
+    return false;
 }
 
-bool Pollable::_can_write(const void *data, int flags)
+bool Pollable::_can_write_cb(const void *data, int flags)
 {
     assert(data);
 
     Pollable *p = (Pollable *)data;
-    int r;
 
-    if (!p->_write_buf.data)
-        goto end;
-
-    r = p->_do_write(p->_write_buf);
-    if (r == -EAGAIN) {
-        log_debug("Write package failed. Trying again.");
+    if (p->_can_write())
         return true;
-    }
 
-    delete[] p->_write_buf.data;
-    p->_write_buf = {0, nullptr};
-end:
-    p->_write_handler = 0;
+    p->monitor_write(false);
     return false;
 }
 
@@ -88,32 +63,20 @@ void Pollable::monitor_read(bool monitor)
         m->remove_fd(_read_handler);
 
     if (monitor)
-        _read_handler = m->add_fd(_fd, Mainloop::IO_IN, _can_read, this);
+        _read_handler = m->add_fd(_fd, Mainloop::IO_IN, _can_read_cb, this);
     else
         _read_handler = 0;
 }
 
-int Pollable::write(const struct buffer &buf)
+void Pollable::monitor_write(bool monitor)
 {
-    int r;
-    r = _do_write(buf);
-    if (r >= 0)
-        return r;
+    Mainloop *m = Mainloop::get_mainloop();
 
-    if (_write_buf.data) {
-        delete[] _write_buf.data;
-        log_warning("There was another packet to be sent. Dropping that packet.");
-    }
+    if (_write_handler)
+        m->remove_fd(_write_handler);
 
-    _write_buf = {buf.len, new uint8_t[buf.len]};
-    memcpy(_write_buf.data, buf.data, buf.len);
-
-    if (!_write_handler)
-        _write_handler = Mainloop::get_mainloop()->add_fd(_fd, Mainloop::IO_OUT, _can_write, this);
-    return 0;
-}
-
-void Pollable::set_read_callback(std::function<void(const struct buffer &buf)> cb)
-{
-    _read_cb = cb;
+    if (monitor)
+        _write_handler = m->add_fd(_fd, Mainloop::IO_OUT, _can_write_cb, this);
+    else
+        _write_handler = 0;
 }
