@@ -30,9 +30,8 @@
 
 class StreamManager {
 public:
-    StreamManager();
+    StreamManager(ConfFile &conf);
     ~StreamManager();
-    void init_streams(ConfFile &conf);
     void start();
     void stop();
     void addStream(Stream *stream);
