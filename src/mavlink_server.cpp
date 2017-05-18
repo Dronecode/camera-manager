@@ -23,20 +23,50 @@
 #include "log.h"
 #include "mainloop.h"
 #include "mavlink_server.h"
+#include "util.h"
 
 #define DEFAULT_MAVLINK_PORT 14550
+#define DEFAULT_SYSID 42
 #define DEFAULT_MAVLINK_BROADCAST_ADDR "255.255.255.255"
 #define MAX_MAVLINK_MESSAGE_SIZE 1024
 
-MavlinkServer::MavlinkServer(std::vector<std::unique_ptr<Stream>> &streams)
+MavlinkServer::MavlinkServer(ConfFile &conf, std::vector<std::unique_ptr<Stream>> &streams)
     : _streams(streams)
     , _is_running(false)
     , _timeout_handler(0)
     , _broadcast_addr{}
+    , _system_id(DEFAULT_SYSID)
 {
+    struct options {
+        unsigned long int port;
+        int sysid;
+        char broadcast[17];
+    } opt = {};
+    static const ConfFile::OptionsTable option_table[] = {
+        {"port", false, ConfFile::parse_ul, OPTIONS_TABLE_STRUCT_FIELD(options, port)},
+        {"system_id", false, ConfFile::parse_ul, OPTIONS_TABLE_STRUCT_FIELD(options, sysid)},
+        {"broadcast_addr", false, ConfFile::parse_str_buf, OPTIONS_TABLE_STRUCT_FIELD(options, broadcast)},
+    };
+    conf.extract_options("mavlink", option_table, ARRAY_SIZE(option_table), (void *)&opt);
+
+    if (opt.port)
+        _broadcast_addr.sin_port = htons(opt.port);
+    else
+        _broadcast_addr.sin_port = htons(DEFAULT_MAVLINK_PORT);
+
+    if (opt.sysid) {
+        if (opt.sysid <= 1 || opt.sysid >= 255)
+            log_error("Invalid System ID for MAVLink communication (%d). Using default (%d)",
+                      opt.sysid, DEFAULT_SYSID);
+        else
+            _system_id = DEFAULT_SYSID;
+    }
+
+    if (opt.broadcast[0])
+        _broadcast_addr.sin_addr.s_addr = inet_addr(opt.broadcast);
+    else
+        _broadcast_addr.sin_addr.s_addr = inet_addr(DEFAULT_MAVLINK_BROADCAST_ADDR);
     _broadcast_addr.sin_family = AF_INET;
-    _broadcast_addr.sin_addr.s_addr = inet_addr(DEFAULT_MAVLINK_BROADCAST_ADDR);
-    _broadcast_addr.sin_port = htons(DEFAULT_MAVLINK_PORT);
 }
 
 MavlinkServer::~MavlinkServer()
@@ -48,7 +78,7 @@ void MavlinkServer::_send_ack(const struct sockaddr_in &addr, int cmd, bool succ
 {
     mavlink_message_t msg;
 
-    mavlink_msg_command_ack_pack(_get_system_id(), MAV_COMP_ID_CAMERA, &msg, cmd,
+    mavlink_msg_command_ack_pack(_system_id, MAV_COMP_ID_CAMERA, &msg, cmd,
                                  success ? MAV_RESULT_ACCEPTED : MAV_RESULT_FAILED, 255);
 
     if (!_send_mavlink_message(&addr, msg)) {
@@ -71,7 +101,7 @@ void MavlinkServer::_handle_camera_info_request(const struct sockaddr_in &addr, 
     for (auto const &s : _streams) {
         if (camera_id == 0 || camera_id == s->id) {
             mavlink_msg_camera_information_pack(
-                _get_system_id(), MAV_COMP_ID_CAMERA, &msg, 0, s->id, 1,
+                _system_id, MAV_COMP_ID_CAMERA, &msg, 0, s->id, 1,
                 (const uint8_t *)"",
                 (const uint8_t *)s->get_name().c_str(), 0, 0, 0, 0, 0, 0, 0);
 
@@ -95,7 +125,7 @@ void MavlinkServer::_handle_mavlink_message(const struct sockaddr_in &addr, mavl
         mavlink_command_long_t cmd;
         mavlink_msg_command_long_decode(msg, &cmd);
 
-        if (cmd.target_system != _get_system_id() || cmd.target_component != MAV_COMP_ID_CAMERA)
+        if (cmd.target_system != _system_id || cmd.target_component != MAV_COMP_ID_CAMERA)
             return;
 
         switch (cmd.command) {
@@ -139,8 +169,8 @@ bool _heartbeat_cb(void *data)
     MavlinkServer *server = (MavlinkServer *)data;
     mavlink_message_t msg;
 
-    mavlink_msg_heartbeat_pack(1, MAV_COMP_ID_CAMERA, &msg, MAV_TYPE_GENERIC, MAV_AUTOPILOT_INVALID,
-                               MAV_MODE_PREFLIGHT, 0, MAV_STATE_ACTIVE);
+    mavlink_msg_heartbeat_pack(server->_system_id, MAV_COMP_ID_CAMERA, &msg, MAV_TYPE_GENERIC,
+                               MAV_AUTOPILOT_INVALID, MAV_MODE_PREFLIGHT, 0, MAV_STATE_ACTIVE);
     if (!server->_send_mavlink_message(nullptr, msg))
         log_error("Sending HEARTBEAT failed.");
 
@@ -168,9 +198,4 @@ void MavlinkServer::stop()
 
     if (_timeout_handler > 0)
         Mainloop::get_mainloop()->del_timeout(_timeout_handler);
-}
-
-int MavlinkServer::_get_system_id()
-{
-    return 1;
 }

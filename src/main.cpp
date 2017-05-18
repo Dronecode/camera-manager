@@ -230,14 +230,16 @@ int main(int argc, char *argv[])
 
     ConfFile *conf;
     GlibMainloop mainloop;
-    StreamManager stream;
 
-    if (parse_argv(argc, argv, &opt) != 2)
-        goto close_log;
+    if (parse_argv(argc, argv, &opt) != 2) {
+        Log::close();
+        return EXIT_FAILURE;
+    }
 
     conf = new ConfFile();
     parse_conf_files(*conf, &opt);
-    stream.init_streams(*conf);
+
+    StreamManager stream(*conf);
     delete conf;
 
     log_debug("Starting Camera Streaming Daemon");
@@ -247,8 +249,4 @@ int main(int argc, char *argv[])
     Log::close();
 
     return 0;
-
-close_log:
-    Log::close();
-    return EXIT_FAILURE;
 }
