@@ -37,6 +37,7 @@ static void stream_media_dispose(GObject *obj)
 
     if (media_dispose)
         media_dispose(obj);
+    stream->is_streaming = false;
 }
 
 GstElement *stream_create_element(GstRTSPMediaFactory *factory, const GstRTSPUrl *url)
@@ -211,6 +212,7 @@ GstElement *RTSPServer::create_element_from_url(const GstRTSPUrl *url)
     if (!pipeline)
         goto error;
 
+    stream->is_streaming = true;
     return pipeline;
 error:
     log_error("No gstreamer pipeline available for request (device_path: %s - query: %s)",
