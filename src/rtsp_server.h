@@ -32,7 +32,7 @@ public:
     void start();
     void stop();
 
-    std::string get_rtsp_uri(const char *ip, Stream &stream);
+    std::string get_rtsp_uri(const char *ip, Stream &stream, const char *query);
 
 private:
     const std::vector<std::unique_ptr<Stream>> &streams;

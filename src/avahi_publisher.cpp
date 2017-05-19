@@ -96,7 +96,7 @@ void AvahiPublisher::reset_services()
 AvahiStringList *AvahiPublisher::txt_record_from_stream(const std::unique_ptr<Stream> &s)
 {
     AvahiStringList *lst = NULL;
-    const std::vector<Stream::PixelFormat> &formats = s->get_formats();
+    const std::vector<Stream::PixelFormat> &formats = s->formats;
     for (int i = formats.size() - 1; i >= 0; i--) {
         std::stringstream ss;
         ss << "frame_size[" << i << "]=";

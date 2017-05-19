@@ -72,6 +72,9 @@ static gboolean cb_seek_data(GstAppSrc *src, guint64 offset, gpointer user_data)
 StreamRealSense::StreamRealSense()
     : Stream()
 {
+    PixelFormat f{Stream::fourCC("NV12")};
+    f.frame_sizes.emplace_back(FrameSize{640, 480});
+    formats.push_back(f);
 }
 
 const std::string StreamRealSense::get_path() const
@@ -82,12 +85,6 @@ const std::string StreamRealSense::get_path() const
 const std::string StreamRealSense::get_name() const
 {
     return "RealSense Sample Stream";
-}
-
-const std::vector<Stream::PixelFormat> &StreamRealSense::get_formats() const
-{
-    static std::vector<Stream::PixelFormat> formats;
-    return formats;
 }
 
 GstElement *
