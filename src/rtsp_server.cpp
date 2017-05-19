@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <assert.h>
 #include <sstream>
 #include <string.h>
 
@@ -215,4 +216,14 @@ error:
     log_error("No gstreamer pipeline available for request (device_path: %s - query: %s)",
               url->abspath, url->query);
     return nullptr;
+}
+
+std::string RTSPServer::get_rtsp_uri(const char *ip, Stream &stream)
+{
+    assert(ip);
+
+    std::stringstream ss;
+    ss << "rtsp://" << ip << ":" << port << "/" << stream.get_path();
+
+    return ss.str();
 }

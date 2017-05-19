@@ -30,7 +30,7 @@ StreamManager::StreamManager(ConfFile &conf)
     : is_running(false)
     , avahi_publisher(streams, DEFAULT_SERVICE_PORT, DEFAULT_SERVICE_TYPE)
     , rtsp_server(streams, DEFAULT_SERVICE_PORT)
-    , mavlink_server(conf, streams)
+    , mavlink_server(conf, streams, rtsp_server)
 {
     for (StreamBuilder *builder : StreamBuilder::get_builders())
         for (Stream *s : builder->build_streams(conf)) {

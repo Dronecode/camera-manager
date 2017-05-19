@@ -28,23 +28,29 @@
 #define DEFAULT_MAVLINK_PORT 14550
 #define DEFAULT_SYSID 42
 #define DEFAULT_MAVLINK_BROADCAST_ADDR "255.255.255.255"
+#define DEFAULT_RTSP_SERVER_ADDR "0.0.0.0"
 #define MAX_MAVLINK_MESSAGE_SIZE 1024
 
-MavlinkServer::MavlinkServer(ConfFile &conf, std::vector<std::unique_ptr<Stream>> &streams)
+MavlinkServer::MavlinkServer(ConfFile &conf, std::vector<std::unique_ptr<Stream>> &streams,
+                             RTSPServer &rtsp)
     : _streams(streams)
     , _is_running(false)
     , _timeout_handler(0)
     , _broadcast_addr{}
     , _system_id(DEFAULT_SYSID)
+    , _rtsp_server_addr(nullptr)
+    , _rtsp(rtsp)
 {
     struct options {
         unsigned long int port;
         int sysid;
+        char *rtsp_server_addr;
         char broadcast[17];
     } opt = {};
     static const ConfFile::OptionsTable option_table[] = {
         {"port", false, ConfFile::parse_ul, OPTIONS_TABLE_STRUCT_FIELD(options, port)},
         {"system_id", false, ConfFile::parse_ul, OPTIONS_TABLE_STRUCT_FIELD(options, sysid)},
+        {"rtsp_server_addr", false, ConfFile::parse_str_dup, OPTIONS_TABLE_STRUCT_FIELD(options, rtsp_server_addr)},
         {"broadcast_addr", false, ConfFile::parse_str_buf, OPTIONS_TABLE_STRUCT_FIELD(options, broadcast)},
     };
     conf.extract_options("mavlink", option_table, ARRAY_SIZE(option_table), (void *)&opt);
@@ -67,11 +73,13 @@ MavlinkServer::MavlinkServer(ConfFile &conf, std::vector<std::unique_ptr<Stream>
     else
         _broadcast_addr.sin_addr.s_addr = inet_addr(DEFAULT_MAVLINK_BROADCAST_ADDR);
     _broadcast_addr.sin_family = AF_INET;
+    _rtsp_server_addr = opt.rtsp_server_addr;
 }
 
 MavlinkServer::~MavlinkServer()
 {
     stop();
+    free(_rtsp_server_addr);
 }
 
 void MavlinkServer::_send_ack(const struct sockaddr_in &addr, int cmd, bool success)
@@ -116,6 +124,30 @@ void MavlinkServer::_handle_camera_info_request(const struct sockaddr_in &addr, 
     _send_ack(addr, command, success);
 }
 
+void MavlinkServer::_handle_camera_video_stream_request(const struct sockaddr_in &addr, int command,
+                                                        unsigned int camera_id, unsigned int action)
+{
+    mavlink_message_t msg;
+
+    if (action != 1)
+        return;
+
+    for (auto const &s : _streams) {
+        if (camera_id == 0 || camera_id == s->id) {
+            // TODO: Fill current status, fps, resolution, bitrate and rotation
+            mavlink_msg_video_stream_information_pack(
+                _system_id, MAV_COMP_ID_CAMERA, &msg, s->id, 0 /* Status */, 0 /* FPS */,
+                0 /* resolution_h */, 0 /* resolution_v */, 0 /* bitrate */, 0 /* Rotation */,
+                _rtsp.get_rtsp_uri(_rtsp_server_addr, *s).c_str());
+
+            if (!_send_mavlink_message(&addr, msg)) {
+                log_error("Sending camera information failed for camera %d.", s->id);
+                return;
+            }
+        }
+    }
+}
+
 void MavlinkServer::_handle_mavlink_message(const struct sockaddr_in &addr, mavlink_message_t *msg)
 {
     log_debug("Message received: (sysid: %d compid: %d msgid: %d)", msg->sysid, msg->compid,
@@ -132,6 +164,10 @@ void MavlinkServer::_handle_mavlink_message(const struct sockaddr_in &addr, mavl
         case MAV_CMD_REQUEST_CAMERA_INFORMATION:
             this->_handle_camera_info_request(addr, cmd.command, cmd.param1 /* Camera ID */,
                                               cmd.param2 /* Action */);
+            break;
+        case MAV_CMD_REQUEST_VIDEO_STREAM_INFORMATION:
+            this->_handle_camera_video_stream_request(addr, cmd.command, cmd.param1 /* Camera ID */,
+                                                      cmd.param2 /* Action */);
             break;
         default:
             log_debug("Command %d unhandled. Discarding.", cmd.command);
