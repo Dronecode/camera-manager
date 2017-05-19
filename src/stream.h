@@ -42,9 +42,13 @@ public:
         friend std::ostream &operator<<(std::ostream &os, const PixelFormat &pf);
     };
 
+    static uint32_t fourCC(const char *fourcc_str);
+
 public:
     Stream()
-        : id(0){};
+        : id(0)
+        , is_streaming(false)
+        , sel_frame_size(nullptr){};
     virtual ~Stream(){};
     virtual const std::string get_path() const = 0;
     virtual const std::string get_name() const = 0;
@@ -52,7 +56,6 @@ public:
     {
         return nullptr;
     }
-    virtual const std::vector<PixelFormat> &get_formats() const = 0;
 
     /**
      * Called when gstreamer pipeline is finalized so all needed cleanup can be
@@ -64,4 +67,7 @@ public:
      */
     virtual void finalize_gstreamer_pipeline(GstElement *pipeline){};
     unsigned int id;
+    bool is_streaming;
+    std::vector<PixelFormat> formats;
+    const FrameSize *sel_frame_size;
 };

@@ -26,11 +26,19 @@
 #define DEFAULT_SERVICE_PORT 8554
 #define DEFAULT_SERVICE_TYPE "_rtsp._udp"
 
-StreamManager::StreamManager()
+StreamManager::StreamManager(ConfFile &conf)
     : is_running(false)
     , avahi_publisher(streams, DEFAULT_SERVICE_PORT, DEFAULT_SERVICE_TYPE)
     , rtsp_server(streams, DEFAULT_SERVICE_PORT)
-    , mavlink_server(streams){};
+    , mavlink_server(conf, streams, rtsp_server)
+{
+    for (StreamBuilder *builder : StreamBuilder::get_builders())
+        for (Stream *s : builder->build_streams(conf)) {
+            log_debug("Adding stream %s (%s)", s->get_path().c_str(), s->get_name().c_str());
+            addStream(s);
+        }
+    StreamBuilder::get_builders().clear();
+}
 
 StreamManager::~StreamManager()
 {
@@ -46,16 +54,6 @@ void StreamManager::start()
     rtsp_server.start();
     avahi_publisher.start();
     mavlink_server.start();
-}
-
-void StreamManager::init_streams(ConfFile &conf)
-{
-    for (StreamBuilder *builder : StreamBuilder::get_builders())
-        for (Stream *s : builder->build_streams(conf)) {
-            log_debug("Adding stream %s (%s)", s->get_path().c_str(), s->get_name().c_str());
-            addStream(s);
-        }
-    StreamBuilder::get_builders().clear();
 }
 
 void StreamManager::stop()
