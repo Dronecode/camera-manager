@@ -32,6 +32,8 @@ public:
     void start();
     void stop();
 
+    std::string get_rtsp_uri(const char *ip, Stream &stream);
+
 private:
     const std::vector<std::unique_ptr<Stream>> &streams;
     bool is_running;

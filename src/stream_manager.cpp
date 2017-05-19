@@ -31,7 +31,7 @@ StreamManager::StreamManager(ConfFile &conf)
     : is_running(false)
     , avahi_publisher(streams, DEFAULT_SERVICE_PORT, DEFAULT_SERVICE_TYPE)
     , rtsp_server(streams, DEFAULT_SERVICE_PORT)
-    , mavlink_server(conf, streams)
+    , mavlink_server(conf, streams, rtsp_server)
 {
     GstreamerPipelineBuilder::get_instance().apply_configs(conf);
     for (StreamBuilder *builder : StreamBuilder::get_builders())
