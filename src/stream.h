@@ -44,7 +44,8 @@ public:
 
 public:
     Stream()
-        : id(0){};
+        : id(0)
+        , is_streaming(false){};
     virtual ~Stream(){};
     virtual const std::string get_path() const = 0;
     virtual const std::string get_name() const = 0;
@@ -64,4 +65,5 @@ public:
      */
     virtual void finalize_gstreamer_pipeline(GstElement *pipeline){};
     unsigned int id;
+    bool is_streaming;
 };

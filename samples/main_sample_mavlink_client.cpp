@@ -165,12 +165,20 @@ static void handle_mavlink_message(struct Context &ctx, const struct sockaddr_in
 
         mavlink_msg_video_stream_information_decode(&msg, &info);
 
-        log_info("Stream URI: %s", info.uri);
-        ret = snprintf(cmd, sizeof(cmd),
-                       "gst-launch-1.0 rtspsrc location=%s ! decodebin ! autovideosink sync=false",
-                       info.uri);
-        if (ret >= (int)sizeof(cmd) || system(cmd) <= 0) {
-            log_error("Unable to start video stream. Start it manually.");
+        log_info("Stream Information:");
+        log_info("   Status: %s", info.status == 1 ? "streaming" : "not streaming");
+        log_info("   URI: %s", info.uri);
+
+        if (info.status == 1) {
+            log_info("Video is already streaming to another client.");
+            exit(EXIT_FAILURE);
+        } else {
+            ret = snprintf(cmd, sizeof(cmd),
+                    "gst-launch-1.0 rtspsrc location=%s ! decodebin ! autovideosink sync=false",
+                    info.uri);
+            if (ret >= (int)sizeof(cmd) || system(cmd) <= 0) {
+                log_error("Unable to start video stream. Start it manually.");
+            }
         }
     } else if (msg.msgid == MAVLINK_MSG_ID_COMMAND_ACK) {
         mavlink_command_ack_t ack;

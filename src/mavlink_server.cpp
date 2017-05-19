@@ -136,7 +136,7 @@ void MavlinkServer::_handle_camera_video_stream_request(const struct sockaddr_in
         if (camera_id == 0 || camera_id == s->id) {
             // TODO: Fill current status, fps, resolution, bitrate and rotation
             mavlink_msg_video_stream_information_pack(
-                _system_id, MAV_COMP_ID_CAMERA, &msg, s->id, 0 /* Status */, 0 /* FPS */,
+                _system_id, MAV_COMP_ID_CAMERA, &msg, s->id, s->is_streaming /* Status */, 0 /* FPS */,
                 0 /* resolution_h */, 0 /* resolution_v */, 0 /* bitrate */, 0 /* Rotation */,
                 _rtsp.get_rtsp_uri(_rtsp_server_addr, *s).c_str());
 
