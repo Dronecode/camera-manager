@@ -44,11 +44,6 @@ const std::string StreamV4l2::get_name() const
     return name;
 }
 
-const std::vector<Stream::PixelFormat> &StreamV4l2::get_formats() const
-{
-    return formats;
-}
-
 void StreamV4l2::get_v4l2_info()
 {
     int fd = open(device_path.c_str(), O_RDONLY);

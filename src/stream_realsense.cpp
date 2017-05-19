@@ -125,6 +125,9 @@ StreamRealSense::StreamRealSense(const char *path, const char *name, int camera)
     , _name(name)
     , _camera(camera)
 {
+    PixelFormat f{Stream::fourCC("NV12")};
+    f.frame_sizes.emplace_back(FrameSize{640, 480});
+    formats.push_back(f);
 }
 
 const std::string StreamRealSense::get_path() const
@@ -135,12 +138,6 @@ const std::string StreamRealSense::get_path() const
 const std::string StreamRealSense::get_name() const
 {
     return _name;
-}
-
-const std::vector<Stream::PixelFormat> &StreamRealSense::get_formats() const
-{
-    static std::vector<Stream::PixelFormat> formats;
-    return formats;
 }
 
 static std::string create_pipeline(std::map<std::string, std::string> &params)

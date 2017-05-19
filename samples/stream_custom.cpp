@@ -26,6 +26,9 @@
 StreamCustom::StreamCustom()
     : Stream()
 {
+    PixelFormat f{Stream::fourCC("RGB1")};
+    f.frame_sizes.emplace_back(FrameSize{640, 480});
+    formats.push_back(f);
 }
 
 const std::string StreamCustom::get_path() const
@@ -36,12 +39,6 @@ const std::string StreamCustom::get_path() const
 const std::string StreamCustom::get_name() const
 {
     return "Custom Stream";
-}
-
-const std::vector<Stream::PixelFormat> &StreamCustom::get_formats() const
-{
-    static std::vector<Stream::PixelFormat> formats;
-    return formats;
 }
 
 GstElement *StreamCustom::create_gstreamer_pipeline(std::map<std::string, std::string> &params) const

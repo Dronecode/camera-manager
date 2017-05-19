@@ -30,13 +30,11 @@ public:
 
     const std::string get_path() const override;
     const std::string get_name() const override;
-    const std::vector<PixelFormat> &get_formats() const override;
     GstElement *create_gstreamer_pipeline(std::map<std::string, std::string> &params) const override;
 
 private:
     std::string name;
     std::string path;
     std::string device_path;
-    std::vector<PixelFormat> formats;
     void get_v4l2_info();
 };

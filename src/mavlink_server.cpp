@@ -128,24 +128,78 @@ void MavlinkServer::_handle_camera_video_stream_request(const struct sockaddr_in
                                                         unsigned int camera_id, unsigned int action)
 {
     mavlink_message_t msg;
+    char query[35] = "";
 
     if (action != 1)
         return;
 
     for (auto const &s : _streams) {
         if (camera_id == 0 || camera_id == s->id) {
-            // TODO: Fill current status, fps, resolution, bitrate and rotation
-            mavlink_msg_video_stream_information_pack(
-                _system_id, MAV_COMP_ID_CAMERA, &msg, s->id, s->is_streaming /* Status */, 0 /* FPS */,
-                0 /* resolution_h */, 0 /* resolution_v */, 0 /* bitrate */, 0 /* Rotation */,
-                _rtsp.get_rtsp_uri(_rtsp_server_addr, *s).c_str());
+            const Stream::FrameSize *fs = s->sel_frame_size
+                ? s->sel_frame_size
+                : _find_best_frame_size(*s, UINT32_MAX, UINT32_MAX);
 
+            if (s->sel_frame_size) {
+                int ret = snprintf(query, sizeof(query), "?width=%d&height=%d",
+                                   s->sel_frame_size->width, s->sel_frame_size->height);
+                if (ret > (int)sizeof(query)) {
+                    log_error("Invalid requested resolution. Aborting request.");
+                    return;
+                }
+            }
+
+            mavlink_msg_video_stream_information_pack(
+                _system_id, MAV_COMP_ID_CAMERA, &msg, s->id, s->is_streaming /* Status */,
+                0 /* FPS */, fs->width, fs->height, 0 /* bitrate */, 0 /* Rotation */,
+                _rtsp.get_rtsp_uri(_rtsp_server_addr, *s, query).c_str());
             if (!_send_mavlink_message(&addr, msg)) {
                 log_error("Sending camera information failed for camera %d.", s->id);
                 return;
             }
         }
     }
+}
+
+const Stream::FrameSize *MavlinkServer::_find_best_frame_size(Stream &s, uint32_t w, uint32_t h)
+{
+    // Using strategy of getting the higher frame size that is lower than WxH, if the
+    // exact resolution is not found
+    const Stream::FrameSize *best = nullptr;
+    for (auto const &f : s.formats) {
+        for (auto const &fs : f.frame_sizes) {
+            if (fs.width == w && fs.height == h)
+                return &fs;
+            else if (!best || (fs.width <= w && fs.width >= best->width && fs.height <= h
+                               && fs.height >= best->height))
+                best = &fs;
+        }
+    }
+    return best;
+}
+
+void MavlinkServer::_handle_camera_set_video_stream_settings(const struct sockaddr_in &addr,
+                                                             mavlink_message_t *msg)
+{
+    mavlink_set_video_stream_settings_t settings;
+    Stream *stream = nullptr;
+
+    mavlink_msg_set_video_stream_settings_decode(msg, &settings);
+    for (auto const &s : _streams) {
+        if (s->id == settings.camera_id) {
+            stream = &*s;
+        }
+    }
+    if (!stream) {
+        log_debug("SET_VIDEO_STREAM request in an invalid camera (camera_id = %d)",
+                  settings.camera_id);
+        return;
+    }
+
+    if (settings.resolution_h == 0 || settings.resolution_v == 0)
+        stream->sel_frame_size = nullptr;
+    else
+        stream->sel_frame_size
+            = _find_best_frame_size(*stream, settings.resolution_h, settings.resolution_v);
 }
 
 void MavlinkServer::_handle_mavlink_message(const struct sockaddr_in &addr, mavlink_message_t *msg)
@@ -172,6 +226,8 @@ void MavlinkServer::_handle_mavlink_message(const struct sockaddr_in &addr, mavl
         default:
             log_debug("Command %d unhandled. Discarding.", cmd.command);
         }
+    } else if (msg->msgid == MAVLINK_MSG_ID_SET_VIDEO_STREAM_SETTINGS) {
+        this->_handle_camera_set_video_stream_settings(addr, msg);
     }
 }
 

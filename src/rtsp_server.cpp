@@ -220,10 +220,12 @@ error:
     return nullptr;
 }
 
-std::string RTSPServer::get_rtsp_uri(const char *ip, Stream &stream)
+std::string RTSPServer::get_rtsp_uri(const char *ip, Stream &stream, const char *query)
 {
     std::stringstream ss;
     ss << "rtsp://" << (ip ? ip : "0.0.0.0") << ":" << port << "/" << stream.get_path();
+    if (query)
+        ss << query;
 
     return ss.str();
 }

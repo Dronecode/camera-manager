@@ -15,7 +15,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <assert.h>
 #include <ostream>
+#include <string.h>
 
 #include "stream.h"
 
@@ -39,3 +41,16 @@ std::ostream &operator<<(std::ostream &os, const Stream::PixelFormat &pf)
     os << ")";
     return os;
 }
+
+#define fourcc(a, b, c, d) \
+    ((uint32_t)(a) << 0) | ((uint32_t)(b) << 8) | ((uint32_t)(c) << 16) | ((uint32_t)(d) << 24)
+
+uint32_t Stream::fourCC(const char *fourcc_str)
+{
+    assert(fourcc_str);
+    assert(strlen(fourcc_str) >= 4);
+
+    return fourcc(fourcc_str[0], fourcc_str[1], fourcc_str[2], fourcc_str[3]);
+}
+
+#undef fourcc

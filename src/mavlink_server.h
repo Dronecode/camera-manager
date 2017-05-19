@@ -50,7 +50,10 @@ private:
                                      unsigned int camera_id, unsigned int action);
     void _handle_camera_video_stream_request(const struct sockaddr_in &addr, int command,
                                              unsigned int camera_id, unsigned int action);
+    void _handle_camera_set_video_stream_settings(const struct sockaddr_in &addr,
+                                                  mavlink_message_t *msg);
     bool _send_mavlink_message(const struct sockaddr_in *addr, mavlink_message_t &msg);
     void _send_ack(const struct sockaddr_in &addr, int cmd, bool success);
+    const Stream::FrameSize *_find_best_frame_size(Stream &s, uint32_t w, uint32_t v);
     friend bool _heartbeat_cb(void *data);
 };

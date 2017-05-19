@@ -111,7 +111,7 @@ static struct stream *get_camera_stream(struct Context &ctx, int camera_id)
 
 static void play_stream(struct Context &ctx, const struct sockaddr_in &addr)
 {
-    int camera_id;
+    int h, v, camera_id;
     struct stream *s;
 
     log_info("Please make your selection (type stream number):");
@@ -123,7 +123,19 @@ static void play_stream(struct Context &ctx, const struct sockaddr_in &addr)
         return;
     }
 
+    log_info("Select Horizontal resolution (0 for default): ");
+    h = read_int();
+
+    log_info("Select Vertical resolution (0 for default): ");
+    v = read_int();
+
     mavlink_message_t out_msg;
+    mavlink_msg_set_video_stream_settings_pack(GCS_SYSID, MAV_COMP_ID_ALL, &out_msg,
+                                               ctx.connected_camera_sysid, MAV_COMP_ID_CAMERA,
+                                               camera_id, 0, h, v, 0, 0, "");
+
+    send_camera_msg(ctx, addr, out_msg);
+
     mavlink_msg_command_long_pack(GCS_SYSID, MAV_COMP_ID_ALL, &out_msg, ctx.connected_camera_sysid,
                                   MAV_COMP_ID_CAMERA, MAV_CMD_REQUEST_VIDEO_STREAM_INFORMATION, 0,
                                   camera_id, 1, 0, 0, 0, 0, 0);
@@ -164,6 +176,7 @@ static void handle_mavlink_message(struct Context &ctx, const struct sockaddr_in
 
         log_info("Stream Information:");
         log_info("   Status: %s", info.status == 1 ? "streaming" : "not streaming");
+        log_info("   Resolution: %dx%d", info.resolution_h, info.resolution_v);
         log_info("   URI: %s", info.uri);
 
         if (info.status == 1) {
@@ -171,7 +184,7 @@ static void handle_mavlink_message(struct Context &ctx, const struct sockaddr_in
             exit(EXIT_FAILURE);
         } else {
             ret = snprintf(cmd, sizeof(cmd),
-                    "gst-launch-1.0 rtspsrc location=%s ! decodebin ! autovideosink sync=false",
+                    "gst-launch-1.0 rtspsrc location=\"%s\" ! decodebin ! autovideosink sync=false",
                     info.uri);
             if (ret >= (int)sizeof(cmd) || system(cmd) <= 0) {
                 log_error("Unable to start video stream. Start it manually.");
