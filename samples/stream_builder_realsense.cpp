@@ -15,6 +15,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <librealsense/rs.h>
+
 #include "stream_builder_realsense.h"
 #include "stream_realsense.h"
 
@@ -24,7 +26,9 @@ std::vector<Stream *> StreamBuilderRealsense::build_streams(ConfFile &conf)
 {
     std::vector<Stream *> streams;
 
-    streams.push_back(new StreamRealSense());
+    streams.push_back(new StreamRealSense("/rsdepth", "RealSense Depth Camera", RS_STREAM_DEPTH));
+    streams.push_back(new StreamRealSense("/rsir", "RealSense Infrared Camera", RS_STREAM_INFRARED));
+    streams.push_back(new StreamRealSense("/rsir2", "RealSense Infrared Camera2", RS_STREAM_INFRARED2));
 
     return streams;
 }

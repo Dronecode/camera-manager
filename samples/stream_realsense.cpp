@@ -40,6 +40,7 @@ struct rgb {
 struct Context {
     rs_device *dev;
     rs_context *rs_ctx;
+    int camera;
     struct rgb rgb_data[];
 };
 
@@ -73,24 +74,38 @@ static void cb_need_data(GstAppSrc *appsrc, guint unused_size, gpointer user_dat
     Context *ctx = (Context *)user_data;
 
     rs_wait_for_frames(ctx->dev, NULL);
-    uint16_t *depth = (uint16_t *)rs_get_frame_data(ctx->dev, RS_STREAM_DEPTH, NULL);
-    if (!depth) {
-        log_error("No depth data. Not building frame");
-        return;
-    }
-
     GstBuffer *buffer
         = gst_buffer_new_wrapped_full((GstMemoryFlags)0, ctx->rgb_data, SIZE, 0, SIZE, NULL, NULL);
     assert(buffer);
-    for (int i = 0, end = WIDTH * HEIGHT; i < end; ++i) {
-        uint8_t rainbow[3];
-        rainbow_scale((double)depth[i] * 0.001, rainbow);
 
-        ctx->rgb_data[i].r = rainbow[0];
-        ctx->rgb_data[i].g = rainbow[1];
-        ctx->rgb_data[i].b = rainbow[2];
+    if (ctx->camera == RS_STREAM_INFRARED || ctx->camera == RS_STREAM_INFRARED2) {
+        uint8_t *ir = (uint8_t *)rs_get_frame_data(ctx->dev, (rs_stream)ctx->camera, NULL);
+        if (!ir) {
+            log_error("No infrared data. Not building frame");
+            return;
+        }
+
+        for (int i = 0, end = WIDTH * HEIGHT; i < end; ++i) {
+            ctx->rgb_data[i].r = ir[i];
+            ctx->rgb_data[i].g = ir[i];
+            ctx->rgb_data[i].b = ir[i];
+        }
+    } else {
+        uint16_t *depth = (uint16_t *)rs_get_frame_data(ctx->dev, RS_STREAM_DEPTH, NULL);
+        if (!depth) {
+            log_error("No depth data. Not building frame");
+            return;
+        }
+
+        for (int i = 0, end = WIDTH * HEIGHT; i < end; ++i) {
+            uint8_t rainbow[3];
+            rainbow_scale((double)depth[i], rainbow);
+
+            ctx->rgb_data[i].r = rainbow[0];
+            ctx->rgb_data[i].g = rainbow[1];
+            ctx->rgb_data[i].b = rainbow[2];
+        }
     }
-
     g_signal_emit_by_name(appsrc, "push-buffer", buffer, &ret);
 }
 
@@ -103,19 +118,22 @@ static gboolean cb_seek_data(GstAppSrc *src, guint64 offset, gpointer user_data)
     return TRUE;
 }
 
-StreamRealSense::StreamRealSense()
+StreamRealSense::StreamRealSense(const char *path, const char *name, int camera)
     : Stream()
+    , _path(path)
+    , _name(name)
+    , _camera(camera)
 {
 }
 
 const std::string StreamRealSense::get_path() const
 {
-    return "/RealSense";
+    return _path;
 }
 
 const std::string StreamRealSense::get_name() const
 {
-    return "RealSense Sample Stream";
+    return _name;
 }
 
 const std::vector<Stream::PixelFormat> &StreamRealSense::get_formats() const
@@ -147,7 +165,11 @@ StreamRealSense::create_gstreamer_pipeline(std::map<std::string, std::string> &p
     }
 
     /* Configure all streams to run at VGA resolution at 60 frames per second */
-    rs_enable_stream(ctx->dev, RS_STREAM_DEPTH, WIDTH, HEIGHT, RS_FORMAT_Z16, 60, NULL);
+    if (_camera == RS_STREAM_INFRARED || _camera == RS_STREAM_INFRARED2)
+        rs_enable_stream(ctx->dev, (rs_stream)_camera, WIDTH, HEIGHT, RS_FORMAT_Y8, 60, NULL);
+    else
+        rs_enable_stream(ctx->dev, RS_STREAM_DEPTH, WIDTH, HEIGHT, RS_FORMAT_Z16, 60, NULL);
+    ctx->camera = _camera;
     rs_start_device(ctx->dev, NULL);
 
     if (rs_device_supports_option(ctx->dev, RS_OPTION_R200_EMITTER_ENABLED, NULL))

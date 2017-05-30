@@ -24,7 +24,7 @@
 
 class StreamRealSense : public Stream {
 public:
-    StreamRealSense();
+    StreamRealSense(const char *path, const char *name, int camera);
     ~StreamRealSense() {}
 
     const std::string get_path() const override;
@@ -32,4 +32,9 @@ public:
     const std::vector<PixelFormat> &get_formats() const override;
     GstElement *create_gstreamer_pipeline(std::map<std::string, std::string> &params) const override;
     void finalize_gstreamer_pipeline(GstElement *pipeline) override;
+
+private:
+    const char *_path;
+    const char *_name;
+    int _camera;
 };
