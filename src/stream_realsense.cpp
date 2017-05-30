@@ -24,7 +24,7 @@
 #include <unistd.h>
 
 #include "log.h"
-#include "samples/stream_realsense.h"
+#include "stream_realsense.h"
 
 #define WIDTH (640)
 #define HEIGHT (480)
