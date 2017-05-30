@@ -39,5 +39,5 @@ protected:
     int _do_read(const struct buffer &buf) override;
 
 private:
-    struct sockaddr_in sockaddr;
+    struct sockaddr_in sockaddr {};
 };
