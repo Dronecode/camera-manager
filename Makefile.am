@@ -161,6 +161,14 @@ BASE_FILES = \
 	src/util.c \
 	src/util.h
 
+if HAVE_REALSENSE
+BASE_FILES += \
+	src/stream_builder_realsense.h \
+	src/stream_builder_realsense.cpp \
+	src/stream_realsense.cpp \
+	src/stream_realsense.h
+endif
+
 bin_PROGRAMS += csd
 
 SED_PROCESS = $(AM_V_GEN) $(MKDIR_P) $(dir $@) && \
@@ -182,12 +190,7 @@ CLEANFILES += csd.service
 #Samples
 EXTRA_PROGRAMS = samples/camera-sample-custom samples/camera-sample-client samples/camera-sample-mavlink-client
 
-if HAVE_REALSENSE
-EXTRA_PROGRAMS += samples/camera-sample-realsense
-endif
-
 samples_camera_sample_custom_LDADD = ${csd_LDADD}
-samples_camera_sample_realsense_LDADD = ${csd_LDADD}
 samples_camera_sample_client_LDADD = $(GLIB_LIBS) $(AVAHI_LIBS)
 samples_camera_sample_mavlink_client_LDADD = $(GLIB_LIBS) $(AVAHI_LIBS)
 
@@ -198,14 +201,6 @@ samples_camera_sample_custom_SOURCES = \
 	samples/stream_builder_custom.cpp \
 	samples/stream_custom.cpp \
 	samples/stream_custom.h
-
-samples_camera_sample_realsense_SOURCES = \
-	$(BASE_FILES) \
-	src/main.cpp \
-	samples/stream_builder_realsense.h \
-	samples/stream_builder_realsense.cpp \
-	samples/stream_realsense.cpp \
-	samples/stream_realsense.h
 
 samples_camera_sample_client_SOURCES = \
 	samples/main_sample_client.cpp \
