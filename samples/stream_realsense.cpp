@@ -150,6 +150,11 @@ StreamRealSense::create_gstreamer_pipeline(std::map<std::string, std::string> &p
     rs_enable_stream(ctx->dev, RS_STREAM_DEPTH, WIDTH, HEIGHT, RS_FORMAT_Z16, 60, NULL);
     rs_start_device(ctx->dev, NULL);
 
+    if (rs_device_supports_option(ctx->dev, RS_OPTION_R200_EMITTER_ENABLED, NULL))
+        rs_set_device_option(ctx->dev, RS_OPTION_R200_EMITTER_ENABLED, 1, NULL);
+    if (rs_device_supports_option(ctx->dev, RS_OPTION_R200_LR_AUTO_EXPOSURE_ENABLED, NULL))
+        rs_set_device_option(ctx->dev, RS_OPTION_R200_LR_AUTO_EXPOSURE_ENABLED, 1, NULL);
+
     /* gstreamer */
     GError *error = nullptr;
     GstElement *pipeline;
