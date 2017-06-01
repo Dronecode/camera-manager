@@ -20,14 +20,12 @@
 #include <string>
 #include <vector>
 
-#include "gstreamer_pipeline_builder.h"
 #include "log.h"
 #include "stream.h"
 
 class StreamV4l2 : public Stream {
 public:
-    StreamV4l2(GstreamerPipelineBuilder &_gst_builder, std::string device_path,
-               std::string device_name);
+    StreamV4l2(std::string device_path, std::string device_name);
     ~StreamV4l2() {}
 
     const std::string get_path() const override;
@@ -41,5 +39,4 @@ private:
     std::string device_path;
     std::vector<PixelFormat> formats;
     void get_v4l2_info();
-    GstreamerPipelineBuilder &gst_builder;
 };
