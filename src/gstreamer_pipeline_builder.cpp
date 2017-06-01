@@ -105,3 +105,10 @@ std::string GstreamerPipelineBuilder::create_pipeline(std::string source,
     log_debug("Gstreamer pipeline: %s", ss.str().c_str());
     return ss.str();
 }
+
+GstreamerPipelineBuilder &GstreamerPipelineBuilder::get_instance()
+{
+    static GstreamerPipelineBuilder gst;
+
+    return gst;
+}

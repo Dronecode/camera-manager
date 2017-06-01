@@ -23,6 +23,7 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 
+#include "gstreamer_pipeline_builder.h"
 #include "log.h"
 #include "stream_realsense.h"
 
@@ -142,6 +143,17 @@ const std::vector<Stream::PixelFormat> &StreamRealSense::get_formats() const
     return formats;
 }
 
+static std::string create_pipeline(std::map<std::string, std::string> &params)
+{
+    std::stringstream ss;
+    GstreamerPipelineBuilder &gst = GstreamerPipelineBuilder::get_instance();
+
+    ss << "appsrc name=mysource ! videoconvert ! video/x-raw,width=640,height=480,format=NV12";
+    ss << " ! " << gst.create_encoder(params) << " ! " << gst.create_muxer(params) << " name=pay0";
+
+    return ss.str();
+}
+
 GstElement *
 StreamRealSense::create_gstreamer_pipeline(std::map<std::string, std::string> &params) const
 {
@@ -179,12 +191,8 @@ StreamRealSense::create_gstreamer_pipeline(std::map<std::string, std::string> &p
 
     /* gstreamer */
     GError *error = nullptr;
-    GstElement *pipeline;
-
-    pipeline = gst_parse_launch("appsrc name=mysource ! videoconvert ! "
-                                "video/x-raw,width=640,height=480,format=NV12 ! vaapih264enc ! "
-                                "rtph264pay name=pay0",
-                                &error);
+    std::string pipeline_str = create_pipeline(params);
+    GstElement *pipeline = gst_parse_launch(pipeline_str.c_str(), &error);
     if (!pipeline) {
         log_error("Error processing pipeline for RealSense stream device: %s\n",
                   error ? error->message : "unknown error");

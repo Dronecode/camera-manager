@@ -17,7 +17,6 @@
  */
 #pragma once
 
-#include "gstreamer_pipeline_builder.h"
 #include "stream_builder.h"
 
 class StreamBuilderV4l2 final : public StreamBuilder {
@@ -29,7 +28,4 @@ public:
     ~StreamBuilderV4l2() {}
 
     std::vector<Stream *> build_streams(ConfFile &conf);
-
-private:
-    GstreamerPipelineBuilder gst_builder;
 };

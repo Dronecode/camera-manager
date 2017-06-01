@@ -19,6 +19,7 @@
 #include <dirent.h>
 #include <system_error>
 
+#include "gstreamer_pipeline_builder.h"
 #include "log.h"
 #include "stream_builder.h"
 #include "stream_manager.h"
@@ -50,6 +51,7 @@ void StreamManager::start()
 
 void StreamManager::init_streams(ConfFile &conf)
 {
+    GstreamerPipelineBuilder::get_instance().apply_configs(conf);
     for (StreamBuilder *builder : StreamBuilder::get_builders())
         for (Stream *s : builder->build_streams(conf)) {
             log_debug("Adding stream %s (%s)", s->get_path().c_str(), s->get_name().c_str());

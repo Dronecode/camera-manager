@@ -23,17 +23,20 @@
 
 class GstreamerPipelineBuilder {
 public:
-    GstreamerPipelineBuilder();
     virtual ~GstreamerPipelineBuilder() {}
-    virtual void apply_configs(ConfFile &conf);
-    virtual std::string create_caps(std::map<std::string, std::string> &params);
-    virtual std::string create_muxer(std::map<std::string, std::string> &params);
-    virtual std::string create_converter(std::map<std::string, std::string> &params);
-    virtual std::string create_encoder(std::map<std::string, std::string> &params);
-    virtual std::string create_pipeline(std::string source,
-                                        std::map<std::string, std::string> &params);
+    void apply_configs(ConfFile &conf);
+    std::string create_caps(std::map<std::string, std::string> &params);
+    std::string create_muxer(std::map<std::string, std::string> &params);
+    std::string create_converter(std::map<std::string, std::string> &params);
+    std::string create_encoder(std::map<std::string, std::string> &params);
+    std::string create_pipeline(std::string source, std::map<std::string, std::string> &params);
+
+    GstreamerPipelineBuilder(GstreamerPipelineBuilder const &) = delete;
+    void operator=(GstreamerPipelineBuilder const &) = delete;
+    static GstreamerPipelineBuilder &get_instance();
 
 private:
+    GstreamerPipelineBuilder();
     struct options {
         std::string encoder, converter, muxer;
     } opt;

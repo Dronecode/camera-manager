@@ -16,21 +16,20 @@
  * limitations under the License.
  */
 #include <fcntl.h>
+#include <linux/videodev2.h>
 #include <sstream>
 #include <sys/ioctl.h>
 #include <unistd.h>
 
+#include "gstreamer_pipeline_builder.h"
 #include "log.h"
 #include "stream_v4l2.h"
-#include <linux/videodev2.h>
 
-StreamV4l2::StreamV4l2(GstreamerPipelineBuilder &_gst_builder, std::string _path,
-                       std::string _device_path)
+StreamV4l2::StreamV4l2(std::string _path, std::string _device_path)
     : Stream()
     , name("")
     , path(_path)
     , device_path(_device_path)
-    , gst_builder(_gst_builder)
 {
     get_v4l2_info();
 }
@@ -96,7 +95,8 @@ GstElement *StreamV4l2::create_gstreamer_pipeline(std::map<std::string, std::str
     std::string source = "v4l2src device=";
     source.append(device_path);
 
-    std::string pipeline_str = gst_builder.create_pipeline(source, params);
+    std::string pipeline_str
+        = GstreamerPipelineBuilder::get_instance().create_pipeline(source, params);
     pipeline = gst_parse_launch(pipeline_str.c_str(), &error);
     if (!pipeline) {
         log_error("Error processing pipeline for device %s: %s\n", device_path.c_str(),
