@@ -126,7 +126,17 @@ AM_LDFLAGS = \
 	-Wl,--no-undefined \
 	-Wl,--gc-sections
 
+REALSENSE_SRC =
+if HAVE_REALSENSE
+REALSENSE_SRC += \
+	src/stream_builder_realsense.h \
+	src/stream_builder_realsense.cpp \
+	src/stream_realsense.cpp \
+	src/stream_realsense.h
+endif
+
 BASE_FILES = \
+	$(REALSENSE_SRC) \
 	src/avahi_publisher.cpp \
 	src/avahi_publisher.h \
 	src/conf_file.cpp \
