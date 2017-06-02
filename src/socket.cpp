@@ -36,8 +36,7 @@ Socket::Socket()
 
 Socket::~Socket()
 {
-    if (_write_buf.data)
-        free(_write_buf.data);
+    free(_write_buf.data);
 }
 
 int Socket::write(const struct buffer &buf, const struct sockaddr_in &sockaddr)
