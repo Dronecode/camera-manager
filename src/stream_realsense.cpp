@@ -126,7 +126,7 @@ StreamRealSense::StreamRealSense(const char *path, const char *name, int camera)
     , _camera(camera)
 {
     PixelFormat f{Stream::fourCC("NV12")};
-    f.frame_sizes.emplace_back(FrameSize{640, 480});
+    f.frame_sizes.emplace_back(FrameSize{WIDTH, HEIGHT});
     formats.push_back(f);
 }
 
@@ -145,7 +145,7 @@ static std::string create_pipeline(std::map<std::string, std::string> &params)
     std::stringstream ss;
     GstreamerPipelineBuilder &gst = GstreamerPipelineBuilder::get_instance();
 
-    ss << "appsrc name=mysource ! videoconvert ! video/x-raw,width=640,height=480,format=NV12";
+    ss << "appsrc name=mysource ! videoconvert ! video/x-raw,width=" << WIDTH << ",height=" << HEIGHT <<",format=NV12";
     ss << " ! " << gst.create_encoder(params) << " ! " << gst.create_muxer(params) << " name=pay0";
 
     return ss.str();
