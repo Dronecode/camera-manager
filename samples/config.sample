@@ -1,0 +1,60 @@
+# camera-streaming-daemon configuration file is composed of sections,
+# each section has some keys and values. They
+# are case insensitive, so `Key=Value` is the same as `key=value`.
+#
+# [This-is-a-section]
+# ThisIsAKey=ThisIsAValuye
+#
+# Following specifications of expected sessions and key/values.
+#
+# Section [Mavlink]:
+#
+# Keys:
+#   Port
+#       MAVLink destination UDP port.
+#       Default: 14550
+#
+#   System_ID
+#       System ID of the Camera-Streaming-Daemon to be used in MAVLink
+#       communications.
+#       Default: 42
+#
+#   Component_ID
+#       Component ID of the Camera-Streaming-Daemon to be used in MAVLink
+#       communications.
+#       Default: 100 (MAV_COMP_ID_CAMERA)
+#
+#   Rtsp_Server_Addr
+#       IP address or hostname of the interface where the rtsp server is
+#       running. This is the address that will be used by the client to
+#       make the rtsp request.
+#       Default: 0.0.0.0
+#
+#   Broadcast_Addr
+#       Broadcast address to send MAVLink heartbeat messages.
+#       Default: 255.255.255.255
+#
+# Section [Gstreamer]:
+#
+# Keys:
+#   Muxer
+#       Muxer used to create the gstreamer pipeline
+#       Default: rtpjpegpay
+#
+#   Converter
+#       Converter used to create the gstreamer pipeline
+#       Default: videoconvert
+#
+#   Encoder
+#       Muxer used to create the gstreamer pipeline
+#       Default: jpegenc
+#
+# Section [V4L2]
+#
+# Keys:
+#   Blacklist
+#       Coma separated list of /dev/video devices that won't be exported by
+#       camera-streaming-daemon. If the video streams from cameras /dev/video123
+#       and /dev/video456 can't be exported, set:
+#       blacklist = video123,video456
+#       Default: <empty>
