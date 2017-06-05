@@ -44,7 +44,7 @@ protected:
 private:
     std::function<void(const struct buffer &buf, const struct sockaddr_in &sockaddr)> _read_cb;
     struct buffer _write_buf;
-    struct sockaddr_in sockaddr_buf;
+    struct sockaddr_in sockaddr_buf {};
 };
 
 class UDPSocket : public Socket {
