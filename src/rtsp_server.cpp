@@ -32,12 +32,14 @@ static void stream_media_dispose(GObject *obj)
     GObject *element = nullptr;
     g_object_get(obj, "element", &element, NULL);
 
-    if (stream && element)
-        stream->finalize_gstreamer_pipeline(GST_ELEMENT(element));
+    if (stream) {
+        if (element)
+            stream->finalize_gstreamer_pipeline(GST_ELEMENT(element));
+        stream->is_streaming = false;
+    }
 
     if (media_dispose)
         media_dispose(obj);
-    stream->is_streaming = false;
 }
 
 GstElement *stream_create_element(GstRTSPMediaFactory *factory, const GstRTSPUrl *url)
