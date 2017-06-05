@@ -49,7 +49,7 @@ MavlinkServer::MavlinkServer(ConfFile &conf, std::vector<std::unique_ptr<Stream>
     } opt = {};
     static const ConfFile::OptionsTable option_table[] = {
         {"port", false, ConfFile::parse_ul, OPTIONS_TABLE_STRUCT_FIELD(options, port)},
-        {"system_id", false, ConfFile::parse_ul, OPTIONS_TABLE_STRUCT_FIELD(options, sysid)},
+        {"system_id", false, ConfFile::parse_i, OPTIONS_TABLE_STRUCT_FIELD(options, sysid)},
         {"rtsp_server_addr", false, ConfFile::parse_str_dup, OPTIONS_TABLE_STRUCT_FIELD(options, rtsp_server_addr)},
         {"broadcast_addr", false, ConfFile::parse_str_buf, OPTIONS_TABLE_STRUCT_FIELD(options, broadcast)},
     };
@@ -65,7 +65,7 @@ MavlinkServer::MavlinkServer(ConfFile &conf, std::vector<std::unique_ptr<Stream>
             log_error("Invalid System ID for MAVLink communication (%d). Using default (%d)",
                       opt.sysid, DEFAULT_SYSID);
         else
-            _system_id = DEFAULT_SYSID;
+            _system_id = opt.sysid;
     }
 
     if (opt.broadcast[0])
