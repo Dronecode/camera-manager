@@ -30,6 +30,20 @@
 
 static StreamBuilderV4l2 stream_builder;
 
+static void _insert(std::set<std::string> *value_set, const char *val, size_t val_len)
+{
+    while (isspace(*val) && val_len > 0) {
+        val++;
+        val_len--;
+    }
+
+    while (val_len > 0 && isspace(val[val_len - 1]))
+        val_len--;
+
+    if (val_len)
+        value_set->insert(std::string(val, val_len));
+}
+
 static int parse_stl_set(const char *val, size_t val_len, void *storage, size_t storage_len)
 {
     assert(val);
@@ -39,14 +53,14 @@ static int parse_stl_set(const char *val, size_t val_len, void *storage, size_t 
     std::set<std::string> *value_set = (std::set<std::string> *)storage;
     char *end;
 
-    while ((end = (char *)memchr((void *)val, ' ', val_len))) {
+    while ((end = (char *)memchr((void *)val, ',', val_len))) {
         if (end - val)
-            value_set->insert(std::string(val, end - val));
+            _insert(value_set, val, end - val);
         val_len = val_len - (end - val) - 1;
         val = end + 1;
     }
     if (val_len)
-        value_set->insert(std::string(val, val_len));
+        _insert(value_set, val, val_len);
 
     return 0;
 }
