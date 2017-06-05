@@ -41,6 +41,7 @@ private:
     UDPSocket _udp;
     struct sockaddr_in _broadcast_addr = {};
     int _system_id;
+    int _comp_id;
     char *_rtsp_server_addr;
     RTSPServer &_rtsp;
 

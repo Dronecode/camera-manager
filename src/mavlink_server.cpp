@@ -38,18 +38,21 @@ MavlinkServer::MavlinkServer(ConfFile &conf, std::vector<std::unique_ptr<Stream>
     , _timeout_handler(0)
     , _broadcast_addr{}
     , _system_id(DEFAULT_SYSID)
+    , _comp_id(MAV_COMP_ID_CAMERA)
     , _rtsp_server_addr(nullptr)
     , _rtsp(rtsp)
 {
     struct options {
         unsigned long int port;
         int sysid;
+        int compid;
         char *rtsp_server_addr;
         char broadcast[17];
     } opt = {};
     static const ConfFile::OptionsTable option_table[] = {
         {"port", false, ConfFile::parse_ul, OPTIONS_TABLE_STRUCT_FIELD(options, port)},
         {"system_id", false, ConfFile::parse_i, OPTIONS_TABLE_STRUCT_FIELD(options, sysid)},
+        {"component_id", false, ConfFile::parse_i, OPTIONS_TABLE_STRUCT_FIELD(options, compid)},
         {"rtsp_server_addr", false, ConfFile::parse_str_dup, OPTIONS_TABLE_STRUCT_FIELD(options, rtsp_server_addr)},
         {"broadcast_addr", false, ConfFile::parse_str_buf, OPTIONS_TABLE_STRUCT_FIELD(options, broadcast)},
     };
@@ -66,6 +69,14 @@ MavlinkServer::MavlinkServer(ConfFile &conf, std::vector<std::unique_ptr<Stream>
                       opt.sysid, DEFAULT_SYSID);
         else
             _system_id = opt.sysid;
+    }
+
+    if (opt.compid) {
+        if (opt.compid <= 1 || opt.compid >= 255)
+            log_error("Invalid Component ID for MAVLink communication (%d). Using default "
+                      "MAV_COMP_ID_CAMERA (%d)", opt.compid, MAV_COMP_ID_CAMERA);
+        else
+            _comp_id = opt.compid;
     }
 
     if (opt.broadcast[0])
@@ -86,7 +97,7 @@ void MavlinkServer::_send_ack(const struct sockaddr_in &addr, int cmd, bool succ
 {
     mavlink_message_t msg;
 
-    mavlink_msg_command_ack_pack(_system_id, MAV_COMP_ID_CAMERA, &msg, cmd,
+    mavlink_msg_command_ack_pack(_system_id, _comp_id, &msg, cmd,
                                  success ? MAV_RESULT_ACCEPTED : MAV_RESULT_FAILED, 255);
 
     if (!_send_mavlink_message(&addr, msg)) {
@@ -109,7 +120,7 @@ void MavlinkServer::_handle_camera_info_request(const struct sockaddr_in &addr, 
     for (auto const &s : _streams) {
         if (camera_id == 0 || camera_id == s->id) {
             mavlink_msg_camera_information_pack(
-                _system_id, MAV_COMP_ID_CAMERA, &msg, 0, s->id, 1,
+                _system_id, _comp_id, &msg, 0, s->id, 1,
                 (const uint8_t *)"",
                 (const uint8_t *)s->get_name().c_str(), 0, 0, 0, 0, 0, 0, 0);
 
@@ -149,7 +160,7 @@ void MavlinkServer::_handle_camera_video_stream_request(const struct sockaddr_in
             }
 
             mavlink_msg_video_stream_information_pack(
-                _system_id, MAV_COMP_ID_CAMERA, &msg, s->id, s->is_streaming /* Status */,
+                _system_id, _comp_id, &msg, s->id, s->is_streaming /* Status */,
                 0 /* FPS */, fs->width, fs->height, 0 /* bitrate */, 0 /* Rotation */,
                 _rtsp.get_rtsp_uri(_rtsp_server_addr, *s, query).c_str());
             if (!_send_mavlink_message(&addr, msg)) {
@@ -211,7 +222,7 @@ void MavlinkServer::_handle_mavlink_message(const struct sockaddr_in &addr, mavl
         mavlink_command_long_t cmd;
         mavlink_msg_command_long_decode(msg, &cmd);
 
-        if (cmd.target_system != _system_id || cmd.target_component != MAV_COMP_ID_CAMERA)
+        if (cmd.target_system != _system_id || cmd.target_component != _comp_id)
             return;
 
         switch (cmd.command) {
@@ -261,7 +272,7 @@ bool _heartbeat_cb(void *data)
     MavlinkServer *server = (MavlinkServer *)data;
     mavlink_message_t msg;
 
-    mavlink_msg_heartbeat_pack(server->_system_id, MAV_COMP_ID_CAMERA, &msg, MAV_TYPE_GENERIC,
+    mavlink_msg_heartbeat_pack(server->_system_id, server->_comp_id, &msg, MAV_TYPE_GENERIC,
                                MAV_AUTOPILOT_INVALID, MAV_MODE_PREFLIGHT, 0, MAV_STATE_ACTIVE);
     if (!server->_send_mavlink_message(nullptr, msg))
         log_error("Sending HEARTBEAT failed.");
