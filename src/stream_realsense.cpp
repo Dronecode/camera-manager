@@ -154,6 +154,9 @@ static std::string create_pipeline(std::map<std::string, std::string> &params)
 GstElement *
 StreamRealSense::create_gstreamer_pipeline(std::map<std::string, std::string> &params) const
 {
+    GstElement *pipeline;
+    GError *error = nullptr;
+    GstElement *appsrc;
     Context *ctx = (Context *)malloc(sizeof(Context) + SIZE);
     assert(ctx);
 
@@ -165,12 +168,12 @@ StreamRealSense::create_gstreamer_pipeline(std::map<std::string, std::string> &p
                   rs_get_failed_args(e), rs_get_error_message(e));
         log_error("Current librealsense api version %d", rs_get_api_version(NULL));
         log_error("Compiled for librealsense api version %d", RS_API_VERSION);
-        return nullptr;
+        goto error;
     }
     ctx->dev = rs_get_device(ctx->rs_ctx, 0, NULL);
     if (!ctx->dev) {
         log_error("Unable to access realsense device");
-        return nullptr;
+        goto error_rs;
     }
 
     /* Configure all streams to run at VGA resolution at 60 frames per second */
@@ -187,18 +190,16 @@ StreamRealSense::create_gstreamer_pipeline(std::map<std::string, std::string> &p
         rs_set_device_option(ctx->dev, RS_OPTION_R200_LR_AUTO_EXPOSURE_ENABLED, 1, NULL);
 
     /* gstreamer */
-    GError *error = nullptr;
-    std::string pipeline_str = create_pipeline(params);
-    GstElement *pipeline = gst_parse_launch(pipeline_str.c_str(), &error);
+    pipeline = gst_parse_launch(create_pipeline(params).c_str(), &error);
     if (!pipeline) {
         log_error("Error processing pipeline for RealSense stream device: %s\n",
                   error ? error->message : "unknown error");
         g_clear_error(&error);
 
-        return nullptr;
+        goto error_rs;
     }
 
-    GstElement *appsrc = gst_bin_get_by_name(GST_BIN(pipeline), "mysource");
+    appsrc = gst_bin_get_by_name(GST_BIN(pipeline), "mysource");
 
     /* setup */
     gst_app_src_set_caps(GST_APP_SRC(appsrc),
@@ -216,9 +217,17 @@ StreamRealSense::create_gstreamer_pipeline(std::map<std::string, std::string> &p
     cbs.seek_data = cb_seek_data;
     gst_app_src_set_callbacks(GST_APP_SRC_CAST(appsrc), &cbs, ctx, NULL);
 
+    g_object_unref(appsrc);
+
     g_object_set_data(G_OBJECT(pipeline), "context", ctx);
 
     return pipeline;
+
+error_rs:
+    rs_delete_context(ctx->rs_ctx, NULL);
+error:
+    free(ctx);
+    return nullptr;
 }
 
 void StreamRealSense::finalize_gstreamer_pipeline(GstElement *pipeline)
