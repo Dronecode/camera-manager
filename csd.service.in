@@ -1,5 +1,6 @@
 [Unit]
 Description=Camera Streaming Daemon
+After=multi-user.target
 
 [Service]
 Type=simple
