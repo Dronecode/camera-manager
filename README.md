@@ -1,6 +1,7 @@
 # Camera Streaming Daemon
 
-[![Build Status](https://travis-ci.org/01org/camera-streaming-daemon.svg?branch=master)](https://travis-ci.org/01org/camera-streaming-daemon) <a href="https://scan.coverity.com/projects/01org-camera-streaming-daemon">
+[![Build Status](https://travis-ci.org/01org/camera-streaming-daemon.svg?branch=master)](https://travis-ci.org/01org/camera-streaming-daemon)
+<a href="https://scan.coverity.com/projects/01org-camera-streaming-daemon">
   <img alt="Coverity Scan Build Status"
        src="https://scan.coverity.com/projects/12056/badge.svg"/>
 </a>
@@ -14,6 +15,7 @@ In order to compile you need the following packages:
  - Avahi 0.6 or newer (https://github.com/lathiat/avahi)
  - GStreamer 1.4 or newer (https://gstreamer.freedesktop.org/)
  - GStreamer RTSP Server 1.4 or newer (https://gstreamer.freedesktop.org/modules/gst-rtsp-server.html)
+ - Python2
 
 ### Installing Pre-Requisites on Ubuntu
 
@@ -63,7 +65,45 @@ Camera streaming daemon is composed of a single binary that can be run without a
 
     $ csd
 
-## Testing
+## Testing MAVLink Advertisement
+
+Currently there are no Ground Control System with full support for Camera Streaming Daemon MAVLink advertisement, but there are 2 straightforward ways to test the daemon, using a WIP implementation in QGroundControl or camera-sample-mavlink-client sample.
+
+### QGroundControl
+
+There is a QGroundControl branch, still under development, but functional on Linux, to discovery Camera Streaming Daemon streams and play them.
+
+In order to use it, clone the repository located at https://github.com/otaviobp/qgroundcontrol/tree/csd_mavlink_support:
+
+    $ git clone -b csd_mavlink_support https://github.com/otaviobp/qgroundcontrol.git
+
+And build it, following the instructions in QGroundControl website: http://qgroundcontrol.org/dev/build_qgc_new
+
+This modified version of QGroundControl adds an option called "MAVLink Auto Discovery Streams" another option to "VideoSource" ComboBox in General Settings panel.
+
+[[images/qgc1.png|alt=QGroundControl Video Settings]]
+
+As soon as this option is selected, information and options about the video is loaded in "Video Streaming Widget", accessible in the Widgets menu (Widgets->Video Streaming).
+
+[[images/qgc2.png|alt=QGroundControl Video Streaming Widget]]
+
+In Video Streaming widget, select the desired video stream and, optionally the resolution. The video will start playing in Video Area automatically.
+
+### Sample
+
+#### Running the sample
+In camera-streaming-daemon samples repository there is one sample to list all drone's video stream found.
+The first step to build the samples:
+
+    $ make samples
+
+And then in a computer connected to the target drone using WiFi or any other Ethernet connection:
+
+    $ ./samples/camera-sample-mavlink-client
+
+More information about the camera-sample-mavlink-client is located in [[samples|Samples#camera-sample-mavlink-client]] wiki page.
+
+## Testing Avahi advertisement
 
 Currently there are no Ground Control System with full support for Camera Streaming Daemon, but there are 2 straightforward ways to test the daemon, using a WIP implementation in QGroundControl or camera-sample-client sample + vlc.
 
@@ -77,7 +117,7 @@ In order to use it, clone the repository located at https://github.com/otaviobp/
 
 And build it, following the instructions in QGroundControl website: http://qgroundcontrol.org/dev/build_qgc_new
 
-This modified version of QGroundControl adds an option called "Zeroconf Cameras" another option to "VideoSource" combobox in General Settings panel.
+This modified version of QGroundControl adds an option called "Zeroconf Cameras" another option to "VideoSource" ComboBox in General Settings panel.
 
 [[images/qgc1.png|alt=QGroundControl Video Settings]]
 
@@ -114,6 +154,16 @@ In order to play the discovered stream, copy the video URI and open it using the
 
 VLC will start streaming your video.
 
+## Configuration files
+
+It's possible to use a .conf file to set custom options for Camera Streaming Daemon. By default, csd looks for  a file /etc/csd/main.conf. File location can be overriden via CSD_CONF_FILE  environment variable, or via -c switch when running csd. An example of conf file can be found on [samples/config.sample](https://github.com/01org/camera-streaming-daemon/blob/master/samples/config.sample)
+
+### Conf dirs
+
+Besides default conf file, it's also possible to use a directory in where to put some extra configuration files. Files on such directory will be read in alphabetical order, and can add or override configurations found on previous files.
+
+By default, /etc/csd/config.d is the directory, but it can be overriden via CSD_CONF_DIR environment variable, or via -d switch when running csd.
+
 ## Contributing
 
 Pull-requests are accepted on GitHub. Make sure to check coding style with the
@@ -123,4 +173,4 @@ test on real hardware.
 ### Valgrind
 
 In order to avoid seeing a lot of glib and gstreamer false positives memory leaks it is recommended to run valgrind using the followind command:
-    $ GDEBUG=gc-friendly G_SLICE=always-malloc valgrind --suppressions=valgrind.supp --leak-check=full --track-origins=yes --show-possibly-lost=no --num-callers=20 ./camera-streaming-daemon
+    $ GDEBUG=gc-friendly G_SLICE=always-malloc valgrind --suppressions=valgrind.supp --leak-check=full --track-origins=yes --show-possibly-lost=no --num-callers=20 ./csd
