@@ -17,13 +17,17 @@
  */
 #pragma once
 
+#ifndef DISABLE_AVAHI
 #include <avahi-common/watch.h>
+#endif
 #include <functional>
 
 class Mainloop {
 public:
     virtual void loop() = 0;
+#ifndef DISABLE_AVAHI
     virtual const AvahiPoll *get_avahi_poll_api() = 0;
+#endif
     static Mainloop *get_mainloop() { return mainloop; };
     virtual unsigned int add_timeout(unsigned int timeout_msec, bool (*cb)(void *),
                                      const void *data) = 0;

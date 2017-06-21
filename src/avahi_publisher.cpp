@@ -146,6 +146,7 @@ void AvahiPublisher::publish_services(AvahiClient *c)
 
 void AvahiPublisher::start()
 {
+    log_error("AVAHI START\n");
     if (is_running)
         return;
 
