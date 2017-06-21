@@ -15,6 +15,23 @@ AC_CONFIG_HEADERS(config.h)
 AC_CONFIG_AUX_DIR([build-aux])
 AC_SEARCH_LIBS([rs_create_context], [realsense], [AM_CONDITIONAL([HAVE_REALSENSE], true)], [AM_CONDITIONAL([HAVE_REALSENSE], false)])
 
+AC_ARG_ENABLE([mavlink],
+ AS_HELP_STRING([--enable-mavlink], [Enable MAVLink advertisement]),
+ [
+   AM_CONDITIONAL([ENABLE_MAVLINK], true)
+   AC_DEFINE(ENABLE_MAVLINK, 1, [Enable MAVLink advertisement])
+ ],
+ [AM_CONDITIONAL([ENABLE_MAVLINK], false)])
+
+AC_ARG_ENABLE([avahi],
+ AS_HELP_STRING([--disable-avahi], [Disable avahi advertisement]),
+ [
+   AM_CONDITIONAL([DISABLE_AVAHI], true)
+   AC_DEFINE(DISABLE_AVAHI, 1, [Disable avahi advertisement])
+ ],
+ [AM_CONDITIONAL([DISABLE_AVAHI], false)])
+
+
 AC_USE_SYSTEM_EXTENSIONS
 AC_SYS_LARGEFILE
 AC_PREFIX_DEFAULT([/usr])

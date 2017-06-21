@@ -22,9 +22,13 @@
 #include <string>
 #include <vector>
 
+#ifndef DISABLE_AVAHI
 #include "avahi_publisher.h"
+#endif
 #include "conf_file.h"
+#ifdef ENABLE_MAVLINK
 #include "mavlink_server.h"
+#endif
 #include "rtsp_server.h"
 #include "stream.h"
 
@@ -39,7 +43,11 @@ public:
 private:
     std::vector<std::unique_ptr<Stream>> streams;
     bool is_running;
+#ifndef DISABLE_AVAHI
     AvahiPublisher avahi_publisher;
+#endif
     RTSPServer rtsp_server;
+#ifdef ENABLE_MAVLINK
     MavlinkServer mavlink_server;
+#endif
 };

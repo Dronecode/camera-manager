@@ -12,18 +12,13 @@ AM_MAKEFLAGS = --no-print-directory
 GCC_COLORS ?= 'yes'
 export GCC_COLORS
 
-BUILT_SOURCES = include/mavlink/ardupilotmega/mavlink.h
+BUILT_SOURCES =
+samples_deps =
 
 clean-local:
 	rm -rf $(top_builddir)/include/mavlink
 	rm -rf $(EXTRA_PROGRAMS)
 
-include/mavlink/ardupilotmega/mavlink.h: modules/mavlink/pymavlink/tools/mavgen.py modules/mavlink/message_definitions/v1.0/ardupilotmega.xml
-	$(AM_V_GEN)$(PYTHON) $(srcdir)/modules/mavlink/pymavlink/tools/mavgen.py \
-		-o include/mavlink \
-		--lang C \
-		--wire-protocol 2.0 \
-		$(srcdir)/modules/mavlink/message_definitions/v1.0/ardupilotmega.xml
 #if SYSTEMD
 systemdsystemunitdir = @SYSTEMD_SYSTEMUNITDIR@
 systemdsystemunit_DATA = csd.service
@@ -32,8 +27,6 @@ systemdsystemunit_DATA = csd.service
 
 AM_CPPFLAGS = \
 	-include $(abs_top_builddir)/config.h \
-	-I$(abs_top_builddir)/include/mavlink \
-	-I$(abs_top_builddir)/include/mavlink/ardupilotmega \
 	-DSYSCONFDIR=\""$(sysconfdir)"\"
 
 AM_CFLAGS = \
@@ -77,7 +70,6 @@ AM_CFLAGS = \
 	-fvisibility=hidden \
 	-ffunction-sections \
 	-fdata-sections \
-	${AVAHI_CFLAGS} \
 	${GST_CFLAGS}
 
 AM_CXXFLAGS = \
@@ -118,7 +110,6 @@ AM_CXXFLAGS = \
 	-fvisibility=hidden \
 	-ffunction-sections \
 	-fdata-sections \
-	${AVAHI_CFLAGS} \
 	${GST_CFLAGS}
 
 AM_LDFLAGS = \
@@ -127,8 +118,6 @@ AM_LDFLAGS = \
 	-Wl,--gc-sections
 
 BASE_FILES = \
-	src/avahi_publisher.cpp \
-	src/avahi_publisher.h \
 	src/conf_file.cpp \
 	src/conf_file.h \
 	src/glib_mainloop.cpp \
@@ -140,8 +129,6 @@ BASE_FILES = \
 	src/macro.h \
 	src/mainloop.cpp \
 	src/mainloop.h \
-	src/mavlink_server.cpp \
-	src/mavlink_server.h \
 	src/pollable.cpp \
 	src/pollable.h \
 	src/rtsp_server.cpp \
@@ -183,16 +170,14 @@ csd_SOURCES = \
 	${BASE_FILES} \
 	src/main.cpp
 
-csd_LDADD = $(GLIB_LIBS) $(AVAHI_LIBS) $(GST_LIBS)
+csd_LDADD = $(GLIB_LIBS) $(GST_LIBS)
 
 CLEANFILES += csd.service
 
 #Samples
-EXTRA_PROGRAMS = samples/camera-sample-custom samples/camera-sample-client samples/camera-sample-mavlink-client
+EXTRA_PROGRAMS = samples/camera-sample-custom
 
 samples_camera_sample_custom_LDADD = ${csd_LDADD}
-samples_camera_sample_client_LDADD = $(GLIB_LIBS) $(AVAHI_LIBS)
-samples_camera_sample_mavlink_client_LDADD = $(GLIB_LIBS) $(AVAHI_LIBS)
 
 samples_camera_sample_custom_SOURCES = \
 	$(BASE_FILES) \
@@ -202,6 +187,16 @@ samples_camera_sample_custom_SOURCES = \
 	samples/stream_custom.cpp \
 	samples/stream_custom.h
 
+if !DISABLE_AVAHI
+EXTRA_PROGRAMS += samples/camera-sample-client
+BASE_FILES += \
+	src/avahi_publisher.cpp \
+	src/avahi_publisher.h
+
+AM_CXXFLAGS += ${AVAHI_CFLAGS}
+AM_CXXFLAGS += ${AVAHI_CFLAGS}
+csd_LDADD += $(AVAHI_LIBS)
+
 samples_camera_sample_client_SOURCES = \
 	samples/main_sample_client.cpp \
 	src/log.cpp \
@@ -210,6 +205,29 @@ samples_camera_sample_client_SOURCES = \
 	src/glib_mainloop.h \
 	src/mainloop.cpp \
 	src/mainloop.h
+
+samples_camera_sample_client_LDADD = $(GLIB_LIBS) $(AVAHI_LIBS)
+endif
+
+if ENABLE_MAVLINK
+
+EXTRA_PROGRAMS += samples/camera-sample-mavlink-client
+
+BUILT_SOURCES += include/mavlink/ardupilotmega/mavlink.h
+include/mavlink/ardupilotmega/mavlink.h: modules/mavlink/pymavlink/tools/mavgen.py modules/mavlink/message_definitions/v1.0/ardupilotmega.xml
+	$(AM_V_GEN)$(PYTHON) $(srcdir)/modules/mavlink/pymavlink/tools/mavgen.py \
+		-o include/mavlink \
+		--lang C \
+		--wire-protocol 2.0 \
+		$(srcdir)/modules/mavlink/message_definitions/v1.0/ardupilotmega.xml
+
+AM_CPPFLAGS += \
+	-I$(abs_top_builddir)/include/mavlink \
+	-I$(abs_top_builddir)/include/mavlink/ardupilotmega
+
+BASE_FILES += \
+	src/mavlink_server.cpp \
+	src/mavlink_server.h
 
 samples_camera_sample_mavlink_client_SOURCES = \
 	samples/main_sample_mavlink_client.cpp \
@@ -226,10 +244,17 @@ samples_camera_sample_mavlink_client_SOURCES = \
 	src/util.c \
 	src/util.h
 
-.PHONY: samples
-samples: include/mavlink/ardupilotmega/mavlink.h
-	$(MAKE) $(EXTRA_PROGRAMS)
+samples_camera_sample_mavlink_client_LDADD = $(GLIB_LIBS)
+if !DISABLE_AVAHI
+samples_camera_sample_mavlink_client_LDADD += $(AVAHI_LIBS)
+endif
 
+samples_deps = samples_camera_sample_mavlink_client_LDADD
+endif
+
+.PHONY: samples
+samples: $(samples_deps)
+	$(MAKE) $(EXTRA_PROGRAMS)
 
 # ------------------------------------------------------------------------------
 # coverity
