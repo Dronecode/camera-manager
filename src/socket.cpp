@@ -85,6 +85,7 @@ bool Socket::_can_read()
         read_buf.len = (unsigned int)r;
         _read_cb(read_buf, sockaddr);
     }
+    delete[] read_buf.data;
     return true;
 }
 
