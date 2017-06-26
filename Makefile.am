@@ -169,6 +169,14 @@ BASE_FILES += \
 	src/stream_realsense.h
 endif
 
+if ENABLE_AERO
+BASE_FILES += \
+	src/stream_builder_aero_bottom.h \
+	src/stream_builder_aero_bottom.cpp \
+	src/stream_aero_bottom.cpp \
+	src/stream_aero_bottom.h
+endif
+
 bin_PROGRAMS += csd
 
 SED_PROCESS = $(AM_V_GEN) $(MKDIR_P) $(dir $@) && \
