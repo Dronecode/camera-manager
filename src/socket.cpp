@@ -75,16 +75,19 @@ bool Socket::_can_read()
 
     if (r == -EAGAIN) {
         log_debug("Read packet failed. Trying again.");
-        return true;
+        goto end;
     }
     if (r < 0) {
         log_debug("Read failed. Droping packet.");
+        delete[] read_buf.data;
         return false;
     }
     if (r > 0) {
         read_buf.len = (unsigned int)r;
         _read_cb(read_buf, sockaddr);
     }
+
+end:
     delete[] read_buf.data;
     return true;
 }
