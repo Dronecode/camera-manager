@@ -14,6 +14,7 @@ AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS(config.h)
 AC_CONFIG_AUX_DIR([build-aux])
 AC_SEARCH_LIBS([rs_create_context], [realsense], [AM_CONDITIONAL([HAVE_REALSENSE], true)], [AM_CONDITIONAL([HAVE_REALSENSE], false)])
+AC_SEARCH_LIBS([pcre_study], [pcre], [], [ AC_MSG_ERROR([unable to find the pcre_study() function]) ])
 
 AC_USE_SYSTEM_EXTENSIONS
 AC_SYS_LARGEFILE
