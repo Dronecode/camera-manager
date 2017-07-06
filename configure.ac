@@ -13,24 +13,48 @@ AC_CONFIG_SRCDIR([src/main.cpp])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS(config.h)
 AC_CONFIG_AUX_DIR([build-aux])
-AC_SEARCH_LIBS([rs_create_context], [realsense], [AM_CONDITIONAL([HAVE_REALSENSE], true)], [AM_CONDITIONAL([HAVE_REALSENSE], false)])
-AC_ARG_ENABLE([aero], AS_HELP_STRING([--enable-aero], [Include streams specific for Intel Aero drone]), [AM_CONDITIONAL([ENABLE_AERO], true)], [AM_CONDITIONAL([ENABLE_AERO], false)])
+AC_SEARCH_LIBS([rs_create_context], [realsense],
+ [
+   have_realsense=yes
+   AM_CONDITIONAL([HAVE_REALSENSE], true)
+ ],
+ [
+   have_realsense=no
+   AM_CONDITIONAL([HAVE_REALSENSE], false)
+ ])
+AC_ARG_ENABLE([aero], AS_HELP_STRING([--enable-aero], [Include streams specific for Intel Aero drone]),
+ [
+   enable_aero=yes
+   AM_CONDITIONAL([ENABLE_AERO], true)
+ ],
+ [
+   enable_aero=no
+   AM_CONDITIONAL([ENABLE_AERO], false)
+ ])
 
 AC_ARG_ENABLE([mavlink],
  AS_HELP_STRING([--enable-mavlink], [Enable MAVLink advertisement]),
  [
+   enable_mavlink=yes
    AM_CONDITIONAL([ENABLE_MAVLINK], true)
    AC_DEFINE(ENABLE_MAVLINK, 1, [Enable MAVLink advertisement])
  ],
- [AM_CONDITIONAL([ENABLE_MAVLINK], false)])
+ [
+   enable_mavlink=no
+   AM_CONDITIONAL([ENABLE_MAVLINK], false)
+ ])
 
 AC_ARG_ENABLE([avahi],
  AS_HELP_STRING([--disable-avahi], [Disable avahi advertisement]),
  [
+   enable_avahi=no
    AM_CONDITIONAL([DISABLE_AVAHI], true)
    AC_DEFINE(DISABLE_AVAHI, 1, [Disable avahi advertisement])
  ],
- [AM_CONDITIONAL([DISABLE_AVAHI], false)])
+ [
+   enable_avahi=yes
+   AM_CONDITIONAL([DISABLE_AVAHI], false)
+ ])
 
 
 AC_USE_SYSTEM_EXTENSIONS
@@ -107,7 +131,7 @@ AM_CONDITIONAL(SYSTEMD, test "${enable_systemd}" != "no")
 DEFAULT_FLAGS=" -fstack-protector-all -fPIE -fPIC -O2 -D_FORTIFY_SOURCE=2 -pthread -Wformat -Wformat-security"
 CFLAGS+=$DEFAULT_FLAGS
 CXXFLAGS+=$DEFAULT_FLAGS
-LDFLAGS+=" -z noexecstack -z relro -z now"
+LDFLAGS+="-z noexecstack -z relro -z now"
 
 #####################################################################
 # Generate files from *.in
@@ -125,16 +149,21 @@ AC_MSG_RESULT([
     $PACKAGE $VERSION
     ================
 
-    prefix:            ${prefix}
-    sysconfdir:        ${sysconfdir}
-    libdir:            ${libdir}
-    rootlibdir:        ${rootlibdir}
-    includedir:        ${includedir}
-    bindir:            ${bindir}
+    prefix:              ${prefix}
+    sysconfdir:          ${sysconfdir}
+    libdir:              ${libdir}
+    rootlibdir:          ${rootlibdir}
+    includedir:          ${includedir}
+    bindir:              ${bindir}
 
-    C compiler:        ${CC}
-    C++ compiler:      ${CXX}
-    CFLAGS:            ${CFLAGS}
-    CXXFLAGS:          ${CXXFLAGS}
-    LDFLAGS:           ${LDFLAGS}
+    C compiler:          ${CC}
+    C++ compiler:        ${CXX}
+    CFLAGS:              ${CFLAGS}
+    CXXFLAGS:            ${CXXFLAGS}
+    LDFLAGS:             ${LDFLAGS}
+
+    RealSense support:   $have_realsense
+    MAVLink support:     $enable_mavlink
+    AVAHI support:       $enable_avahi
+    Intel Aero support:  $enable_aero
 ])
