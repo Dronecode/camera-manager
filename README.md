@@ -38,9 +38,7 @@ system during compilation. The corresponding submodule should be fetched.
 
 Build system follows the usual configure/build/install cycle. Configuration is needed to be done only once. A typical configuration is shown below:
 
-    $ ./autogen.sh && ./configure \
-        --sysconfdir=/etc --localstatedir=/var --libdir=/usr/lib64 \
-        --prefix=/usr
+    $ ./autogen.sh c
 
 By default systemd integration is enabled. In a system without systemd it can
 be disabled --disable-systemd. The default systemd system directory
