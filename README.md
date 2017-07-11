@@ -97,7 +97,7 @@ The first step to build the samples:
 
 And then in a computer connected to the target drone using WiFi or any other Ethernet connection:
 
-    $ ./samples/camera-sample-mavlink-client
+    $ ./samples/camera-sample-client
 
 More information about the camera-sample-mavlink-client is located in [[samples|Samples#camera-sample-mavlink-client]] wiki page.
 
