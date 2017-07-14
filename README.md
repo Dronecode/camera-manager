@@ -25,6 +25,7 @@ The following commands should install many of these required packages on Ubuntu:
     $ sudo apt-get install gstreamer-1.0
     $ sudo apt-get install libgstreamer-plugins-base1.0-dev
     $ sudo apt-get install libgstrtspserver-1.0-dev
+    $ sudo apt-get install python-pip
     $ sudo pip2 -q install -U future
 
 ## Fetch dependencies: ##
