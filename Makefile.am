@@ -235,7 +235,14 @@ AM_CPPFLAGS += \
 
 BASE_FILES += \
 	src/mavlink_server.cpp \
-	src/mavlink_server.h
+	src/mavlink_server.h \
+	src/CameraServer.cpp \
+	src/CameraServer.h \
+	src/CameraComponent.h \
+	src/CameraComponent_V4L2.cpp \
+	src/CameraComponent_V4L2.h \
+	src/CameraParameters.cpp \
+	src/CameraParameters.h
 
 samples_camera_sample_mavlink_client_SOURCES = \
 	samples/main_sample_mavlink_client.cpp \

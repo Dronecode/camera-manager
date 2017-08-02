@@ -62,7 +62,7 @@ void StreamManager::start()
     avahi_publisher.start();
 #endif
 #ifdef ENABLE_MAVLINK
-    mavlink_server.start();
+// mavlink_server.start();
 #endif
 }
 
@@ -77,7 +77,7 @@ void StreamManager::stop()
     avahi_publisher.stop();
 #endif
 #ifdef ENABLE_MAVLINK
-    mavlink_server.stop();
+// mavlink_server.stop();
 #endif
 }
 

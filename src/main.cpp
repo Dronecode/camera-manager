@@ -22,6 +22,7 @@
 #include <string.h>
 #include <sys/stat.h>
 
+#include "CameraServer.h"
 #include "conf_file.h"
 #include "glib_mainloop.h"
 #include "log.h"
@@ -239,11 +240,15 @@ int main(int argc, char *argv[])
     conf = new ConfFile();
     parse_conf_files(*conf, &opt);
 
-    StreamManager stream(*conf);
-    delete conf;
+    CameraServer camServer(*conf);
+    camServer.start();
 
-    log_debug("Starting Camera Streaming Daemon");
+    StreamManager stream(*conf);
     stream.start();
+
+    delete conf;
+    log_debug("Starting Camera Streaming Daemon");
+
     mainloop.loop();
 
     Log::close();
