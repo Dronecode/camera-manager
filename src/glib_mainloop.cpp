@@ -115,7 +115,7 @@ static gboolean fd_io_cb(gint fd, GIOCondition condition, gpointer user_data)
     assert(user_data);
     handler = (struct fd_handler *)user_data;
 
-    log_debug("Poll IO fd: %d flag: %d", fd, condition);
+    // log_debug("Poll IO fd: %d flag: %d", fd, condition);
 
     if (condition & G_IO_IN)
         flags |= Mainloop::IO_IN;
