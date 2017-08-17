@@ -26,12 +26,12 @@ class CameraParameters {
 public:
     CameraParameters();
     virtual ~CameraParameters();
+    const std::map<std::string, std::string> &getParameterList() const { return paramValue; }
+    bool setParameterSupported(std::string key, std::string value);
+    bool setParameter(std::string param, std::string value);
+    std::string getParameter(std::string param);
     int getParameterType(std::string param);
     int getParameterID(std::string param);
-    int setParameterSupported(std::string key, std::string value);
-    int setParameter(std::string param, std::string value);
-    std::string getParameter(std::string param);
-    const std::map<std::string, std::string> &getParameterList() const { return paramValue; }
 
     enum param_type {
         PARAM_TYPE_UINT8 = 1,
@@ -96,93 +96,95 @@ public:
     static const char IMAGE_FORMAT_JPEG[];
     static const char IMAGE_FORMAT_PNG[];
 
-    enum param_id {
-        PARAM_ID_CAMERA_MODE = 1,
-        PARAM_ID_BRIGHTNESS,
-        PARAM_ID_CONTRAST,
-        PARAM_ID_SATURATION,
-        PARAM_ID_HUE,
-        PARAM_ID_WHITE_BALANCE_MODE,
-        PARAM_ID_GAMMA,
-        PARAM_ID_GAIN,
-        PARAM_ID_POWER_LINE_FREQ_MODE,
-        PARAM_ID_WHITE_BALANCE_TEMPERATURE,
-        PARAM_ID_SHARPNESS,
-        PARAM_ID_BACKLIGHT_COMPENSATION,
-        PARAM_ID_EXPOSURE_MODE,
-        PARAM_ID_EXPOSURE_ABSOLUTE,
-        PARAM_ID_IMAGE_SIZE,
-        PARAM_ID_IMAGE_FORMAT,
-        PARAM_ID_PIXEL_FORMAT,
-        PARAM_ID_SCENE_MODE,
-        PARAM_ID_VIDEO_SIZE,
-        PARAM_ID_VIDEO_FRAME_FORMAT,
-        PARAM_ID_VIDEO_SNAPSHOT_SUPPORTED
-    };
+    // ID for parameters
+    static const int PARAM_ID_CAMERA_MODE = 1;
+    static const int PARAM_ID_BRIGHTNESS = 2;
+    static const int PARAM_ID_CONTRAST = 3;
+    static const int PARAM_ID_SATURATION = 4;
+    static const int PARAM_ID_HUE = 5;
+    static const int PARAM_ID_WHITE_BALANCE_MODE = 6;
+    static const int PARAM_ID_GAMMA = 7;
+    static const int PARAM_ID_GAIN = 8;
+    static const int PARAM_ID_POWER_LINE_FREQ_MODE = 9;
+    static const int PARAM_ID_WHITE_BALANCE_TEMPERATURE = 10;
+    static const int PARAM_ID_SHARPNESS = 11;
+    static const int PARAM_ID_BACKLIGHT_COMPENSATION = 12;
+    static const int PARAM_ID_EXPOSURE_MODE = 13;
+    static const int PARAM_ID_EXPOSURE_ABSOLUTE = 14;
+    static const int PARAM_ID_IMAGE_SIZE = 15;
+    static const int PARAM_ID_IMAGE_FORMAT = 16;
+    static const int PARAM_ID_PIXEL_FORMAT = 17;
+    static const int PARAM_ID_SCENE_MODE = 18;
+    static const int PARAM_ID_VIDEO_SIZE = 19;
+    static const int PARAM_ID_VIDEO_FRAME_FORMAT = 20;
+    static const int PARAM_ID_IMAGE_CAPTURE = 21;
+    static const int PARAM_ID_VIDEO_CAPTURE = 22;
+    static const int PARAM_ID_VIDEO_SNAPSHOT = 23;
+    static const int PARAM_ID_IMAGE_VIDEOSHOT = 24;
 
-    enum id_image_size {
-        ID_IMAGE_SIZE_3264x2448 = 0,
-        ID_IMAGE_SIZE_3264x1836,
-        ID_IMAGE_SIZE_1920x1080
-    };
+    // ID for image sizes
+    static const int ID_IMAGE_SIZE_3264x2448 = 1;
+    static const int ID_IMAGE_SIZE_3264x1836 = 2;
+    static const int ID_IMAGE_SIZE_1920x1080 = 3;
 
-    enum id_video_size {
-        ID_VIDEO_SIZE_1920x1080x30 = 1,
-        ID_VIDEO_SIZE_1920x1080x15,
-        ID_VIDEO_SIZE_1280x720x30,
-        ID_VIDEO_SIZE_1280x720x15,
-        ID_VIDEO_SIZE_960x540x30,
-        ID_VIDEO_SIZE_960x540x15,
-        ID_VIDEO_SIZE_848x480x30,
-        ID_VIDEO_SIZE_848x480x15,
-        ID_VIDEO_SIZE_640x480x60,
-        ID_VIDEO_SIZE_640x480x30,
-        ID_VIDEO_SIZE_640x480x15,
-        ID_VIDEO_SIZE_640x360x30,
-        ID_VIDEO_SIZE_640x360x15,
-        ID_VIDEO_SIZE_424x240x30,
-        ID_VIDEO_SIZE_424x240x15,
-        ID_VIDEO_SIZE_320x240x60,
-        ID_VIDEO_SIZE_320x240x30,
-        ID_VIDEO_SIZE_320x240x15,
-        ID_VIDEO_SIZE_320x180x30,
-        ID_VIDEO_SIZE_320x180x60
-    };
+    // ID for video sizes
+    static const int ID_VIDEO_SIZE_1920x1080x30 = 1;
+    static const int ID_VIDEO_SIZE_1920x1080x15 = 2;
+    static const int ID_VIDEO_SIZE_1280x720x30 = 3;
+    static const int ID_VIDEO_SIZE_1280x720x15 = 4;
+    static const int ID_VIDEO_SIZE_960x540x30 = 5;
+    static const int ID_VIDEO_SIZE_960x540x15 = 6;
+    static const int ID_VIDEO_SIZE_848x480x30 = 7;
+    static const int ID_VIDEO_SIZE_848x480x15 = 8;
+    static const int ID_VIDEO_SIZE_640x480x60 = 9;
+    static const int ID_VIDEO_SIZE_640x480x30 = 10;
+    static const int ID_VIDEO_SIZE_640x480x15 = 11;
+    static const int ID_VIDEO_SIZE_640x360x30 = 12;
+    static const int ID_VIDEO_SIZE_640x360x15 = 13;
+    static const int ID_VIDEO_SIZE_424x240x30 = 14;
+    static const int ID_VIDEO_SIZE_424x240x15 = 15;
+    static const int ID_VIDEO_SIZE_320x240x60 = 16;
+    static const int ID_VIDEO_SIZE_320x240x30 = 17;
+    static const int ID_VIDEO_SIZE_320x240x15 = 18;
+    static const int ID_VIDEO_SIZE_320x180x30 = 19;
+    static const int ID_VIDEO_SIZE_320x180x60 = 20;
 
-    enum id_camera_mode { ID_CAMERA_MODE_STILL = 0, ID_CAMERA_MODE_VIDEO, ID_CAMERA_MODE_PREVIEW };
+    // ID for camera modes
+    static const int ID_CAMERA_MODE_STILL = 0;
+    static const int ID_CAMERA_MODE_VIDEO = 1;
+    static const int ID_CAMERA_MODE_PREVIEW = 2;
 
-    enum id_image_format { ID_IMAGE_FORMAT_JPEG = 0, ID_IMAGE_FORMAT_PNG };
+    // ID for image formats
+    static const int ID_IMAGE_FORMAT_RAW = 0;
+    static const int ID_IMAGE_FORMAT_JPEG = 1;
+    static const int ID_IMAGE_FORMAT_PNG = 2;
 
-    enum id_white_balance_mode {
-        ID_WHITE_BALANCE_MANUAL = 0,
-        ID_WHITE_BALANCE_AUTO,
-        ID_WHITE_BALANCE_INCANDESCENT,
-        ID_WHITE_BALANCE_FLUORESCENT,
-        ID_WHITE_BALANCE_WARM_FLUORESCENT,
-        ID_WHITE_BALANCE_DAYLIGHT,
-        ID_WHITE_BALANCE_CLOUDY_DAYLIGHT,
-        ID_WHITE_BALANCE_TWILIGHT,
-        ID_WHITE_BALANCE_SHADE
-    };
+    // ID for White Balance Modes
+    static const int ID_WHITE_BALANCE_MANUAL = 0;
+    static const int ID_WHITE_BALANCE_AUTO = 1;
+    static const int ID_WHITE_BALANCE_INCANDESCENT = 2;
+    static const int ID_WHITE_BALANCE_FLUORESCENT = 3;
+    static const int ID_WHITE_BALANCE_WARM_FLUORESCENT = 4;
+    static const int ID_WHITE_BALANCE_DAYLIGHT = 5;
+    static const int ID_WHITE_BALANCE_CLOUDY_DAYLIGHT = 6;
+    static const int ID_WHITE_BALANCE_TWILIGHT = 7;
+    static const int ID_WHITE_BALANCE_SHADE = 8;
 
-    enum id_exposure_mode { ID_EXPOSURE_MANUAL = 0, ID_EXPOSURE_AUTO };
+    // ID for exposure modes
+    static const int ID_EXPOSURE_MANUAL = 0;
+    static const int ID_EXPOSURE_AUTO = 1;
 
-    enum id_pixel_format {
-        ID_PIXEL_FORMAT_YUV422SP = 0,
-        ID_PIXEL_FORMAT_YUV420SP,
-        ID_PIXEL_FORMAT_YUV422I,
-        ID_PIXEL_FORMAT_YUV420P,
-        ID_PIXEL_FORMAT_RGB565,
-        ID_PIXEL_FORMAT_RGBA8888
-    };
+    // ID for pixel formats
+    static const int ID_PIXEL_FORMAT_YUV422SP = 0;
+    static const int ID_PIXEL_FORMAT_YUV420SP = 1;
+    static const int ID_PIXEL_FORMAT_YUV422I = 2;
+    static const int ID_PIXEL_FORMAT_YUV420P = 3;
+    static const int ID_PIXEL_FORMAT_RGB565 = 4;
+    static const int ID_PIXEL_FORMAT_RGBA8888 = 5;
 
     // TODO :: Make exhaustive list of parameters and its possible values
 private:
     void initParamIdType();
-    void set(std::map<std::string, std::string> &pMap, std::string key, std::string value);
-    void set(std::map<std::string, std::pair<int, int>> &pMap, std::string key,
-             std::pair<int, int> value);
-    std::string get(std::map<std::string, std::string> &pMap, std::string key);
     std::map<std::string, std::string> paramValue;
     std::map<std::string, std::string> paramValuesSupported;
     std::map<std::string, std::pair<int, int>> paramIdType; /*Key->ID,Type*/

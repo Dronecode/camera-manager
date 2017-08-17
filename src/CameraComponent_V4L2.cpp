@@ -91,14 +91,13 @@ void CameraComponent_V4L2::initSupportedValues()
 void CameraComponent_V4L2::initDefaultValues()
 {
     // TODO :: Get the details of the default values from the camera device and then save it in DB
-    saveParameter(CameraParameters::CAMERA_MODE,
-                  (uint32_t)CameraParameters::id_camera_mode::ID_CAMERA_MODE_VIDEO);
+    saveParameter(CameraParameters::CAMERA_MODE, (uint32_t)CameraParameters::ID_CAMERA_MODE_VIDEO);
     saveParameter(CameraParameters::BRIGHTNESS, (uint32_t)56);
     saveParameter(CameraParameters::CONTRAST, (uint32_t)32);
     saveParameter(CameraParameters::SATURATION, (uint32_t)128);
     saveParameter(CameraParameters::HUE, (int32_t)0);
     saveParameter(CameraParameters::WHITE_BALANCE_MODE,
-                  (uint32_t)CameraParameters::id_white_balance_mode::ID_WHITE_BALANCE_AUTO);
+                  (uint32_t)CameraParameters::ID_WHITE_BALANCE_AUTO);
     saveParameter(CameraParameters::GAMMA, (uint32_t)220);
     saveParameter(CameraParameters::GAIN, (uint32_t)32);
     saveParameter(CameraParameters::POWER_LINE_FREQ_MODE, (uint32_t)0);
@@ -108,15 +107,12 @@ void CameraComponent_V4L2::initDefaultValues()
     saveParameter(CameraParameters::EXPOSURE_MODE, (uint32_t)3);
     saveParameter(CameraParameters::EXPOSURE_ABSOLUTE, (uint32_t)1);
     saveParameter(CameraParameters::VIDEO_SIZE,
-                  (uint32_t)CameraParameters::id_video_size::ID_VIDEO_SIZE_640x480x30);
+                  (uint32_t)CameraParameters::ID_VIDEO_SIZE_640x480x30);
 
     // dummy values
-    saveParameter(CameraParameters::IMAGE_SIZE,
-                  CameraParameters::id_image_size::ID_IMAGE_SIZE_3264x2448);
-    saveParameter(CameraParameters::IMAGE_FORMAT,
-                  CameraParameters::id_image_format::ID_IMAGE_FORMAT_JPEG);
-    saveParameter(CameraParameters::PIXEL_FORMAT,
-                  CameraParameters::id_pixel_format::ID_PIXEL_FORMAT_YUV420P);
+    saveParameter(CameraParameters::IMAGE_SIZE, CameraParameters::ID_IMAGE_SIZE_3264x2448);
+    saveParameter(CameraParameters::IMAGE_FORMAT, CameraParameters::ID_IMAGE_FORMAT_JPEG);
+    saveParameter(CameraParameters::PIXEL_FORMAT, CameraParameters::ID_PIXEL_FORMAT_YUV420P);
 }
 
 int CameraComponent_V4L2::getParam(const char *param_id, char *param_value)
@@ -324,6 +320,7 @@ int CameraComponent_V4L2::saveParameter(const char *param_id, float param_value)
 
 int CameraComponent_V4L2::saveParameter(const char *param_id, uint32_t param_value)
 {
+    log_debug("saveParameter Id:%s Value:%d", param_id, param_value);
     char str[128];
     mavlink_param_union_t u;
     u.param_uint32 = param_value;

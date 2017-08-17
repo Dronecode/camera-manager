@@ -83,26 +83,30 @@ CameraParameters::~CameraParameters()
 {
 }
 
-int CameraParameters::setParameterSupported(std::string key, std::string value)
+bool CameraParameters::setParameterSupported(std::string key, std::string value)
 {
-    set(paramValuesSupported, key, value);
-    return 1;
+    // TODO::Check if the key and value are valid
+    paramValuesSupported[key] = value;
+    return true;
 }
 
-int CameraParameters::setParameter(std::string key, std::string value)
+bool CameraParameters::setParameter(std::string key, std::string value)
 {
-    set(paramValue, key, value);
-    return 1;
+    // TODO::Check if the key and value are valid
+    paramValue[key] = value;
+    return true;
 }
 
 std::string CameraParameters::getParameter(std::string key)
 {
-    return get(paramValue, key);
+    if (paramValue.find(key) == paramValue.end())
+        return "";
+    else
+        return paramValue[key];
 }
 
 int CameraParameters::getParameterID(std::string param)
 {
-    // TODO :: Create a map of paramString to paramID
     int ret = -1;
     std::map<std::string, std::pair<int, int>>::iterator it = paramIdType.find(param);
     if (it != paramIdType.end()) {
@@ -114,7 +118,6 @@ int CameraParameters::getParameterID(std::string param)
 
 int CameraParameters::getParameterType(std::string param)
 {
-    // TODO :: Create a map of paramString to paramType
     int ret = -1;
     std::map<std::string, std::pair<int, int>>::iterator it = paramIdType.find(param);
     if (it != paramIdType.end()) {
@@ -126,55 +129,33 @@ int CameraParameters::getParameterType(std::string param)
 
 void CameraParameters::initParamIdType()
 {
-    set(paramIdType, CAMERA_MODE, std::make_pair(PARAM_ID_CAMERA_MODE, PARAM_TYPE_UINT32));
-    set(paramIdType, BRIGHTNESS, std::make_pair(PARAM_ID_BRIGHTNESS, PARAM_TYPE_UINT32));
-    set(paramIdType, CONTRAST, std::make_pair(PARAM_ID_CONTRAST, PARAM_TYPE_UINT32));
-    set(paramIdType, SATURATION, std::make_pair(PARAM_ID_SATURATION, PARAM_TYPE_UINT32));
-    set(paramIdType, HUE, std::make_pair(PARAM_ID_HUE, PARAM_TYPE_INT32));
-    set(paramIdType, WHITE_BALANCE_MODE,
-        std::make_pair(PARAM_ID_WHITE_BALANCE_MODE, PARAM_TYPE_UINT32));
-    set(paramIdType, GAMMA, std::make_pair(PARAM_ID_GAMMA, PARAM_TYPE_UINT32));
-    set(paramIdType, GAIN, std::make_pair(PARAM_ID_GAIN, PARAM_TYPE_UINT32));
-    set(paramIdType, POWER_LINE_FREQ_MODE,
-        std::make_pair(PARAM_ID_POWER_LINE_FREQ_MODE, PARAM_TYPE_UINT32));
-    set(paramIdType, WHITE_BALANCE_TEMPERATURE,
-        std::make_pair(PARAM_ID_WHITE_BALANCE_TEMPERATURE, PARAM_TYPE_UINT32));
-    set(paramIdType, SHARPNESS, std::make_pair(PARAM_ID_SHARPNESS, PARAM_TYPE_UINT32));
-    set(paramIdType, BACKLIGHT_COMPENSATION,
-        std::make_pair(PARAM_ID_BACKLIGHT_COMPENSATION, PARAM_TYPE_UINT32));
-    set(paramIdType, EXPOSURE_MODE, std::make_pair(PARAM_ID_EXPOSURE_MODE, PARAM_TYPE_UINT32));
-    set(paramIdType, EXPOSURE_ABSOLUTE,
-        std::make_pair(PARAM_ID_EXPOSURE_ABSOLUTE, PARAM_TYPE_UINT32));
-    set(paramIdType, IMAGE_SIZE, std::make_pair(PARAM_ID_IMAGE_SIZE, PARAM_TYPE_UINT32));
-    set(paramIdType, IMAGE_FORMAT, std::make_pair(PARAM_ID_IMAGE_FORMAT, PARAM_TYPE_UINT32));
-    set(paramIdType, PIXEL_FORMAT, std::make_pair(PARAM_ID_PIXEL_FORMAT, PARAM_TYPE_UINT32));
-    set(paramIdType, WHITE_BALANCE_MODE,
-        std::make_pair(PARAM_ID_WHITE_BALANCE_MODE, PARAM_TYPE_UINT32));
-    set(paramIdType, SCENE_MODE, std::make_pair(PARAM_ID_SCENE_MODE, PARAM_TYPE_UINT32));
-    set(paramIdType, VIDEO_SIZE, std::make_pair(PARAM_ID_VIDEO_SIZE, PARAM_TYPE_UINT32));
-    set(paramIdType, VIDEO_FRAME_FORMAT,
-        std::make_pair(PARAM_ID_VIDEO_FRAME_FORMAT, PARAM_TYPE_UINT32));
-    set(paramIdType, VIDEO_SNAPSHOT,
-        std::make_pair(PARAM_ID_VIDEO_SNAPSHOT_SUPPORTED, PARAM_TYPE_UINT32));
-}
-
-void CameraParameters::set(std::map<std::string, std::string> &pMap, std::string key,
-                           std::string value)
-{
-    pMap.insert(std::make_pair(key, value));
-}
-
-void CameraParameters::set(std::map<std::string, std::pair<int, int>> &pMap, std::string key,
-                           std::pair<int, int> value)
-{
-    pMap.insert(std::make_pair(key, value));
-}
-
-std::string CameraParameters::get(std::map<std::string, std::string> &pMap, std::string key)
-{
-    std::map<std::string, std::string>::iterator it = pMap.find(key);
-    if (it != pMap.end())
-        return it->second;
-    else
-        return "";
+    paramIdType[CAMERA_MODE] = std::make_pair(PARAM_ID_CAMERA_MODE, PARAM_TYPE_UINT32);
+    paramIdType[BRIGHTNESS] = std::make_pair(PARAM_ID_BRIGHTNESS, PARAM_TYPE_UINT32);
+    paramIdType[CONTRAST] = std::make_pair(PARAM_ID_CONTRAST, PARAM_TYPE_UINT32);
+    paramIdType[SATURATION] = std::make_pair(PARAM_ID_SATURATION, PARAM_TYPE_UINT32);
+    paramIdType[HUE] = std::make_pair(PARAM_ID_HUE, PARAM_TYPE_INT32);
+    paramIdType[WHITE_BALANCE_MODE]
+        = std::make_pair(PARAM_ID_WHITE_BALANCE_MODE, PARAM_TYPE_UINT32);
+    paramIdType[GAMMA] = std::make_pair(PARAM_ID_GAMMA, PARAM_TYPE_UINT32);
+    paramIdType[GAIN] = std::make_pair(PARAM_ID_GAIN, PARAM_TYPE_UINT32);
+    paramIdType[POWER_LINE_FREQ_MODE]
+        = std::make_pair(PARAM_ID_POWER_LINE_FREQ_MODE, PARAM_TYPE_UINT32);
+    paramIdType[WHITE_BALANCE_TEMPERATURE]
+        = std::make_pair(PARAM_ID_WHITE_BALANCE_TEMPERATURE, PARAM_TYPE_UINT32);
+    paramIdType[SHARPNESS] = std::make_pair(PARAM_ID_SHARPNESS, PARAM_TYPE_UINT32);
+    paramIdType[BACKLIGHT_COMPENSATION]
+        = std::make_pair(PARAM_ID_BACKLIGHT_COMPENSATION, PARAM_TYPE_UINT32);
+    paramIdType[EXPOSURE_MODE] = std::make_pair(PARAM_ID_EXPOSURE_MODE, PARAM_TYPE_UINT32);
+    paramIdType[EXPOSURE_ABSOLUTE] = std::make_pair(PARAM_ID_EXPOSURE_ABSOLUTE, PARAM_TYPE_UINT32);
+    paramIdType[IMAGE_SIZE] = std::make_pair(PARAM_ID_IMAGE_SIZE, PARAM_TYPE_UINT32);
+    paramIdType[IMAGE_FORMAT] = std::make_pair(PARAM_ID_IMAGE_FORMAT, PARAM_TYPE_UINT32);
+    paramIdType[PIXEL_FORMAT] = std::make_pair(PARAM_ID_PIXEL_FORMAT, PARAM_TYPE_UINT32);
+    paramIdType[SCENE_MODE] = std::make_pair(PARAM_ID_SCENE_MODE, PARAM_TYPE_UINT32);
+    paramIdType[VIDEO_SIZE] = std::make_pair(PARAM_ID_VIDEO_SIZE, PARAM_TYPE_UINT32);
+    paramIdType[VIDEO_FRAME_FORMAT]
+        = std::make_pair(PARAM_ID_VIDEO_FRAME_FORMAT, PARAM_TYPE_UINT32);
+    paramIdType[IMAGE_CAPTURE] = std::make_pair(PARAM_ID_IMAGE_CAPTURE, PARAM_TYPE_UINT32);
+    paramIdType[VIDEO_CAPTURE] = std::make_pair(PARAM_ID_VIDEO_CAPTURE, PARAM_TYPE_UINT32);
+    paramIdType[VIDEO_SNAPSHOT] = std::make_pair(PARAM_ID_VIDEO_SNAPSHOT, PARAM_TYPE_UINT32);
+    paramIdType[IMAGE_VIDEOSHOT] = std::make_pair(PARAM_ID_IMAGE_VIDEOSHOT, PARAM_TYPE_UINT32);
 }
