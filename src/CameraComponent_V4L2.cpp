@@ -81,6 +81,14 @@ void CameraComponent_V4L2::initCameraInfo()
 void CameraComponent_V4L2::initStorageInfo()
 {
     // TODO:: Fill storage details with values
+    storeInfo.storage_id = 1;
+    storeInfo.storage_count = 1;
+    storeInfo.status = 2; /*formatted*/
+    storeInfo.total_capacity = 50.0;
+    storeInfo.used_capacity = 0.0;
+    storeInfo.available_capacity = 50.0;
+    storeInfo.read_speed = 128;
+    storeInfo.write_speed = 128;
 }
 
 void CameraComponent_V4L2::initSupportedValues()

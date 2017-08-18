@@ -187,10 +187,12 @@ void MavlinkServer::_handle_request_storage_information(const struct sockaddr_in
     CameraComponent *tgtComp = getCameraComponent(cmd.target_component);
     if (tgtComp) {
         // TODO:: Fill with appropriate value
-        mavlink_msg_storage_information_pack(
-            _system_id, cmd.target_component, &msg, 0, 1 /*storage_id*/, 1 /*storage_count*/,
-            2 /*status- formatted*/, 50.0 /*total_capacity*/, 0.0 /*used_capacity*/,
-            50.0 /*available_capacity*/, 128 /*read_speed*/, 128 /*write_speed*/);
+        const StorageInfo &storeInfo = tgtComp->getStorageInfo();
+        mavlink_msg_storage_information_pack(_system_id, cmd.target_component, &msg, 0,
+                                             storeInfo.storage_id, storeInfo.storage_count,
+                                             storeInfo.status, storeInfo.total_capacity,
+                                             storeInfo.used_capacity, storeInfo.available_capacity,
+                                             storeInfo.read_speed, storeInfo.write_speed);
 
         if (!_send_mavlink_message(&addr, msg)) {
             log_error("Sending storage information failed for camera %d.", cmd.target_component);
