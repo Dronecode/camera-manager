@@ -100,7 +100,7 @@ bool CameraParameters::setParameter(std::string key, std::string value)
 std::string CameraParameters::getParameter(std::string key)
 {
     if (paramValue.find(key) == paramValue.end())
-        return "";
+        return std::string();
     else
         return paramValue[key];
 }

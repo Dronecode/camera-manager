@@ -29,12 +29,14 @@ public:
     CameraComponent_V4L2(std::string dev_path);
     CameraComponent_V4L2(std::string dev_path, std::string uri);
     ~CameraComponent_V4L2();
-    int getParam(const char *param_id, char *param_value);
-    int setParam(const char *param_id, const char *param_value, int param_type);
-    int setParam(const char *param_id, float param_value);
-    int setParam(const char *param_id, int32_t param_value);
-    int setParam(const char *param_id, uint32_t param_value);
-    int setParam(const char *param_id, uint8_t param_value);
+    int getParam(const char *param_id /*Null Terminated*/, char *param_value /*o/p Byte Array*/,
+                 size_t value_size);
+    int setParam(const char *param_id /*Null Terminated*/,
+                 const char *param_value /*i/p Byte Array*/, size_t value_size, int param_type);
+    int setParam(std::string param_id, float param_value);
+    int setParam(std::string param_id, int32_t param_value);
+    int setParam(std::string param_id, uint32_t param_value);
+    int setParam(std::string param_id, uint8_t param_value);
 
 private:
     std::string dev_path;
@@ -51,10 +53,10 @@ private:
     int setVideoSize(uint32_t wb_value);
     int setVideoFrameFormat(uint32_t wb_value);
 
-    int saveParameter(const char *param_id, float param_value);
-    int saveParameter(const char *param_id, uint32_t param_value);
-    int saveParameter(const char *param_id, int32_t param_value);
-    int saveParameter(const char *param_id, uint8_t param_value);
+    bool saveParameter(std::string param_id, float param_value);
+    bool saveParameter(std::string param_id, uint32_t param_value);
+    bool saveParameter(std::string param_id, int32_t param_value);
+    bool saveParameter(std::string param_id, uint8_t param_value);
 
     int xioctl(int fd, int request, void *arg);
     int v4l2_open_device(const char *dev_path);

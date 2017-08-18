@@ -35,19 +35,25 @@ CameraComponent_V4L2::CameraComponent_V4L2()
 
 CameraComponent_V4L2::CameraComponent_V4L2(std::string devicepath)
     : CameraComponent()
+    , dev_path(devicepath)
 {
     log_debug("%s path:%s", __func__, devicepath.c_str());
 }
 
 CameraComponent_V4L2::CameraComponent_V4L2(std::string devicepath, std::string uri)
     : CameraComponent()
+    , dev_path(devicepath)
 {
 
     log_debug("%s path:%s uri:%s", __func__, devicepath.c_str(), uri.c_str());
-    // TODO:: get the supported paramters from the camera device
+    // TODO:: get the supported parameters from the camera device
     // Initialize the supported and default values
-    dev_path = devicepath;
-    strcpy((char *)camInfo.cam_definition_uri, uri.c_str());
+    if (sizeof(camInfo.cam_definition_uri) < uri.size() + 1) {
+        log_error("URI length bigger than permitted");
+        // TODO::Continue with no parameter support
+    } else
+        strcpy((char *)camInfo.cam_definition_uri, uri.c_str());
+
     initCameraInfo();
     initSupportedValues();
     initDefaultValues();
@@ -123,32 +129,40 @@ void CameraComponent_V4L2::initDefaultValues()
     saveParameter(CameraParameters::PIXEL_FORMAT, CameraParameters::ID_PIXEL_FORMAT_YUV420P);
 }
 
-int CameraComponent_V4L2::getParam(const char *param_id, char *param_value)
+int CameraComponent_V4L2::getParam(const char *param_id, char *param_value, size_t value_size)
 {
     // TODO :: Do appropriate checks
     // query the value set in the map and fill the output, return appropriate value
     std::string value = camParam.getParameter(param_id);
-    strcpy(param_value, value.c_str());
-    return 1;
+    if (!value.empty())
+        return 1;
+
+    if (value_size < value.size())
+        strncpy(param_value, value.c_str(), value_size);
+    else
+        strcpy(param_value, value.c_str());
+
+    return 0;
 }
 
-int CameraComponent_V4L2::setParam(const char *param_id, const char *param_value, int param_type)
+int CameraComponent_V4L2::setParam(const char *param_id, const char *param_value, size_t value_size,
+                                   int param_type)
 {
     int ret = 1;
     mavlink_param_union_t u;
     memcpy(&u.param_float, param_value, sizeof(float));
     switch (param_type) {
     case CameraParameters::PARAM_TYPE_REAL32:
-        setParam(param_id, u.param_float);
+        ret = setParam(param_id, u.param_float);
         break;
     case CameraParameters::PARAM_TYPE_INT32:
-        setParam(param_id, u.param_int32);
+        ret = setParam(param_id, u.param_int32);
         break;
     case CameraParameters::PARAM_TYPE_UINT32:
-        setParam(param_id, u.param_uint32);
+        ret = setParam(param_id, u.param_uint32);
         break;
     case CameraParameters::PARAM_TYPE_UINT8:
-        setParam(param_id, u.param_uint8);
+        ret = setParam(param_id, u.param_uint8);
         break;
     default:
         break;
@@ -157,15 +171,15 @@ int CameraComponent_V4L2::setParam(const char *param_id, const char *param_value
     return ret;
 }
 
-int CameraComponent_V4L2::setParam(const char *param_id, float param_value)
+int CameraComponent_V4L2::setParam(std::string param_id, float param_value)
 {
-    log_debug("%s: Param Id:%s Value:%lf", __func__, param_id, param_value);
+    log_debug("%s: Param Id:%s Value:%lf", __func__, param_id.c_str(), param_value);
     return 0;
 }
 
-int CameraComponent_V4L2::setParam(const char *param_id, int32_t param_value)
+int CameraComponent_V4L2::setParam(std::string param_id, int32_t param_value)
 {
-    log_debug("%s: Param Id:%s Value:%d", __func__, param_id, param_value);
+    log_debug("%s: Param Id:%s Value:%d", __func__, param_id.c_str(), param_value);
     int ret = 0;
     int ctrl_id = -1;
     int paramID = camParam.getParameterID(param_id);
@@ -181,7 +195,7 @@ int CameraComponent_V4L2::setParam(const char *param_id, int32_t param_value)
         int fd = v4l2_open_device(dev_path.c_str());
         ret = v4l2_set_control(fd, ctrl_id, param_value);
         if (ret)
-            log_error("Error in setting control : %s Error:%d", param_id, errno);
+            log_error("Error in setting control : %s Error:%d", param_id.c_str(), errno);
         v4l2_close_device(fd);
         if (!ret)
             saveParameter(param_id, param_value);
@@ -189,14 +203,14 @@ int CameraComponent_V4L2::setParam(const char *param_id, int32_t param_value)
     return ret;
 }
 
-int CameraComponent_V4L2::setParam(const char *param_id, uint32_t param_value)
+int CameraComponent_V4L2::setParam(std::string param_id, uint32_t param_value)
 {
     // TODO :: Do appropriate checks
     // Check if camera is open for any usecase?
     // Check if param is available
     // Check if param is already set to same value
     // Check if value is supported
-    log_debug("%s: Param Id:%s Value:%d", __func__, param_id, param_value);
+    log_debug("%s: Param Id:%s Value:%d", __func__, param_id.c_str(), param_value);
     int ret = 0;
     int ctrl_id = -1;
     int paramID = camParam.getParameterID(param_id);
@@ -267,7 +281,7 @@ int CameraComponent_V4L2::setParam(const char *param_id, uint32_t param_value)
         int fd = v4l2_open_device(dev_path.c_str());
         ret = v4l2_set_control(fd, ctrl_id, param_value);
         if (ret)
-            log_error("Error in setting control : %s Error:%d", param_id, errno);
+            log_error("Error in setting control : %s Error:%d", param_id.c_str(), errno);
         v4l2_close_device(fd);
         if (!ret)
             saveParameter(param_id, param_value);
@@ -275,9 +289,9 @@ int CameraComponent_V4L2::setParam(const char *param_id, uint32_t param_value)
     return ret;
 }
 
-int CameraComponent_V4L2::setParam(const char *param_id, uint8_t param_value)
+int CameraComponent_V4L2::setParam(std::string param_id, uint8_t param_value)
 {
-    log_debug("%s: Param Id:%s Value:%d", __func__, param_id, param_value);
+    log_debug("%s: Param Id:%s Value:%d", __func__, param_id.c_str(), param_value);
     return 0;
 }
 
@@ -316,45 +330,44 @@ int CameraComponent_V4L2::setVideoFrameFormat(uint32_t param_value)
     return 0;
 }
 
-int CameraComponent_V4L2::saveParameter(const char *param_id, float param_value)
+bool CameraComponent_V4L2::saveParameter(std::string param_id, float param_value)
 {
     char str[128];
     mavlink_param_union_t u;
     u.param_float = param_value;
     memcpy(&str[0], &u.param_float, sizeof(float));
-    camParam.setParameter(param_id, str);
-    return 0;
+    std::string str2(str, sizeof(str));
+    return camParam.setParameter(param_id, str2);
 }
 
-int CameraComponent_V4L2::saveParameter(const char *param_id, uint32_t param_value)
+bool CameraComponent_V4L2::saveParameter(std::string param_id, uint32_t param_value)
 {
-    log_debug("saveParameter Id:%s Value:%d", param_id, param_value);
     char str[128];
     mavlink_param_union_t u;
     u.param_uint32 = param_value;
-    memcpy(&str[0], &u.param_float, sizeof(float));
-    camParam.setParameter(param_id, str);
-    return 0;
+    memcpy(&str[0], &u.param_uint32, sizeof(uint32_t));
+    std::string str2(str, sizeof(str));
+    return camParam.setParameter(param_id, str2);
 }
 
-int CameraComponent_V4L2::saveParameter(const char *param_id, int32_t param_value)
+bool CameraComponent_V4L2::saveParameter(std::string param_id, int32_t param_value)
 {
     char str[128];
     mavlink_param_union_t u;
     u.param_int32 = param_value;
-    memcpy(&str[0], &u.param_float, sizeof(float));
-    camParam.setParameter(param_id, str);
-    return 0;
+    memcpy(&str[0], &u.param_int32, sizeof(int32_t));
+    std::string str2(str, sizeof(str));
+    return camParam.setParameter(param_id, str2);
 }
 
-int CameraComponent_V4L2::saveParameter(const char *param_id, uint8_t param_value)
+bool CameraComponent_V4L2::saveParameter(std::string param_id, uint8_t param_value)
 {
     char str[128];
     mavlink_param_union_t u;
     u.param_uint8 = param_value;
-    memcpy(&str[0], &u.param_float, sizeof(float));
-    camParam.setParameter(param_id, str);
-    return 0;
+    memcpy(&str[0], &u.param_uint8, sizeof(uint8_t));
+    std::string str2(str, sizeof(str));
+    return camParam.setParameter(param_id, str2);
 }
 
 /*

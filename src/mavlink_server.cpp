@@ -115,6 +115,7 @@ void MavlinkServer::_handle_request_camera_information(const struct sockaddr_in 
     mavlink_message_t msg;
     bool success = false;
 
+    /* Check for Request camera capabilities flag*/
     if (cmd.param1 != 1) {
         _send_ack(addr, cmd.command, cmd.target_component, true);
         return;
@@ -146,6 +147,7 @@ void MavlinkServer::_handle_request_camera_settings(const struct sockaddr_in &ad
 {
     log_debug("%s", __func__);
 
+    // Check for Request camera settings flag
     if (cmd.param1 != 1) {
         _send_ack(addr, cmd.command, cmd.target_component, true);
         return;
@@ -176,7 +178,8 @@ void MavlinkServer::_handle_request_storage_information(const struct sockaddr_in
 {
     log_debug("%s", __func__);
 
-    if (cmd.param1 != 1) {
+    // Check for Request storage information flag
+    if (cmd.param2 != 1) {
         _send_ack(addr, cmd.command, cmd.target_component, true);
         return;
     }
@@ -300,22 +303,24 @@ void MavlinkServer::_handle_param_ext_request_read(const struct sockaddr_in &add
     CameraComponent *tgtComp = getCameraComponent(param_ext_read.target_component);
     if (tgtComp) {
         // Read parameter value from camera component
-        ret = tgtComp->getParam(param_ext_read.param_id, param_ext_value.param_value);
-        if (ret) {
+        ret = tgtComp->getParam(param_ext_read.param_id, param_ext_value.param_value,
+                                sizeof(param_ext_value.param_value));
+        if (!ret) {
             // Send the param value to GCS
             param_ext_value.param_count = 1;
             param_ext_value.param_index = 0;
-            strncpy(param_ext_value.param_id, param_ext_read.param_id, 16);
+            strncpy(param_ext_value.param_id, param_ext_read.param_id,
+                    sizeof(param_ext_value.param_id));
             param_ext_value.param_type = tgtComp->getParamType(param_ext_value.param_id);
             mavlink_msg_param_ext_value_encode(_system_id, param_ext_read.target_component, &msg2,
                                                &param_ext_value);
         } else {
             // Send param ack error to GCS
             mavlink_param_ext_ack_t param_ext_ack;
-            strncpy(param_ext_ack.param_id, param_ext_read.param_id, 16);
+            strncpy(param_ext_ack.param_id, param_ext_read.param_id,
+                    sizeof(param_ext_ack.param_id));
             // strncpy(param_ext_ack.param_value, , 128);
             param_ext_ack.param_type = tgtComp->getParamType(param_ext_value.param_id);
-            ;
             param_ext_ack.param_result = PARAM_ACK_FAILED;
             mavlink_msg_param_ext_ack_encode(_system_id, param_ext_read.target_component, &msg2,
                                              &param_ext_ack);
@@ -346,8 +351,9 @@ void MavlinkServer::_handle_param_ext_request_list(const struct sockaddr_in &add
         // Send each param,value to GCS
         for (auto &x : paramIdtoValue) {
             param_ext_value.param_index = idx++;
-            strncpy(param_ext_value.param_id, x.first.c_str(), 16);
-            strncpy(param_ext_value.param_value, x.second.c_str(), 128);
+            strncpy(param_ext_value.param_id, x.first.c_str(), sizeof(param_ext_value.param_id));
+            strncpy(param_ext_value.param_value, x.second.c_str(),
+                    sizeof(param_ext_value.param_value));
             param_ext_value.param_type = tgtComp->getParamType(param_ext_value.param_id);
             mavlink_msg_param_ext_value_encode(_system_id, param_list.target_component, &msg2,
                                                &param_ext_value);
@@ -370,16 +376,20 @@ void MavlinkServer::_handle_param_ext_set(const struct sockaddr_in &addr, mavlin
     CameraComponent *tgtComp = getCameraComponent(param_set.target_component);
     if (tgtComp) {
         // Set parameter
-        ret = tgtComp->setParam(param_set.param_id, param_set.param_value, param_set.param_type);
-        strncpy(param_ext_ack.param_id, param_set.param_id, 16);
+        // TODO:: Ensure that param_id is null terminated before passing
+        ret = tgtComp->setParam(param_set.param_id, param_set.param_value,
+                                sizeof(param_set.param_value), param_set.param_type);
+        strncpy(param_ext_ack.param_id, param_set.param_id, sizeof(param_ext_ack.param_id));
         param_ext_ack.param_type = param_set.param_type;
-        if (ret) {
+        if (!ret) {
             // Send response to GCS
-            strncpy(param_ext_ack.param_value, param_set.param_value, 128);
+            strncpy(param_ext_ack.param_value, param_set.param_value,
+                    sizeof(param_ext_ack.param_value));
             param_ext_ack.param_result = PARAM_ACK_ACCEPTED;
         } else {
             // Send error alongwith current value of the param to GCS
-            tgtComp->getParam(param_ext_ack.param_id, param_ext_ack.param_value);
+            tgtComp->getParam(param_ext_ack.param_id, param_ext_ack.param_value,
+                              sizeof(param_ext_ack.param_value));
             param_ext_ack.param_result = PARAM_ACK_FAILED;
         }
 
@@ -403,11 +413,11 @@ void MavlinkServer::_handle_mavlink_message(const struct sockaddr_in &addr, mavl
         log_debug("Command received: (sysid: %d compid: %d msgid: %d)", cmd.target_system,
                   cmd.target_component, cmd.command);
 
-        // Get the target component
-        // CameraComponent *tgt_comp = getCameraComponent(cmd.target_component);
-
         if (cmd.target_system != _system_id || cmd.target_component < MAV_COMP_ID_CAMERA
             || cmd.target_component > MAV_COMP_ID_CAMERA6)
+            return;
+
+        if (compIdToObj.find(cmd.target_component) == compIdToObj.end())
             return;
 
         switch (cmd.command) {
@@ -535,16 +545,18 @@ void MavlinkServer::stop()
 int MavlinkServer::addCameraComponent(CameraComponent *camComp)
 {
     log_debug("%s", __func__);
+    int ret = -1;
     int id = MAV_COMP_ID_CAMERA;
     while (id < MAV_COMP_ID_CAMERA6 + 1) {
         if (compIdToObj.find(id) == compIdToObj.end()) {
             compIdToObj.insert(std::make_pair(id, camComp));
+            ret = id;
             break;
         }
         id++;
     }
 
-    return id;
+    return ret;
 }
 
 void MavlinkServer::removeCameraComponent(CameraComponent *camComp)

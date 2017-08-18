@@ -40,7 +40,6 @@ struct CameraInfo {
 };
 
 struct StorageInfo {
-    uint32_t time_boot_ms;
     uint8_t storage_id;
     uint8_t storage_count;
     uint8_t status;
@@ -58,8 +57,10 @@ public:
     const CameraInfo &getCameraInfo() const { return camInfo; }
     const StorageInfo &getStorageInfo() const { return storeInfo; }
     const std::map<std::string, std::string> &getParamList() { return camParam.getParameterList(); }
-    virtual int getParam(const char *param_id, char *param_value) = 0;
-    virtual int setParam(const char *param_id, const char *param_value, int param_type) = 0;
+    virtual int getParam(const char *param_id, char *param_value, size_t value_size) = 0;
+    virtual int setParam(const char *param_id, const char *param_value, size_t value_size,
+                         int param_type)
+        = 0;
     int getParamType(const char *param_id) { return camParam.getParameterType(param_id); }
 
 protected:

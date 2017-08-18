@@ -42,7 +42,8 @@ CameraServer::CameraServer(ConfFile &conf)
     std::vector<CameraComponent *>::iterator it;
     for (it = cameraList.begin(); it != cameraList.end(); it++) {
         if (*it) {
-            mavlink_server.addCameraComponent(*it);
+            if (mavlink_server.addCameraComponent(*it) == -1)
+                log_error("Error in adding Camera Component");
         }
     }
 }
@@ -109,8 +110,13 @@ static int parse_stl_set(const char *val, size_t val_len, void *storage, size_t 
     return 0;
 }
 
-static int parse_uri(ConfFile &conf, const char *key, char *value)
+static int parse_uri(ConfFile &conf, const char *key, char *value, size_t value_len)
 {
+    assert(key);
+    assert(value);
+    assert(value_len);
+
+    int ret = 1;
     struct options {
         char *uri_addr;
     } opt;
@@ -121,13 +127,20 @@ static int parse_uri(ConfFile &conf, const char *key, char *value)
     conf.extract_options("uri", option_table, ARRAY_SIZE(option_table), (void *)&opt);
     if (!opt.uri_addr) {
         log_error("URI of camera definition file for %s not found", key);
-        return 0;
+        return 1;
     }
 
     log_debug("%s URI : %s", key, opt.uri_addr);
-    strcpy(value, opt.uri_addr);
+    if (value_len > strlen(opt.uri_addr)) {
+        strcpy(value, opt.uri_addr);
+        ret = 0;
+    } else {
+        log_error("Output buffer size :%ld insufficient for URI:%ld ", value_len,
+                  strlen(opt.uri_addr) + 1);
+        ret = 1;
+    }
     free(opt.uri_addr);
-    return 1;
+    return ret;
 }
 
 int CameraServer::detect_v4l2devices(ConfFile &conf, std::vector<CameraComponent *> &camList)
@@ -159,9 +172,10 @@ int CameraServer::detect_v4l2devices(ConfFile &conf, std::vector<CameraComponent
             log_debug("Found V4L2 camera device %s", ep->d_name);
             dev_path.append(ep->d_name);
             // TODO::Get the URI for the specific camera device from conf file
-            if (parse_uri(conf, ep->d_name, uri))
-                camList.push_back(new CameraComponent_V4L2(dev_path, uri));
-            else
+            if (!parse_uri(conf, ep->d_name, uri, sizeof(uri))) {
+                std::string uriString(uri);
+                camList.push_back(new CameraComponent_V4L2(dev_path, uriString));
+            } else
                 camList.push_back(new CameraComponent_V4L2(dev_path));
             count++;
         }
