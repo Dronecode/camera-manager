@@ -75,84 +75,16 @@ int CameraServer::detectCamera(ConfFile &conf)
     return count;
 }
 
-static void _insert(std::set<std::string> *value_set, const char *val, size_t val_len)
-{
-    while (isspace(*val) && val_len > 0) {
-        val++;
-        val_len--;
-    }
-
-    while (val_len > 0 && isspace(val[val_len - 1]))
-        val_len--;
-
-    if (val_len)
-        value_set->insert(std::string(val, val_len));
-}
-
-static int parse_stl_set(const char *val, size_t val_len, void *storage, size_t storage_len)
-{
-    assert(val);
-    assert(val_len);
-    assert(storage);
-
-    std::set<std::string> *value_set = (std::set<std::string> *)storage;
-    char *end;
-
-    while ((end = (char *)memchr((void *)val, ',', val_len))) {
-        if (end - val)
-            _insert(value_set, val, end - val);
-        val_len = val_len - (end - val) - 1;
-        val = end + 1;
-    }
-    if (val_len)
-        _insert(value_set, val, val_len);
-
-    return 0;
-}
-
-static int parse_uri(ConfFile &conf, const char *key, char *value, size_t value_len)
-{
-    assert(key);
-    assert(value);
-    assert(value_len);
-
-    int ret = 1;
-    struct options {
-        char *uri_addr;
-    } opt;
-
-    static const ConfFile::OptionsTable option_table[] = {
-        {key, false, ConfFile::parse_str_dup, OPTIONS_TABLE_STRUCT_FIELD(options, uri_addr)},
-    };
-    conf.extract_options("uri", option_table, ARRAY_SIZE(option_table), (void *)&opt);
-    if (!opt.uri_addr) {
-        log_error("URI of camera definition file for %s not found", key);
-        return 1;
-    }
-
-    log_debug("%s URI : %s", key, opt.uri_addr);
-    if (value_len > strlen(opt.uri_addr)) {
-        strcpy(value, opt.uri_addr);
-        ret = 0;
-    } else {
-        log_error("Output buffer size :%ld insufficient for URI:%ld ", value_len,
-                  strlen(opt.uri_addr) + 1);
-        ret = 1;
-    }
-    free(opt.uri_addr);
-    return ret;
-}
-
 int CameraServer::detect_v4l2devices(ConfFile &conf, std::vector<CameraComponent *> &camList)
 {
     int count = 0;
-    char uri[140];
+    char *uri_addr = 0;
     DIR *dp;
     struct dirent *ep;
 
     std::set<std::string> blacklist;
     static const ConfFile::OptionsTable option_table[] = {
-        {"blacklist", false, parse_stl_set, 0, 0},
+        {"blacklist", false, ConfFile::parse_stl_set, 0, 0},
     };
 
     conf.extract_options("v4l2", option_table, 1, (void *)&blacklist);
@@ -171,12 +103,14 @@ int CameraServer::detect_v4l2devices(ConfFile &conf, std::vector<CameraComponent
                 continue;
             log_debug("Found V4L2 camera device %s", ep->d_name);
             dev_path.append(ep->d_name);
-            // TODO::Get the URI for the specific camera device from conf file
-            if (!parse_uri(conf, ep->d_name, uri, sizeof(uri))) {
-                std::string uriString(uri);
+            if (!conf.extract_options("uri", ep->d_name, &uri_addr)) {
+                std::string uriString(uri_addr);
                 camList.push_back(new CameraComponent_V4L2(dev_path, uriString));
-            } else
+                free(uri_addr);
+            } else {
+                log_warning("Camera Definition for device:%s not found", ep->d_name);
                 camList.push_back(new CameraComponent_V4L2(dev_path));
+            }
             count++;
         }
     }
