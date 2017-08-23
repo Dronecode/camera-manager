@@ -57,12 +57,4 @@ private:
     bool saveParameter(std::string param_id, uint32_t param_value);
     bool saveParameter(std::string param_id, int32_t param_value);
     bool saveParameter(std::string param_id, uint8_t param_value);
-
-    int xioctl(int fd, int request, void *arg);
-    int v4l2_open_device(const char *dev_path);
-    int v4l2_close_device(int fd);
-    int v4l2_device_info(int fd);
-    int v4l2_get_control(int fd, int ctrl_id);
-    int v4l2_set_control(int fd, int ctrl_id, int value);
-    int v4l2_query_control(int fd);
 };

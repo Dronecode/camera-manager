@@ -16,20 +16,14 @@
  * limitations under the License.
  */
 
-#include <assert.h>
-#include <cstring>
 #include <set>
-#include <sstream>
-#include <string.h>
 
 #include "CameraComponent_V4L2.h"
 #include "CameraServer.h"
 #include "log.h"
 #include "mavlink_server.h"
-#include "util.h"
+#include "v4l2_interface.h"
 
-#define DEVICE_PATH "/dev/"
-#define VIDEO_PREFIX "video"
 #define DEFAULT_SERVICE_PORT 8554
 
 CameraServer::CameraServer(ConfFile &conf)
@@ -51,6 +45,8 @@ CameraServer::CameraServer(ConfFile &conf)
 CameraServer::~CameraServer()
 {
     stop();
+
+    // Free up all the resources  allocated
 }
 
 void CameraServer::start()
@@ -79,42 +75,37 @@ int CameraServer::detect_v4l2devices(ConfFile &conf, std::vector<CameraComponent
 {
     int count = 0;
     char *uri_addr = 0;
-    DIR *dp;
-    struct dirent *ep;
 
+    // Get the list of devices in the system
+    std::vector<std::string> v4l2List;
+    v4l2_list_devices(v4l2List);
+    if (v4l2List.empty())
+        return 0;
+
+    // Get the blacklisted devices
     std::set<std::string> blacklist;
     static const ConfFile::OptionsTable option_table[] = {
         {"blacklist", false, ConfFile::parse_stl_set, 0, 0},
     };
-
     conf.extract_options("v4l2", option_table, 1, (void *)&blacklist);
 
-    dp = opendir(DEVICE_PATH);
-    if (dp == NULL) {
-        log_error("Could not open directory");
-        return 0;
-    }
-
-    while ((ep = readdir(dp))) {
-        if (std::strncmp(VIDEO_PREFIX, ep->d_name, sizeof(VIDEO_PREFIX) - 1) == 0) {
-            std::string dev_path = DEVICE_PATH;
-            // Don't add stream if it is in a blacklist
-            if (blacklist.find(ep->d_name) != blacklist.end())
-                continue;
-            log_debug("Found V4L2 camera device %s", ep->d_name);
-            dev_path.append(ep->d_name);
-            if (!conf.extract_options("uri", ep->d_name, &uri_addr)) {
-                std::string uriString(uri_addr);
-                camList.push_back(new CameraComponent_V4L2(dev_path, uriString));
-                free(uri_addr);
-            } else {
-                log_warning("Camera Definition for device:%s not found", ep->d_name);
-                camList.push_back(new CameraComponent_V4L2(dev_path));
-            }
-            count++;
+    // Create camera components for devices not blacklisted
+    std::string dev_name;
+    for (auto dev_path : v4l2List) {
+        log_debug("v4l2 device : : %s", dev_path.c_str());
+        dev_name = dev_path.substr(sizeof(V4L2_DEVICE_PATH) - 1);
+        if (blacklist.find(dev_name) != blacklist.end())
+            continue;
+        if (!conf.extract_options("uri", dev_name.c_str(), &uri_addr)) {
+            std::string uriString(uri_addr);
+            camList.push_back(new CameraComponent_V4L2(dev_path, uriString));
+            free(uri_addr);
+        } else {
+            log_warning("Camera Definition for device:%s not found", dev_name.c_str());
+            camList.push_back(new CameraComponent_V4L2(dev_path));
         }
+        count++;
     }
 
-    closedir(dp);
     return count;
 }

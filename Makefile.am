@@ -146,7 +146,9 @@ BASE_FILES = \
 	src/stream_manager.cpp \
 	src/stream_manager.h \
 	src/util.c \
-	src/util.h
+	src/util.h \
+	src/v4l2_interface.cpp \
+	src/v4l2_interface.h
 
 if HAVE_REALSENSE
 BASE_FILES += \

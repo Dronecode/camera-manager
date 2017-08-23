@@ -16,17 +16,13 @@
  * limitations under the License.
  */
 #include <assert.h>
-#include <fcntl.h>
 #include <linux/videodev2.h>
-#include <sstream>
-#include <string.h>
-#include <sys/ioctl.h>
-#include <unistd.h>
 
 #include "mavlink_server.h"
 
 #include "CameraComponent_V4L2.h"
 #include "log.h"
+#include "v4l2_interface.h"
 
 CameraComponent_V4L2::CameraComponent_V4L2()
     : CameraComponent()
@@ -67,9 +63,9 @@ void CameraComponent_V4L2::initCameraInfo()
 {
     // TODO :: Get the details from the camera device
     // Or read it from conf file
-    int fd = v4l2_open_device(dev_path.c_str());
-    v4l2_device_info(fd);
-    v4l2_close_device(fd);
+    int fd = v4l2_open(dev_path.c_str());
+    v4l2_query_cap(fd);
+    v4l2_close(fd);
 
     strcpy((char *)camInfo.vendorName, "Intel");
     strcpy((char *)camInfo.modelName, "RealSense R200");
@@ -192,11 +188,11 @@ int CameraComponent_V4L2::setParam(std::string param_id, int32_t param_value)
     }
 
     if (ctrl_id != -1) {
-        int fd = v4l2_open_device(dev_path.c_str());
+        int fd = v4l2_open(dev_path.c_str());
         ret = v4l2_set_control(fd, ctrl_id, param_value);
         if (ret)
             log_error("Error in setting control : %s Error:%d", param_id.c_str(), errno);
-        v4l2_close_device(fd);
+        v4l2_close(fd);
         if (!ret)
             saveParameter(param_id, param_value);
     }
@@ -278,11 +274,11 @@ int CameraComponent_V4L2::setParam(std::string param_id, uint32_t param_value)
     }
 
     if (ctrl_id != -1) {
-        int fd = v4l2_open_device(dev_path.c_str());
+        int fd = v4l2_open(dev_path.c_str());
         ret = v4l2_set_control(fd, ctrl_id, param_value);
         if (ret)
             log_error("Error in setting control : %s Error:%d", param_id.c_str(), errno);
-        v4l2_close_device(fd);
+        v4l2_close(fd);
         if (!ret)
             saveParameter(param_id, param_value);
     }
@@ -368,118 +364,4 @@ bool CameraComponent_V4L2::saveParameter(std::string param_id, uint8_t param_val
     memcpy(&str[0], &u.param_uint8, sizeof(uint8_t));
     std::string str2(str, sizeof(str));
     return camParam.setParameter(param_id, str2);
-}
-
-/*
-*
-* V4L2 Interfaces
-*
-*/
-
-int CameraComponent_V4L2::xioctl(int fd, int request, void *arg)
-{
-    int r;
-
-    do
-        r = ioctl(fd, request, arg);
-    while (-1 == r && EINTR == errno);
-
-    return r;
-}
-
-int CameraComponent_V4L2::v4l2_open_device(const char *devicepath)
-{
-    int fd = -1;
-    fd = open(devicepath, O_RDWR, 0);
-    if (fd < 0) {
-        log_error("Cannot open device '%s': %d: ", devicepath, errno);
-    }
-
-    return fd;
-}
-
-int CameraComponent_V4L2::v4l2_close_device(int fd)
-{
-    if (fd < 1)
-        return -1;
-
-    close(fd);
-    return 0;
-}
-
-int CameraComponent_V4L2::v4l2_get_control(int fd, int ctrl_id)
-{
-    int ret = -1;
-    if (fd < 1)
-        return ret;
-
-    struct v4l2_control ctrl = {0};
-    ctrl.id = ctrl_id;
-    ret = xioctl(fd, VIDIOC_G_CTRL, &ctrl);
-    if (ret == 0)
-        return ctrl.value;
-    else
-        return ret;
-}
-
-int CameraComponent_V4L2::v4l2_set_control(int fd, int ctrl_id, int value)
-{
-    int ret = -1;
-    if (fd < 1)
-        return ret;
-
-    struct v4l2_control c = {0};
-    c.id = ctrl_id;
-    c.value = value;
-    ret = xioctl(fd, VIDIOC_S_CTRL, &c);
-
-    return ret;
-}
-
-int CameraComponent_V4L2::v4l2_query_control(int fd)
-{
-    int ret = -1;
-    if (fd < 1)
-        return ret;
-
-    const unsigned next_fl = V4L2_CTRL_FLAG_NEXT_CTRL | V4L2_CTRL_FLAG_NEXT_COMPOUND;
-    struct v4l2_control ctrl = {0};
-    struct v4l2_queryctrl qctrl = {0};
-    qctrl.id = next_fl;
-    while (xioctl(fd, VIDIOC_QUERYCTRL, &qctrl) == 0) {
-        if ((qctrl.flags & V4L2_CTRL_TYPE_BOOLEAN) || (qctrl.type & V4L2_CTRL_TYPE_INTEGER)) {
-            log_debug("Ctrl: %s Min:%d Max:%d Step:%d dflt:%d", qctrl.name, qctrl.minimum,
-                      qctrl.maximum, qctrl.step, qctrl.default_value);
-            ctrl.id = qctrl.id;
-            if (xioctl(fd, VIDIOC_G_CTRL, &ctrl) == 0) {
-                log_debug("Ctrl: %s Id:%x Value:%d\n", qctrl.name, ctrl.id, ctrl.value);
-            }
-        }
-        qctrl.id |= next_fl;
-    }
-    return 0;
-}
-
-int CameraComponent_V4L2::v4l2_device_info(int fd)
-{
-    int ret = -1;
-    if (fd < 1)
-        return ret;
-
-    struct v4l2_capability vcap;
-    ret = xioctl(fd, VIDIOC_QUERYCAP, &vcap);
-    if (ret)
-        return ret;
-
-    log_debug("\tDriver name   : %s", vcap.driver);
-    log_debug("\tCard type     : %s", vcap.card);
-    log_debug("\tBus info      : %s", vcap.bus_info);
-    log_debug("\tDriver version: %d.%d.%d", vcap.version >> 16, (vcap.version >> 8) & 0xff,
-              vcap.version & 0xff);
-    log_debug("\tCapabilities  : 0x%08X", vcap.capabilities);
-    if (vcap.capabilities & V4L2_CAP_DEVICE_CAPS) {
-        log_debug("\tDevice Caps   : 0x%08X", vcap.device_caps);
-    }
-
-    return 0;
 }
