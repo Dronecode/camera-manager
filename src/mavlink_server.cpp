@@ -225,6 +225,36 @@ void MavlinkServer::_handle_set_camera_mode(const struct sockaddr_in &addr,
 
 }
 
+void MavlinkServer::_handle_request_camera_capture_status(const struct sockaddr_in &addr,
+                                                          mavlink_command_long_t &cmd)
+{
+    log_debug("%s", __func__);
+
+    // Check for Request camera capture status flag
+    if (cmd.param1 != 1) {
+        _send_ack(addr, cmd.command, cmd.target_component, true);
+        return;
+    }
+
+    mavlink_message_t msg;
+    bool success = false;
+    CameraComponent *tgtComp = getCameraComponent(cmd.target_component);
+    if (tgtComp) {
+        // TODO:: Fill with appropriate status after query from component
+        mavlink_msg_camera_capture_status_pack(
+            _system_id, cmd.target_component, &msg, 0, 0 /*image_status*/, 0 /*video_status*/,
+            0 /*image_interval*/, 0 /*recording_time_ms*/, 50 /*available_capacity*/);
+        if (!_send_mavlink_message(&addr, msg)) {
+            log_error("Sending camera setting failed for camera %d.", cmd.target_component);
+            return;
+        }
+
+        success = true;
+    }
+
+    _send_ack(addr, cmd.command, cmd.target_component, success);
+}
+
 void MavlinkServer::_handle_camera_video_stream_request(const struct sockaddr_in &addr, int command,
                                                         unsigned int camera_id, unsigned int action)
 {
@@ -449,7 +479,7 @@ void MavlinkServer::_handle_mavlink_message(const struct sockaddr_in &addr, mavl
             this->_handle_request_camera_settings(addr, cmd);
             break;
         case MAV_CMD_REQUEST_CAMERA_CAPTURE_STATUS:
-            log_debug("MAV_CMD_REQUEST_CAMERA_CAPTURE_STATUS");
+            this->_handle_request_camera_capture_status(addr, cmd);
             break;
         case MAV_CMD_RESET_CAMERA_SETTINGS:
             log_debug("MAV_CMD_RESET_CAMERA_SETTINGS");
