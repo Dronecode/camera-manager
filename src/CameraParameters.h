@@ -75,7 +75,7 @@ public:
     // Values for camera modes
     static const char CAMERA_MODE_STILL[];
     static const char CAMERA_MODE_VIDEO[];
-    static const char CAMERA_MODE_PREVIEW[];
+    static const char CAMERA_MODE_IMAGE_SURVEY[];
     // Values for white balance settings.
     static const char WHITE_BALANCE_AUTO[];
     static const char WHITE_BALANCE_INCANDESCENT[];
@@ -152,7 +152,7 @@ public:
     // ID for camera modes
     static const int ID_CAMERA_MODE_STILL = 0;
     static const int ID_CAMERA_MODE_VIDEO = 1;
-    static const int ID_CAMERA_MODE_PREVIEW = 2;
+    static const int ID_CAMERA_MODE_IMAGE_SURVEY = 2;
 
     // ID for image formats
     static const int ID_IMAGE_FORMAT_RAW = 0;

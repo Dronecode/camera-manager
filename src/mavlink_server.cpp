@@ -208,6 +208,23 @@ void MavlinkServer::_handle_request_storage_information(const struct sockaddr_in
     _send_ack(addr, cmd.command, cmd.target_component, success);
 }
 
+void MavlinkServer::_handle_set_camera_mode(const struct sockaddr_in &addr,
+                                                        mavlink_command_long_t &cmd)
+{
+    log_debug("%s", __func__);
+
+    bool success = false;
+
+    CameraComponent *tgtComp = getCameraComponent(cmd.target_component);
+    if (tgtComp) {
+        if(!tgtComp->setCameraMode((uint32_t)cmd.param2))
+            success = true;
+    }
+
+    _send_ack(addr, cmd.command, cmd.target_component, success);
+
+}
+
 void MavlinkServer::_handle_camera_video_stream_request(const struct sockaddr_in &addr, int command,
                                                         unsigned int camera_id, unsigned int action)
 {
@@ -444,6 +461,8 @@ void MavlinkServer::_handle_mavlink_message(const struct sockaddr_in &addr, mavl
             log_debug("MAV_CMD_STORAGE_FORMAT");
             break;
         case MAV_CMD_SET_CAMERA_MODE:
+            this->_handle_set_camera_mode(addr, cmd);
+            break;
         case MAV_CMD_IMAGE_START_CAPTURE:
         case MAV_CMD_IMAGE_STOP_CAPTURE:
         case MAV_CMD_REQUEST_CAMERA_IMAGE_CAPTURE:

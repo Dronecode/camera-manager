@@ -51,7 +51,7 @@ const char CameraParameters::IMAGE_VIDEOSHOT[] = "img-videoshot";
 /* ++Need to check if required, as we have defined values as enums++ */
 const char CameraParameters::CAMERA_MODE_STILL[] = "still";
 const char CameraParameters::CAMERA_MODE_VIDEO[] = "video";
-const char CameraParameters::CAMERA_MODE_PREVIEW[] = "preview";
+const char CameraParameters::CAMERA_MODE_IMAGE_SURVEY[] = "img-survey";
 
 const char CameraParameters::IMAGE_FORMAT_JPEG[] = "jpg";
 const char CameraParameters::IMAGE_FORMAT_PNG[] = "png";

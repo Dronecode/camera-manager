@@ -62,7 +62,8 @@ public:
                          int param_type)
         = 0;
     int getParamType(const char *param_id) { return camParam.getParameterType(param_id); }
-
+    virtual int setCameraMode(uint32_t mode) = 0;
+    virtual int getCameraMode() = 0;
 protected:
     CameraInfo camInfo;
     StorageInfo storeInfo;

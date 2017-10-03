@@ -291,9 +291,15 @@ int CameraComponent_V4L2::setParam(std::string param_id, uint8_t param_value)
     return 0;
 }
 
-int CameraComponent_V4L2::setCameraMode(uint32_t param_value)
+int CameraComponent_V4L2::setCameraMode(uint32_t mode)
 {
+    mCamMode = mode;
     return 0;
+}
+
+int CameraComponent_V4L2::getCameraMode()
+{
+    return mCamMode;
 }
 
 int CameraComponent_V4L2::setImazeSize(uint32_t param_value)

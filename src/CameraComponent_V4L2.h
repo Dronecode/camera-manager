@@ -37,15 +37,17 @@ public:
     int setParam(std::string param_id, int32_t param_value);
     int setParam(std::string param_id, uint32_t param_value);
     int setParam(std::string param_id, uint8_t param_value);
+    int setCameraMode(uint32_t mode);
+    int getCameraMode();
 
 private:
     std::string dev_path;
+    int mCamMode;
     int cam_fd;
     void initCameraInfo();
     void initStorageInfo();
     void initSupportedValues();
     void initDefaultValues();
-    int setCameraMode(uint32_t param_value);
     int setImazeSize(uint32_t wb_value);
     int setImageFormat(uint32_t wb_value);
     int setPixelFormat(uint32_t wb_value);
