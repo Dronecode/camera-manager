@@ -54,9 +54,4 @@ private:
     int setSceneMode(uint32_t wb_value);
     int setVideoSize(uint32_t wb_value);
     int setVideoFrameFormat(uint32_t wb_value);
-
-    bool saveParameter(std::string param_id, float param_value);
-    bool saveParameter(std::string param_id, uint32_t param_value);
-    bool saveParameter(std::string param_id, int32_t param_value);
-    bool saveParameter(std::string param_id, uint8_t param_value);
 };

@@ -22,6 +22,9 @@
 
 #include "log.h"
 
+#define CAM_PARAM_ID_LEN 16
+#define CAM_PARAM_VALUE_LEN 128
+
 class CameraParameters {
 public:
     CameraParameters();
@@ -29,9 +32,21 @@ public:
     const std::map<std::string, std::string> &getParameterList() const { return paramValue; }
     bool setParameterSupported(std::string key, std::string value);
     bool setParameter(std::string param, std::string value);
+    bool setParameter(std::string param_id, float param_value);
+    bool setParameter(std::string param_id, uint32_t param_value);
+    bool setParameter(std::string param_id, int32_t param_value);
+    bool setParameter(std::string param_id, uint8_t param_value);
     std::string getParameter(std::string param);
     int getParameterType(std::string param);
     int getParameterID(std::string param);
+
+    union cam_param_union {
+        float param_float;
+        int32_t param_int32;
+        uint32_t param_uint32;
+        uint8_t param_uint8;
+        uint8_t bytes[4];
+    } cam_param_union_t;
 
     enum param_type {
         PARAM_TYPE_UINT8 = 1,

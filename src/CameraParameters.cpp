@@ -97,6 +97,43 @@ bool CameraParameters::setParameter(std::string key, std::string value)
     return true;
 }
 
+bool CameraParameters::setParameter(std::string param_id, float param_value)
+{
+    char str[CAM_PARAM_VALUE_LEN];
+    cam_param_union u;
+    u.param_float = param_value;
+    memcpy(&str[0], &u.param_float, sizeof(float));
+    std::string str2(str, sizeof(str));
+    return setParameter(param_id, str2);
+}
+bool CameraParameters::setParameter(std::string param_id, uint32_t param_value)
+{
+    char str[CAM_PARAM_VALUE_LEN];
+    cam_param_union u;
+    u.param_uint32 = param_value;
+    memcpy(&str[0], &u.param_uint32, sizeof(uint32_t));
+    std::string str2(str, sizeof(str));
+    return setParameter(param_id, str2);
+}
+bool CameraParameters::setParameter(std::string param_id, int32_t param_value)
+{
+    char str[CAM_PARAM_VALUE_LEN];
+    cam_param_union u;
+    u.param_int32 = param_value;
+    memcpy(&str[0], &u.param_int32, sizeof(int32_t));
+    std::string str2(str, sizeof(str));
+    return setParameter(param_id, str2);
+}
+bool CameraParameters::setParameter(std::string param_id, uint8_t param_value)
+{
+    char str[CAM_PARAM_VALUE_LEN];
+    cam_param_union u;
+    u.param_uint8 = param_value;
+    memcpy(&str[0], &u.param_uint8, sizeof(uint8_t));
+    std::string str2(str, sizeof(str));
+    return setParameter(param_id, str2);
+}
+
 std::string CameraParameters::getParameter(std::string key)
 {
     if (paramValue.find(key) == paramValue.end())

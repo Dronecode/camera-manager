@@ -100,29 +100,31 @@ void CameraComponent_V4L2::initSupportedValues()
 
 void CameraComponent_V4L2::initDefaultValues()
 {
-    // TODO :: Get the details of the default values from the camera device and then save it in DB
-    saveParameter(CameraParameters::CAMERA_MODE, (uint32_t)CameraParameters::ID_CAMERA_MODE_VIDEO);
-    saveParameter(CameraParameters::BRIGHTNESS, (uint32_t)56);
-    saveParameter(CameraParameters::CONTRAST, (uint32_t)32);
-    saveParameter(CameraParameters::SATURATION, (uint32_t)128);
-    saveParameter(CameraParameters::HUE, (int32_t)0);
-    saveParameter(CameraParameters::WHITE_BALANCE_MODE,
-                  (uint32_t)CameraParameters::ID_WHITE_BALANCE_AUTO);
-    saveParameter(CameraParameters::GAMMA, (uint32_t)220);
-    saveParameter(CameraParameters::GAIN, (uint32_t)32);
-    saveParameter(CameraParameters::POWER_LINE_FREQ_MODE, (uint32_t)0);
-    saveParameter(CameraParameters::WHITE_BALANCE_TEMPERATURE, (uint32_t)6500);
-    saveParameter(CameraParameters::SHARPNESS, (uint32_t)0);
-    saveParameter(CameraParameters::BACKLIGHT_COMPENSATION, (uint32_t)1);
-    saveParameter(CameraParameters::EXPOSURE_MODE, (uint32_t)3);
-    saveParameter(CameraParameters::EXPOSURE_ABSOLUTE, (uint32_t)1);
-    saveParameter(CameraParameters::VIDEO_SIZE,
-                  (uint32_t)CameraParameters::ID_VIDEO_SIZE_640x480x30);
+    // TODO :: Get the details of the default values from the camera device instead
+    camParam.setParameter(CameraParameters::CAMERA_MODE,
+                          (uint32_t)CameraParameters::ID_CAMERA_MODE_VIDEO);
+    camParam.setParameter(CameraParameters::BRIGHTNESS, (uint32_t)56);
+    camParam.setParameter(CameraParameters::CONTRAST, (uint32_t)32);
+    camParam.setParameter(CameraParameters::SATURATION, (uint32_t)128);
+    camParam.setParameter(CameraParameters::HUE, (int32_t)0);
+    camParam.setParameter(CameraParameters::WHITE_BALANCE_MODE,
+                          (uint32_t)CameraParameters::ID_WHITE_BALANCE_AUTO);
+    camParam.setParameter(CameraParameters::GAMMA, (uint32_t)220);
+    camParam.setParameter(CameraParameters::GAIN, (uint32_t)32);
+    camParam.setParameter(CameraParameters::POWER_LINE_FREQ_MODE, (uint32_t)0);
+    camParam.setParameter(CameraParameters::WHITE_BALANCE_TEMPERATURE, (uint32_t)6500);
+    camParam.setParameter(CameraParameters::SHARPNESS, (uint32_t)0);
+    camParam.setParameter(CameraParameters::BACKLIGHT_COMPENSATION, (uint32_t)1);
+    camParam.setParameter(CameraParameters::EXPOSURE_MODE, (uint32_t)3);
+    camParam.setParameter(CameraParameters::EXPOSURE_ABSOLUTE, (uint32_t)1);
+    camParam.setParameter(CameraParameters::VIDEO_SIZE,
+                          (uint32_t)CameraParameters::ID_VIDEO_SIZE_640x480x30);
 
     // dummy values
-    saveParameter(CameraParameters::IMAGE_SIZE, CameraParameters::ID_IMAGE_SIZE_3264x2448);
-    saveParameter(CameraParameters::IMAGE_FORMAT, CameraParameters::ID_IMAGE_FORMAT_JPEG);
-    saveParameter(CameraParameters::PIXEL_FORMAT, CameraParameters::ID_PIXEL_FORMAT_YUV420P);
+    camParam.setParameter(CameraParameters::IMAGE_SIZE, CameraParameters::ID_IMAGE_SIZE_3264x2448);
+    camParam.setParameter(CameraParameters::IMAGE_FORMAT, CameraParameters::ID_IMAGE_FORMAT_JPEG);
+    camParam.setParameter(CameraParameters::PIXEL_FORMAT,
+                          CameraParameters::ID_PIXEL_FORMAT_YUV420P);
 }
 
 int CameraComponent_V4L2::getParam(const char *param_id, char *param_value, size_t value_size)
@@ -194,7 +196,7 @@ int CameraComponent_V4L2::setParam(std::string param_id, int32_t param_value)
             log_error("Error in setting control : %s Error:%d", param_id.c_str(), errno);
         v4l2_close(fd);
         if (!ret)
-            saveParameter(param_id, param_value);
+            camParam.setParameter(param_id, param_value);
     }
     return ret;
 }
@@ -280,7 +282,7 @@ int CameraComponent_V4L2::setParam(std::string param_id, uint32_t param_value)
             log_error("Error in setting control : %s Error:%d", param_id.c_str(), errno);
         v4l2_close(fd);
         if (!ret)
-            saveParameter(param_id, param_value);
+            camParam.setParameter(param_id, param_value);
     }
     return ret;
 }
@@ -330,44 +332,4 @@ int CameraComponent_V4L2::setVideoSize(uint32_t param_value)
 int CameraComponent_V4L2::setVideoFrameFormat(uint32_t param_value)
 {
     return 0;
-}
-
-bool CameraComponent_V4L2::saveParameter(std::string param_id, float param_value)
-{
-    char str[128];
-    mavlink_param_union_t u;
-    u.param_float = param_value;
-    memcpy(&str[0], &u.param_float, sizeof(float));
-    std::string str2(str, sizeof(str));
-    return camParam.setParameter(param_id, str2);
-}
-
-bool CameraComponent_V4L2::saveParameter(std::string param_id, uint32_t param_value)
-{
-    char str[128];
-    mavlink_param_union_t u;
-    u.param_uint32 = param_value;
-    memcpy(&str[0], &u.param_uint32, sizeof(uint32_t));
-    std::string str2(str, sizeof(str));
-    return camParam.setParameter(param_id, str2);
-}
-
-bool CameraComponent_V4L2::saveParameter(std::string param_id, int32_t param_value)
-{
-    char str[128];
-    mavlink_param_union_t u;
-    u.param_int32 = param_value;
-    memcpy(&str[0], &u.param_int32, sizeof(int32_t));
-    std::string str2(str, sizeof(str));
-    return camParam.setParameter(param_id, str2);
-}
-
-bool CameraComponent_V4L2::saveParameter(std::string param_id, uint8_t param_value)
-{
-    char str[128];
-    mavlink_param_union_t u;
-    u.param_uint8 = param_value;
-    memcpy(&str[0], &u.param_uint8, sizeof(uint8_t));
-    std::string str2(str, sizeof(str));
-    return camParam.setParameter(param_id, str2);
 }
