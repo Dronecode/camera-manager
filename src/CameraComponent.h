@@ -57,11 +57,12 @@ public:
     const CameraInfo &getCameraInfo() const { return camInfo; }
     const StorageInfo &getStorageInfo() const { return storeInfo; }
     const std::map<std::string, std::string> &getParamList() { return camParam.getParameterList(); }
-    virtual int getParam(const char *param_id, char *param_value, size_t value_size) = 0;
-    virtual int setParam(const char *param_id, const char *param_value, size_t value_size,
-                         int param_type)
+    virtual int getParamType(const char *param_id, size_t id_size) = 0;
+    virtual int getParam(const char *param_id, size_t id_size, char *param_value, size_t value_size)
         = 0;
-    int getParamType(const char *param_id) { return camParam.getParameterType(param_id); }
+    virtual int setParam(const char *param_id, size_t id_size, const char *param_value,
+                         size_t value_size, int param_type)
+        = 0;
     virtual int setCameraMode(uint32_t mode) = 0;
     virtual int getCameraMode() = 0;
 protected:

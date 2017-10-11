@@ -349,25 +349,30 @@ void MavlinkServer::_handle_param_ext_request_read(const struct sockaddr_in &add
     mavlink_msg_param_ext_request_read_decode(msg, &param_ext_read);
     CameraComponent *tgtComp = getCameraComponent(param_ext_read.target_component);
     if (tgtComp) {
+        // Null terminate param_id
         // Read parameter value from camera component
-        ret = tgtComp->getParam(param_ext_read.param_id, param_ext_value.param_value,
-                                sizeof(param_ext_value.param_value));
+        ret = tgtComp->getParam(param_ext_read.param_id, sizeof(param_ext_read.param_id),
+                                param_ext_value.param_value, sizeof(param_ext_value.param_value));
         if (!ret) {
             // Send the param value to GCS
             param_ext_value.param_count = 1;
             param_ext_value.param_index = 0;
-            strncpy(param_ext_value.param_id, param_ext_read.param_id,
+            // Copy the param id from req msg to resp msg
+            mem_cpy(param_ext_value.param_id, sizeof(param_ext_value.param_id),
+                    param_ext_read.param_id, sizeof(param_ext_read.param_id),
                     sizeof(param_ext_value.param_id));
-            param_ext_value.param_type = tgtComp->getParamType(param_ext_value.param_id);
+            param_ext_value.param_type
+                = tgtComp->getParamType(param_ext_value.param_id, sizeof(param_ext_value.param_id));
             mavlink_msg_param_ext_value_encode(_system_id, param_ext_read.target_component, &msg2,
                                                &param_ext_value);
         } else {
             // Send param ack error to GCS
             mavlink_param_ext_ack_t param_ext_ack;
-            strncpy(param_ext_ack.param_id, param_ext_read.param_id,
-                    sizeof(param_ext_ack.param_id));
-            // strncpy(param_ext_ack.param_value, , 128);
-            param_ext_ack.param_type = tgtComp->getParamType(param_ext_value.param_id);
+            // Copy the param id from req msg to resp msg
+            mem_cpy(param_ext_ack.param_id, sizeof(param_ext_ack.param_id), param_ext_read.param_id,
+                    sizeof(param_ext_read.param_id), sizeof(param_ext_ack.param_id));
+            param_ext_ack.param_type
+                = tgtComp->getParamType(param_ext_value.param_id, sizeof(param_ext_value.param_id));
             param_ext_ack.param_result = PARAM_ACK_FAILED;
             mavlink_msg_param_ext_ack_encode(_system_id, param_ext_read.target_component, &msg2,
                                              &param_ext_ack);
@@ -398,10 +403,13 @@ void MavlinkServer::_handle_param_ext_request_list(const struct sockaddr_in &add
         // Send each param,value to GCS
         for (auto &x : paramIdtoValue) {
             param_ext_value.param_index = idx++;
-            strncpy(param_ext_value.param_id, x.first.c_str(), sizeof(param_ext_value.param_id));
-            strncpy(param_ext_value.param_value, x.second.c_str(),
-                    sizeof(param_ext_value.param_value));
-            param_ext_value.param_type = tgtComp->getParamType(param_ext_value.param_id);
+            // Copy the param id
+            mem_cpy(param_ext_value.param_id, sizeof(param_ext_value.param_id), x.first.c_str(),
+                    x.first.size() + 1, sizeof(param_ext_value.param_id));
+            // Copy the param value
+            mem_cpy(param_ext_value.param_value, sizeof(param_ext_value.param_value),
+                    x.second.data(), x.second.size(), sizeof(param_ext_value.param_id));
+            param_ext_value.param_type = tgtComp->getParamType(x.first.c_str(), x.first.size());
             mavlink_msg_param_ext_value_encode(_system_id, param_list.target_component, &msg2,
                                                &param_ext_value);
             if (!_send_mavlink_message(&addr, msg2)) {
@@ -424,8 +432,10 @@ void MavlinkServer::_handle_param_ext_set(const struct sockaddr_in &addr, mavlin
     if (tgtComp) {
         // Set parameter
         // TODO:: Ensure that param_id is null terminated before passing
-        ret = tgtComp->setParam(param_set.param_id, param_set.param_value,
-                                sizeof(param_set.param_value), param_set.param_type);
+        ret = tgtComp->setParam(param_set.param_id, sizeof(param_set.param_id),
+                                param_set.param_value, sizeof(param_set.param_value),
+                                param_set.param_type);
+        // Copy id from req msg to response msg
         strncpy(param_ext_ack.param_id, param_set.param_id, sizeof(param_ext_ack.param_id));
         param_ext_ack.param_type = param_set.param_type;
         if (!ret) {
@@ -435,8 +445,8 @@ void MavlinkServer::_handle_param_ext_set(const struct sockaddr_in &addr, mavlin
             param_ext_ack.param_result = PARAM_ACK_ACCEPTED;
         } else {
             // Send error alongwith current value of the param to GCS
-            tgtComp->getParam(param_ext_ack.param_id, param_ext_ack.param_value,
-                              sizeof(param_ext_ack.param_value));
+            tgtComp->getParam(param_ext_ack.param_id, sizeof(param_ext_ack.param_id),
+                              param_ext_ack.param_value, sizeof(param_ext_ack.param_value));
             param_ext_ack.param_result = PARAM_ACK_FAILED;
         }
 

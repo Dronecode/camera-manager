@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <algorithm>
 #include <assert.h>
 #include <linux/videodev2.h>
 
@@ -22,6 +23,7 @@
 
 #include "CameraComponent_V4L2.h"
 #include "log.h"
+#include "util.h"
 #include "v4l2_interface.h"
 
 CameraComponent_V4L2::CameraComponent_V4L2()
@@ -127,40 +129,48 @@ void CameraComponent_V4L2::initDefaultValues()
                           CameraParameters::ID_PIXEL_FORMAT_YUV420P);
 }
 
-int CameraComponent_V4L2::getParam(const char *param_id, char *param_value, size_t value_size)
+int CameraComponent_V4L2::getParamType(const char *param_id, size_t id_size)
 {
-    // TODO :: Do appropriate checks
+    if (!param_id)
+        return 0;
+
+    return camParam.getParameterType(toString(param_id, id_size));
+}
+
+int CameraComponent_V4L2::getParam(const char *param_id, size_t id_size, char *param_value,
+                                   size_t value_size)
+{
     // query the value set in the map and fill the output, return appropriate value
-    std::string value = camParam.getParameter(param_id);
+    if (!param_id || !param_value || value_size == 0)
+        return 1;
+
+    std::string value = camParam.getParameter(toString(param_id, id_size));
     if (!value.empty())
         return 1;
 
-    if (value_size < value.size())
-        strncpy(param_value, value.c_str(), value_size);
-    else
-        strcpy(param_value, value.c_str());
-
+    mem_cpy(param_value, value_size, value.data(), value.size(), value_size);
     return 0;
 }
 
-int CameraComponent_V4L2::setParam(const char *param_id, const char *param_value, size_t value_size,
-                                   int param_type)
+int CameraComponent_V4L2::setParam(const char *param_id, size_t id_size, const char *param_value,
+                                   size_t value_size, int param_type)
 {
     int ret = 1;
-    mavlink_param_union_t u;
+    CameraParameters::cam_param_union_t u;
+    std::string id = toString(param_id, id_size);
     memcpy(&u.param_float, param_value, sizeof(float));
     switch (param_type) {
     case CameraParameters::PARAM_TYPE_REAL32:
-        ret = setParam(param_id, u.param_float);
+        ret = setParam(id, u.param_float);
         break;
     case CameraParameters::PARAM_TYPE_INT32:
-        ret = setParam(param_id, u.param_int32);
+        ret = setParam(id, u.param_int32);
         break;
     case CameraParameters::PARAM_TYPE_UINT32:
-        ret = setParam(param_id, u.param_uint32);
+        ret = setParam(id, u.param_uint32);
         break;
     case CameraParameters::PARAM_TYPE_UINT8:
-        ret = setParam(param_id, u.param_uint8);
+        ret = setParam(id, u.param_uint8);
         break;
     default:
         break;
@@ -332,4 +342,11 @@ int CameraComponent_V4L2::setVideoSize(uint32_t param_value)
 int CameraComponent_V4L2::setVideoFrameFormat(uint32_t param_value)
 {
     return 0;
+}
+
+/* Input string can be either null-terminated or not */
+std::string CameraComponent_V4L2::toString(const char *buf, size_t buf_size)
+{
+    const char *end = std::find(buf, buf + buf_size, '\0');
+    return std::string(buf, end);
 }

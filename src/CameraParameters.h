@@ -40,12 +40,18 @@ public:
     int getParameterType(std::string param);
     int getParameterID(std::string param);
 
-    union cam_param_union {
-        float param_float;
-        int32_t param_int32;
-        uint32_t param_uint32;
-        uint8_t param_uint8;
-        uint8_t bytes[4];
+    typedef struct {
+        union {
+            float param_float;
+            int32_t param_int32;
+            uint32_t param_uint32;
+            int16_t param_int16;
+            uint16_t param_uint16;
+            int8_t param_int8;
+            uint8_t param_uint8;
+            uint8_t bytes[CAM_PARAM_VALUE_LEN];
+        };
+        uint8_t type;
     } cam_param_union_t;
 
     enum param_type {
