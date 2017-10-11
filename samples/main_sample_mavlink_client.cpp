@@ -165,7 +165,7 @@ static void handle_mavlink_message(struct Context &ctx, const struct sockaddr_in
         mavlink_camera_information_t info;
         mavlink_msg_camera_information_decode(&msg, &info);
 
-        ctx.streams[ctx.streams_size].id = info.camera_id;
+        ctx.streams[ctx.streams_size].id = msg.compid;
         ctx.streams[ctx.streams_size++].name = strdup((const char *)info.model_name);
     } else if (msg.msgid == MAVLINK_MSG_ID_VIDEO_STREAM_INFORMATION) {
         char cmd[300];
