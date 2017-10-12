@@ -219,6 +219,19 @@ samples_camera_sample_client_SOURCES = \
 samples_camera_sample_client_LDADD = $(GLIB_LIBS) $(AVAHI_LIBS)
 endif
 
+EXTRA_PROGRAMS += samples/camera-params-client
+
+samples_camera_params_client_SOURCES = \
+        src/CameraParameters.cpp \
+        src/CameraParameters.h \
+        samples/main_sample_camparams_client.cpp \
+        src/log.cpp \
+        src/log.h \
+        src/util.c \
+        src/util.h
+
+samples_camera_params_client_LDADD = $(GLIB_LIBS)
+
 if ENABLE_MAVLINK
 
 EXTRA_PROGRAMS += samples/camera-sample-mavlink-client
