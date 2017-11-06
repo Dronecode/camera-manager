@@ -436,11 +436,13 @@ void MavlinkServer::_handle_param_ext_set(const struct sockaddr_in &addr, mavlin
                                 param_set.param_value, sizeof(param_set.param_value),
                                 param_set.param_type);
         // Copy id from req msg to response msg
-        strncpy(param_ext_ack.param_id, param_set.param_id, sizeof(param_ext_ack.param_id));
+        mem_cpy(param_ext_ack.param_id, sizeof(param_ext_ack.param_id), param_set.param_id,
+                sizeof(param_set.param_id), sizeof(param_ext_ack.param_id));
         param_ext_ack.param_type = param_set.param_type;
         if (!ret) {
             // Send response to GCS
-            strncpy(param_ext_ack.param_value, param_set.param_value,
+            mem_cpy(param_ext_ack.param_value, sizeof(param_ext_ack.param_value),
+                    param_set.param_value, sizeof(param_set.param_value),
                     sizeof(param_ext_ack.param_value));
             param_ext_ack.param_result = PARAM_ACK_ACCEPTED;
         } else {

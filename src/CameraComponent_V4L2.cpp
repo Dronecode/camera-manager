@@ -26,16 +26,15 @@
 #include "util.h"
 #include "v4l2_interface.h"
 
-CameraComponent_V4L2::CameraComponent_V4L2()
-    : CameraComponent()
-{
-}
-
 CameraComponent_V4L2::CameraComponent_V4L2(std::string devicepath)
     : CameraComponent()
     , dev_path(devicepath)
 {
     log_debug("%s path:%s", __func__, devicepath.c_str());
+    initCameraInfo();
+    initStorageInfo();
+    initSupportedValues();
+    initDefaultValues();
 }
 
 CameraComponent_V4L2::CameraComponent_V4L2(std::string devicepath, std::string uri)
@@ -46,13 +45,15 @@ CameraComponent_V4L2::CameraComponent_V4L2(std::string devicepath, std::string u
     log_debug("%s path:%s uri:%s", __func__, devicepath.c_str(), uri.c_str());
     // TODO:: get the supported parameters from the camera device
     // Initialize the supported and default values
-    if (sizeof(camInfo.cam_definition_uri) < uri.size() + 1) {
+    if (sizeof(camInfo.cam_definition_uri) > uri.size()) {
+        strcpy((char *)camInfo.cam_definition_uri, uri.c_str());
+    } else {
         log_error("URI length bigger than permitted");
         // TODO::Continue with no parameter support
-    } else
-        strcpy((char *)camInfo.cam_definition_uri, uri.c_str());
+    }
 
     initCameraInfo();
+    initStorageInfo();
     initSupportedValues();
     initDefaultValues();
 }
@@ -103,6 +104,7 @@ void CameraComponent_V4L2::initSupportedValues()
 void CameraComponent_V4L2::initDefaultValues()
 {
     // TODO :: Get the details of the default values from the camera device instead
+    mCamMode = CameraParameters::ID_CAMERA_MODE_VIDEO;
     camParam.setParameter(CameraParameters::CAMERA_MODE,
                           (uint32_t)CameraParameters::ID_CAMERA_MODE_VIDEO);
     camParam.setParameter(CameraParameters::BRIGHTNESS, (uint32_t)56);

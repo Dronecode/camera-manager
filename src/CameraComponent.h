@@ -52,7 +52,6 @@ struct StorageInfo {
 
 class CameraComponent {
 public:
-    CameraComponent() {}
     virtual ~CameraComponent() {}
     const CameraInfo &getCameraInfo() const { return camInfo; }
     const StorageInfo &getStorageInfo() const { return storeInfo; }

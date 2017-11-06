@@ -25,7 +25,6 @@
 
 class CameraComponent_V4L2 final : public CameraComponent {
 public:
-    CameraComponent_V4L2();
     CameraComponent_V4L2(std::string dev_path);
     CameraComponent_V4L2(std::string dev_path, std::string uri);
     ~CameraComponent_V4L2();
@@ -44,7 +43,6 @@ public:
 private:
     std::string dev_path;
     int mCamMode;
-    int cam_fd;
     void initCameraInfo();
     void initStorageInfo();
     void initSupportedValues();
