@@ -38,7 +38,7 @@ public:
 
 private:
     int detectCamera(ConfFile &conf);
-    int detect_v4l2devices(ConfFile &conf, std::vector<CameraComponent *> &cameraList);
+    int detect_devices_v4l2(ConfFile &conf, std::vector<CameraComponent *> &cameraList);
     MavlinkServer mavlink_server;
     RTSPServer rtsp_server;
     int cameraCount;

@@ -18,7 +18,7 @@
 
 #include <set>
 
-#include "CameraComponent_V4L2.h"
+#include "CameraComponent.h"
 #include "CameraServer.h"
 #include "log.h"
 #include "mavlink_server.h"
@@ -66,12 +66,12 @@ int CameraServer::detectCamera(ConfFile &conf)
 {
     int count = 0;
 
-    count += detect_v4l2devices(conf, cameraList);
+    count += detect_devices_v4l2(conf, cameraList);
 
     return count;
 }
 
-int CameraServer::detect_v4l2devices(ConfFile &conf, std::vector<CameraComponent *> &camList)
+int CameraServer::detect_devices_v4l2(ConfFile &conf, std::vector<CameraComponent *> &camList)
 {
     int count = 0;
     char *uri_addr = 0;
@@ -92,17 +92,17 @@ int CameraServer::detect_v4l2devices(ConfFile &conf, std::vector<CameraComponent
     // Create camera components for devices not blacklisted
     std::string dev_name;
     for (auto dev_path : v4l2List) {
-        log_debug("v4l2 device : : %s", dev_path.c_str());
+        log_debug("v4l2 device :: %s", dev_path.c_str());
         dev_name = dev_path.substr(sizeof(V4L2_DEVICE_PATH) - 1);
         if (blacklist.find(dev_name) != blacklist.end())
             continue;
         if (!conf.extract_options("uri", dev_name.c_str(), &uri_addr)) {
             std::string uriString(uri_addr);
-            camList.push_back(new CameraComponent_V4L2(dev_path, uriString));
+            camList.push_back(new CameraComponent(dev_path, uriString));
             free(uri_addr);
         } else {
             log_warning("Camera Definition for device:%s not found", dev_name.c_str());
-            camList.push_back(new CameraComponent_V4L2(dev_path));
+            camList.push_back(new CameraComponent(dev_path));
         }
         count++;
     }

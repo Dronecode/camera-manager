@@ -18,9 +18,11 @@
 #pragma once
 #include <gst/gst.h>
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
 
+#include "CameraDevice.h"
 #include "CameraParameters.h"
 #include "log.h"
 
@@ -50,22 +52,39 @@ struct StorageInfo {
     float write_speed;
 };
 
+class CameraDevice;
 class CameraComponent {
 public:
-    virtual ~CameraComponent() {}
-    const CameraInfo &getCameraInfo() const { return camInfo; }
-    const StorageInfo &getStorageInfo() const { return storeInfo; }
-    const std::map<std::string, std::string> &getParamList() { return camParam.getParameterList(); }
-    virtual int getParamType(const char *param_id, size_t id_size) = 0;
-    virtual int getParam(const char *param_id, size_t id_size, char *param_value, size_t value_size)
-        = 0;
+    CameraComponent(std::string);
+    CameraComponent(std::string, std::string);
+    virtual ~CameraComponent();
+    const CameraInfo &getCameraInfo() const;
+    const StorageInfo &getStorageInfo() const;
+    const std::map<std::string, std::string> &getParamList() const;
+    int getParamType(const char *param_id, size_t id_size);
+    virtual int getParam(const char *param_id, size_t id_size, char *param_value,
+                         size_t value_size);
     virtual int setParam(const char *param_id, size_t id_size, const char *param_value,
-                         size_t value_size, int param_type)
-        = 0;
-    virtual int setCameraMode(uint32_t mode) = 0;
-    virtual int getCameraMode() = 0;
-protected:
-    CameraInfo camInfo;
-    StorageInfo storeInfo;
-    CameraParameters camParam;
+                         size_t value_size, int param_type);
+    virtual int setCameraMode(uint32_t mode);
+    virtual int getCameraMode();
+
+private:
+    std::string mCamDevName;               /* Camera device name */
+    CameraInfo mCamInfo;                   /* Camera Information Structure */
+    StorageInfo mStoreInfo;                /* Storage Information Structure */
+    CameraParameters mCamParam;            /* Camera Parameters Object */
+    std::string mCamDefURI;                /* Camera Definition URI */
+    std::shared_ptr<CameraDevice> mCamDev; /* Camera Device Object */
+    void initStorageInfo(struct StorageInfo &storeInfo);
+    int setParam(std::string param_id, float param_value);
+    int setParam(std::string param_id, int32_t param_value);
+    int setParam(std::string param_id, uint32_t param_value);
+    int setParam(std::string param_id, uint8_t param_value);
+    int setVideoFrameFormat(uint32_t param_value);
+    int setVideoSize(uint32_t param_value);
+    int setImageFormat(uint32_t param_value);
+    int setImazeSize(uint32_t param_value);
+    std::shared_ptr<CameraDevice> create_camera_device(std::string camdev_name);
+    std::string toString(const char *buf, size_t buf_size);
 };
