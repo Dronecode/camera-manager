@@ -28,6 +28,9 @@
 #include "settings.h"
 #include "stream_manager.h"
 #include "util.h"
+#ifdef ENABLE_MAVLINK
+#include "CameraServer.h"
+#endif
 
 #define DEFAULT_CONFFILE "/etc/csd/main.conf"
 #define DEFAULT_CONF_DIR "/etc/csd/config.d"
@@ -239,11 +242,17 @@ int main(int argc, char *argv[])
     conf = new ConfFile();
     parse_conf_files(*conf, &opt);
 
-    StreamManager stream(*conf);
-    delete conf;
+#ifdef ENABLE_MAVLINK
+    CameraServer camServer(*conf);
+    camServer.start();
+#endif
 
-    log_debug("Starting Camera Streaming Daemon");
+    StreamManager stream(*conf);
     stream.start();
+
+    delete conf;
+    log_debug("Starting Camera Streaming Daemon");
+
     mainloop.loop();
 
     Log::close();

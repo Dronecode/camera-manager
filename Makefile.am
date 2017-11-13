@@ -146,7 +146,9 @@ BASE_FILES = \
 	src/stream_manager.cpp \
 	src/stream_manager.h \
 	src/util.c \
-	src/util.h
+	src/util.h \
+	src/v4l2_interface.cpp \
+	src/v4l2_interface.h
 
 if HAVE_REALSENSE
 BASE_FILES += \
@@ -217,6 +219,19 @@ samples_camera_sample_client_SOURCES = \
 samples_camera_sample_client_LDADD = $(GLIB_LIBS) $(AVAHI_LIBS)
 endif
 
+EXTRA_PROGRAMS += samples/camera-params-client
+
+samples_camera_params_client_SOURCES = \
+        src/CameraParameters.cpp \
+        src/CameraParameters.h \
+        samples/main_sample_camparams_client.cpp \
+        src/log.cpp \
+        src/log.h \
+        src/util.c \
+        src/util.h
+
+samples_camera_params_client_LDADD = $(GLIB_LIBS)
+
 if ENABLE_MAVLINK
 
 EXTRA_PROGRAMS += samples/camera-sample-mavlink-client
@@ -235,7 +250,14 @@ AM_CPPFLAGS += \
 
 BASE_FILES += \
 	src/mavlink_server.cpp \
-	src/mavlink_server.h
+	src/mavlink_server.h \
+	src/CameraParameters.cpp \
+	src/CameraParameters.h \
+	src/CameraComponent.h \
+	src/CameraComponent_V4L2.cpp \
+	src/CameraComponent_V4L2.h \
+	src/CameraServer.cpp \
+	src/CameraServer.h
 
 samples_camera_sample_mavlink_client_SOURCES = \
 	samples/main_sample_mavlink_client.cpp \

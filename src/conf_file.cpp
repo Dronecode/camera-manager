@@ -22,7 +22,10 @@
 #include <fcntl.h>
 #include <fnmatch.h>
 #include <limits.h>
+#include <set>
+#include <stddef.h>
 #include <string.h>
+#include <string>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -390,6 +393,27 @@ int ConfFile::extract_options(struct section_iter *iter, const OptionsTable tabl
     return _extract_options_from_section((struct section *)iter->ptr, table, table_len, data);
 }
 
+int ConfFile::extract_options(const char *section_name, const char *key, char **value)
+{
+    assert(section_name);
+    assert(key);
+    assert(value);
+
+    int ret = -1;
+    struct options {
+        char *value_str;
+    } opt;
+
+    static const OptionsTable option_table[] = {
+        {key, true, parse_str_dup, OPTIONS_TABLE_STRUCT_FIELD(options, value_str)},
+    };
+
+    ret = extract_options(section_name, option_table, ARRAY_SIZE(option_table), (void *)&opt);
+    if (!ret)
+        *value = opt.value_str;
+    return ret;
+}
+
 struct config *ConfFile::_find_config(struct section *s, const char *key, size_t key_len)
 {
     struct config *c;
@@ -442,6 +466,41 @@ int ConfFile::get_sections(const char *pattern, struct section_iter *iter)
     iter->name = nullptr;
     iter->name_len = 0;
     return -ENOENT;
+}
+
+static void _insert(std::set<std::string> *value_set, const char *val, size_t val_len)
+{
+    while (isspace(*val) && val_len > 0) {
+        val++;
+        val_len--;
+    }
+
+    while (val_len > 0 && isspace(val[val_len - 1]))
+        val_len--;
+
+    if (val_len)
+        value_set->insert(std::string(val, val_len));
+}
+
+int ConfFile::parse_stl_set(const char *val, size_t val_len, void *storage, size_t storage_len)
+{
+    assert(val);
+    assert(val_len);
+    assert(storage);
+
+    std::set<std::string> *value_set = (std::set<std::string> *)storage;
+    char *end;
+
+    while ((end = (char *)memchr((void *)val, ',', val_len))) {
+        if (end - val)
+            _insert(value_set, val, end - val);
+        val_len = val_len - (end - val) - 1;
+        val = end + 1;
+    }
+    if (val_len)
+        _insert(value_set, val, val_len);
+
+    return 0;
 }
 
 int ConfFile::parse_str_dup(const char *val, size_t val_len, void *storage, size_t storage_len)

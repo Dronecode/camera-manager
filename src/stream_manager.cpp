@@ -61,9 +61,6 @@ void StreamManager::start()
 #ifndef DISABLE_AVAHI
     avahi_publisher.start();
 #endif
-#ifdef ENABLE_MAVLINK
-    mavlink_server.start();
-#endif
 }
 
 void StreamManager::stop()
@@ -75,9 +72,6 @@ void StreamManager::stop()
     rtsp_server.stop();
 #ifndef DISABLE_AVAHI
     avahi_publisher.stop();
-#endif
-#ifdef ENABLE_MAVLINK
-    mavlink_server.stop();
 #endif
 }
 

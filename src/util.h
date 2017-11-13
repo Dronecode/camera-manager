@@ -46,6 +46,14 @@ typedef uint64_t nsec_t;
 #define strncaseeq(a, b, len) (strncasecmp((a), (b), (len)) == 0)
 #define memcaseeq(a, len_a, b, len_b) ((len_a) == (len_b) && strncaseeq(a, b, len_a))
 
+#ifndef MAX
+#define MAX(a, b) (((a) > (b)) ? (a) : (b))
+#endif
+
+#ifndef MIN
+#define MIN(a, b) (((a) < (b)) ? (a) : (b))
+#endif
+
 int safe_atoull(const char *s, unsigned long long *ret);
 int safe_atoul(const char *s, unsigned long *ret);
 int safe_atoi(const char *s, int *ret);
@@ -53,6 +61,9 @@ usec_t now_usec(void);
 usec_t ts_usec(const struct timespec *ts);
 
 int mkdir_p(const char *path, int len, mode_t mode);
+
+size_t mem_cpy(void *dest, size_t dsize, const void *src, size_t ssize, size_t cnt);
+
 #ifdef __cplusplus
 }
 #endif

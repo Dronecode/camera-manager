@@ -162,3 +162,19 @@ int mkdir_p(const char *path, int len, mode_t mode)
 
     return 0;
 }
+
+size_t mem_cpy(void *dest, size_t dsize, const void *src, size_t ssize, size_t cnt)
+{
+    size_t ncopy = 0;
+
+    if (dest == NULL || src == NULL)
+        return 0;
+
+    if (dsize == 0 || ssize == 0 || cnt == 0)
+        return 0;
+
+    ncopy = MIN(MIN(dsize, ssize), cnt);
+    memmove(dest, src, ncopy);
+
+    return ncopy;
+}

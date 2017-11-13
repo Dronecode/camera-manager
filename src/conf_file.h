@@ -102,6 +102,17 @@ public:
                         void *data);
 
     /**
+     * Extract option set in @a field from section @a section_name
+     *
+     * @param section_name Name of the section to extract options.
+     * @param key Name of the field that need to be extracted
+     * @param value A double pointer to char used to output the address of the value extracted.
+     * On success, value holds pointer to null terminated string.
+     * Caller must free the memory allocated for value
+     */
+    int extract_options(const char *section_name, const char *key, char **value);
+
+    /**
      * Get next section name from iterator that matches the shell wildcard @a pattern.
      *
      * If iter.ptr is @c nullptr get_sections() will look for first occurence of @a pattern in
@@ -120,6 +131,7 @@ public:
 
     // Helpers
     static int parse_bool(const char *val, size_t val_len, void *storage, size_t storage_len);
+    static int parse_stl_set(const char *val, size_t val_len, void *storage, size_t storage_len);
     static int parse_str_dup(const char *val, size_t val_len, void *storage, size_t storage_len);
     static int parse_str_buf(const char *val, size_t val_len, void *storage, size_t storage_len);
 

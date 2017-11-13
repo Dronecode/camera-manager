@@ -30,41 +30,6 @@
 
 static StreamBuilderV4l2 stream_builder;
 
-static void _insert(std::set<std::string> *value_set, const char *val, size_t val_len)
-{
-    while (isspace(*val) && val_len > 0) {
-        val++;
-        val_len--;
-    }
-
-    while (val_len > 0 && isspace(val[val_len - 1]))
-        val_len--;
-
-    if (val_len)
-        value_set->insert(std::string(val, val_len));
-}
-
-static int parse_stl_set(const char *val, size_t val_len, void *storage, size_t storage_len)
-{
-    assert(val);
-    assert(val_len);
-    assert(storage);
-
-    std::set<std::string> *value_set = (std::set<std::string> *)storage;
-    char *end;
-
-    while ((end = (char *)memchr((void *)val, ',', val_len))) {
-        if (end - val)
-            _insert(value_set, val, end - val);
-        val_len = val_len - (end - val) - 1;
-        val = end + 1;
-    }
-    if (val_len)
-        _insert(value_set, val, val_len);
-
-    return 0;
-}
-
 std::vector<Stream *> StreamBuilderV4l2::build_streams(ConfFile &conf)
 {
     DIR *dir;
@@ -73,7 +38,7 @@ std::vector<Stream *> StreamBuilderV4l2::build_streams(ConfFile &conf)
     std::set<std::string> blacklist;
 
     static const ConfFile::OptionsTable option_table[] = {
-        {"blacklist", false, parse_stl_set, 0, 0},
+        {"blacklist", false, ConfFile::parse_stl_set, 0, 0},
     };
 
     conf.extract_options("v4l2", option_table, 1, (void *)&blacklist);
