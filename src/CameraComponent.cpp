@@ -146,6 +146,8 @@ int CameraComponent::setParam(const char *param_id, size_t id_size, const char *
         ret = setParam(id, u.param_uint8);
         break;
     default:
+        ret = mCamDev->setParam(param_id, id_size, param_value,
+                              value_size, param_type);
         break;
     }
 
@@ -154,8 +156,10 @@ int CameraComponent::setParam(const char *param_id, size_t id_size, const char *
 
 int CameraComponent::setParam(std::string param_id, float param_value)
 {
+    int ret = 0;
     log_debug("%s: Param Id:%s Value:%lf", __func__, param_id.c_str(), param_value);
-    return 0;
+    ret = mCamDev->setParam(param_id, param_value);
+    return ret;
 }
 
 int CameraComponent::setParam(std::string param_id, int32_t param_value)
@@ -168,6 +172,7 @@ int CameraComponent::setParam(std::string param_id, int32_t param_value)
         ret = mCamDev->setHue(param_value);
         break;
     default:
+        ret = mCamDev->setParam(param_id, param_value);
         break;
     }
 
@@ -246,7 +251,7 @@ int CameraComponent::setParam(std::string param_id, uint32_t param_value)
         ret = mCamDev->setSceneMode(param_value);
         break;
     default:
-        ret = -1;
+        ret = mCamDev->setParam(param_id, param_value);
         break;
     }
 
@@ -258,8 +263,10 @@ int CameraComponent::setParam(std::string param_id, uint32_t param_value)
 
 int CameraComponent::setParam(std::string param_id, uint8_t param_value)
 {
+    int ret = 0;
     log_debug("%s: Param Id:%s Value:%d", __func__, param_id.c_str(), param_value);
-    return 0;
+    ret = mCamDev->setParam(param_id, param_value);
+    return ret;
 }
 
 int CameraComponent::setCameraMode(uint32_t mode)
