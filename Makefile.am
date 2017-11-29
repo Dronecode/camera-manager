@@ -258,8 +258,11 @@ BASE_FILES += \
 	src/CameraServer.cpp \
 	src/CameraServer.h \
 	src/CameraDevice.h \
-	src/CameraDevice_V4L2.cpp \
-	src/CameraDevice_V4L2.h
+	src/CameraDeviceV4l2.cpp \
+	src/CameraDeviceV4l2.h \
+	src/ImageCapture.h \
+	src/ImageCaptureGst.h \
+	src/ImageCaptureGst.cpp
 
 samples_camera_sample_mavlink_client_SOURCES = \
 	samples/main_sample_mavlink_client.cpp \

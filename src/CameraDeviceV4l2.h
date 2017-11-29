@@ -21,16 +21,17 @@
 #include "CameraDevice.h"
 #include "CameraParameters.h"
 
-class CameraDevice_V4L2 final : public CameraDevice {
+class CameraDeviceV4l2 final : public CameraDevice {
 public:
-    CameraDevice_V4L2(std::string device);
-    ~CameraDevice_V4L2();
+    CameraDeviceV4l2(std::string device);
+    ~CameraDeviceV4l2();
     int init(CameraParameters &camParam);
     int uninit();
     int start();
     int stop();
     std::vector<uint8_t> read();
     int getInfo(struct CameraInfo &camInfo);
+    std::string getDeviceId();
     int setSize(uint32_t width, uint32_t height);
     int setPixelFormat(uint32_t format);
     int setMode(uint32_t mode);
@@ -51,7 +52,7 @@ public:
     int setHue(int32_t value);
 
 private:
-    std::string mDevice;
+    std::string mDeviceId;
     int mMode;
     int set_control(int ctrl_id, int value);
 };

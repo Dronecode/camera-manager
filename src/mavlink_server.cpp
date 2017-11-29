@@ -25,6 +25,8 @@
 #include "mavlink_server.h"
 #include "util.h"
 
+using namespace std::placeholders;
+
 #define DEFAULT_MAVLINK_PORT 14550
 // TODO::Query from flight stack instead of hardcode
 #define DEFAULT_SYSID 1
@@ -223,6 +225,46 @@ void MavlinkServer::_handle_set_camera_mode(const struct sockaddr_in &addr,
 
     _send_ack(addr, cmd.command, cmd.target_component, success);
 
+}
+
+void MavlinkServer::_handle_image_start_capture(const struct sockaddr_in &addr,
+                                                mavlink_command_long_t &cmd)
+{
+    log_debug("%s", __func__);
+
+    bool success = false;
+
+    CameraComponent *tgtComp = getCameraComponent(cmd.target_component);
+    if (tgtComp) {
+        if (!tgtComp->startImageCapture(
+                (uint32_t)cmd.param2 /*interval*/, (uint32_t)cmd.param3 /*count*/,
+                std::bind(&MavlinkServer::_image_captured_cb, this, _1, _2)))
+            success = true;
+    }
+
+    _send_ack(addr, cmd.command, cmd.target_component, success);
+}
+
+void MavlinkServer::_handle_image_stop_capture(const struct sockaddr_in &addr,
+                                               mavlink_command_long_t &cmd)
+{
+    log_debug("%s", __func__);
+
+    bool success = false;
+
+    CameraComponent *tgtComp = getCameraComponent(cmd.target_component);
+    if (tgtComp) {
+        if (!tgtComp->stopImageCapture())
+            success = true;
+    }
+
+    _send_ack(addr, cmd.command, cmd.target_component, success);
+}
+
+void MavlinkServer::_image_captured_cb(int result, int seq_num)
+{
+    log_debug("%s result:%d seq:%d", __func__, result, seq_num);
+    // TODO :: Send MAVLINK message to indicate image captured
 }
 
 void MavlinkServer::_handle_request_camera_capture_status(const struct sockaddr_in &addr,
@@ -506,6 +548,9 @@ void MavlinkServer::_handle_mavlink_message(const struct sockaddr_in &addr, mavl
             this->_handle_set_camera_mode(addr, cmd);
             break;
         case MAV_CMD_IMAGE_START_CAPTURE:
+            log_debug("MAV_CMD_IMAGE_START_CAPTURE");
+            this->_handle_image_start_capture(addr, cmd);
+            break;
         case MAV_CMD_IMAGE_STOP_CAPTURE:
         case MAV_CMD_REQUEST_CAMERA_IMAGE_CAPTURE:
         case MAV_CMD_DO_TRIGGER_CONTROL:

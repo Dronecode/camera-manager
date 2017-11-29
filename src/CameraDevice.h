@@ -42,6 +42,7 @@ public:
         STATE_ACTIVE = 1,
     };
 
+    virtual std::string getDeviceId() = 0;
     virtual int getInfo(struct CameraInfo &camInfo) = 0;
     virtual int init(CameraParameters &camParam) = 0;
     virtual int uninit() = 0;

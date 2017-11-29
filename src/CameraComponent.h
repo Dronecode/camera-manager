@@ -24,6 +24,7 @@
 
 #include "CameraDevice.h"
 #include "CameraParameters.h"
+#include "ImageCapture.h"
 #include "log.h"
 
 struct CameraInfo {
@@ -53,6 +54,7 @@ struct StorageInfo {
 };
 
 class CameraDevice;
+class ImageCapture;
 class CameraComponent {
 public:
     CameraComponent(std::string);
@@ -68,6 +70,10 @@ public:
                          size_t value_size, int param_type);
     virtual int setCameraMode(uint32_t mode);
     virtual int getCameraMode();
+    typedef std::function<void(int result, int seq_num)> capture_callback_t;
+    virtual int startImageCapture(int interval, int count, capture_callback_t cb);
+    virtual int stopImageCapture();
+    void cbImageCaptured(int result, int seq_num);
 
 private:
     std::string mCamDevName;               /* Camera device name */
@@ -76,6 +82,8 @@ private:
     CameraParameters mCamParam;            /* Camera Parameters Object */
     std::string mCamDefURI;                /* Camera Definition URI */
     std::shared_ptr<CameraDevice> mCamDev; /* Camera Device Object */
+    std::shared_ptr<ImageCapture> mImgCap; /* Image Capture Object */
+    std::function<void(int result, int seq_num)> mImgCapCB;
     void initStorageInfo(struct StorageInfo &storeInfo);
     int setParam(std::string param_id, float param_value);
     int setParam(std::string param_id, int32_t param_value);
