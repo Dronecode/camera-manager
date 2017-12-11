@@ -28,6 +28,11 @@
 #include "socket.h"
 #include "stream.h"
 
+typedef struct image_callback {
+    int comp_id;             /* Component ID */
+    struct sockaddr_in addr; /* Requester address */
+} image_callback_t;
+
 class MavlinkServer {
 public:
     MavlinkServer(ConfFile &conf, std::vector<std::unique_ptr<Stream>> &streams, RTSPServer &rtsp);
@@ -62,7 +67,7 @@ private:
                                                         mavlink_command_long_t &cmd);
     void _handle_image_start_capture(const struct sockaddr_in &addr, mavlink_command_long_t &cmd);
     void _handle_image_stop_capture(const struct sockaddr_in &addr, mavlink_command_long_t &cmd);
-    void _image_captured_cb(int result, int seq_num);
+    void _image_captured_cb(image_callback_t cb_data, int result, int seq_num);
     void _handle_request_camera_capture_status(const struct sockaddr_in &addr,
                                                mavlink_command_long_t &cmd);
     void _handle_camera_video_stream_request(const struct sockaddr_in &addr, int command,
