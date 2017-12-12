@@ -103,9 +103,10 @@ int ImageCaptureGst::setFormat(int imgFormat)
     return 0;
 }
 
-int ImageCaptureGst::setDestination(const std::string imgPath)
+int ImageCaptureGst::setLocation(const std::string imgPath)
 {
-    // TODO::Check if the path is writeable
+    // TODO::Check if the path is writeable/valid
+    log_debug("%s:%s", __func__, imgPath.c_str());
     mImgPath = imgPath;
 
     return 0;
@@ -113,7 +114,7 @@ int ImageCaptureGst::setDestination(const std::string imgPath)
 
 void ImageCaptureGst::captureThread(int num, int interval)
 {
-    log_debug("capture_thread num:%d int:%d", num, interval);
+    log_debug("captureThread num:%d int:%d", num, interval);
     int ret = -1;
     int count = num;
     int seq_num = 0;
@@ -197,9 +198,6 @@ std::string ImageCaptureGst::getGstPipelineNameV4l2(int seq_num)
     return ss.str();
 }
 
-// file path
-// cameraparameter image format to string gst plugin
-// video device
 int ImageCaptureGst::createV4l2Pipeline(int seq_num)
 {
     int ret = 0;

@@ -267,7 +267,7 @@ void MavlinkServer::_image_captured_cb(image_callback_t cb_data, int result, int
 {
     log_debug("%s result:%d seq:%d", __func__, result, seq_num);
     log_debug("Comp Id:%d", cb_data.comp_id);
-    // TODO :: Send MAVLINK message to indicate image captured
+    // TODO :: Fill MAVLINK message with correct info including geo location etc
     bool success = !result;
     mavlink_message_t msg;
     float q[4] = {0}; // Quaternion of camera orientation

@@ -33,11 +33,17 @@ CameraServer::CameraServer(ConfFile &conf)
 {
     cameraCount = detectCamera(conf);
 
+    // Read image capture file location
+    std::string imgPath = getImgCapLocation(conf);
+
     std::vector<CameraComponent *>::iterator it;
     for (it = cameraList.begin(); it != cameraList.end(); it++) {
         if (*it) {
             if (mavlink_server.addCameraComponent(*it) == -1)
                 log_error("Error in adding Camera Component");
+
+            if (!imgPath.empty())
+                (*it)->setImageLocation(imgPath);
         }
     }
 }
@@ -59,6 +65,23 @@ void CameraServer::start()
 void CameraServer::stop()
 {
     mavlink_server.stop();
+}
+
+std::string CameraServer::getImgCapLocation(ConfFile &conf)
+{
+    // Location must start and end with "/"
+    char *imgPath = 0;
+    const char *key = "location";
+    std::string ret;
+    if (!conf.extract_options("imgcap", key, &imgPath)) {
+        ret = std::string(imgPath);
+        free(imgPath);
+    } else {
+        log_error("Image Capture location not found");
+        ret = {};
+    }
+
+    return ret;
 }
 
 // prepare the list of cameras in the system

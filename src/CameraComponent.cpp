@@ -28,6 +28,7 @@ CameraComponent::CameraComponent(std::string camdev_name)
     : mCamDevName(camdev_name)
     , mCamInfo{}
     , mStoreInfo{}
+    , mImgPath("")
 {
     log_debug("%s path:%s", __func__, camdev_name.c_str());
     // Create a camera device based on device path
@@ -50,6 +51,7 @@ CameraComponent::CameraComponent(std::string camdev_name, std::string camdef_uri
     , mCamInfo{}
     , mStoreInfo{}
     , mCamDefURI(camdef_uri)
+    , mImgPath("")
 {
     log_debug("%s path:%s", __func__, camdev_name.c_str());
     // Create a camera device based on device path
@@ -287,6 +289,8 @@ int CameraComponent::startImageCapture(int interval, int count, capture_callback
 {
     mImgCapCB = cb;
     mImgCap = std::make_shared<ImageCaptureGst>(mCamDev);
+    if (!mImgPath.empty())
+        mImgCap->setLocation(mImgPath);
     mImgCap->start(interval, count, std::bind(&CameraComponent::cbImageCaptured, this, _1, _2));
     return 0;
 }
@@ -306,6 +310,12 @@ void CameraComponent::cbImageCaptured(int result, int seq_num)
     // TODO :: Get the file path of the image and host it via http
     if (mImgCapCB)
         mImgCapCB(result, seq_num);
+}
+
+int CameraComponent::setImageLocation(std::string imgPath)
+{
+    mImgPath = imgPath;
+    return 0;
 }
 
 int CameraComponent::setImazeSize(uint32_t param_value)

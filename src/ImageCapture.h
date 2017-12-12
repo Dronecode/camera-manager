@@ -35,5 +35,5 @@ public:
     virtual int getState() = 0;
     virtual int setResolution(int imgWidth, int imgHeight) = 0;
     virtual int setFormat(int imgFormat) = 0;
-    virtual int setDestination(const std::string imgPath) = 0;
+    virtual int setLocation(const std::string imgPath) = 0;
 };

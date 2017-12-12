@@ -29,7 +29,7 @@ public:
     int getState();
     int setResolution(int imgWidth, int imgHeight);
     int setFormat(int imgFormat);
-    int setDestination(const std::string imgPath);
+    int setLocation(const std::string imgPath);
 
 private:
     int setState(int state);

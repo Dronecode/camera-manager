@@ -37,6 +37,7 @@ public:
     int getCameraCount() { return cameraCount; }
 
 private:
+    std::string getImgCapLocation(ConfFile &conf);
     int detectCamera(ConfFile &conf);
     int detect_devices_v4l2(ConfFile &conf, std::vector<CameraComponent *> &cameraList);
     MavlinkServer mavlink_server;

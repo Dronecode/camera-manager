@@ -404,7 +404,7 @@ int ConfFile::extract_options(const char *section_name, const char *key, char **
         char *value_str;
     } opt;
 
-    static const OptionsTable option_table[] = {
+    const OptionsTable option_table[] = {
         {key, true, parse_str_dup, OPTIONS_TABLE_STRUCT_FIELD(options, value_str)},
     };
 

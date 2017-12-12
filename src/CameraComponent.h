@@ -74,6 +74,7 @@ public:
     virtual int startImageCapture(int interval, int count, capture_callback_t cb);
     virtual int stopImageCapture();
     void cbImageCaptured(int result, int seq_num);
+    virtual int setImageLocation(std::string imgPath);
 
 private:
     std::string mCamDevName;               /* Camera device name */
@@ -84,6 +85,7 @@ private:
     std::shared_ptr<CameraDevice> mCamDev; /* Camera Device Object */
     std::shared_ptr<ImageCapture> mImgCap; /* Image Capture Object */
     std::function<void(int result, int seq_num)> mImgCapCB;
+    std::string mImgPath;
     void initStorageInfo(struct StorageInfo &storeInfo);
     int setParam(std::string param_id, float param_value);
     int setParam(std::string param_id, int32_t param_value);
