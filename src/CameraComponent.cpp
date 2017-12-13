@@ -16,15 +16,19 @@
  * limitations under the License.
  */
 #include "CameraComponent.h"
-#include "CameraDevice_V4L2.h"
+#include "CameraDeviceV4l2.h"
+#include "ImageCaptureGst.h"
 #include "mavlink_server.h"
 #include "util.h"
 #include <algorithm>
+
+using namespace std::placeholders;
 
 CameraComponent::CameraComponent(std::string camdev_name)
     : mCamDevName(camdev_name)
     , mCamInfo{}
     , mStoreInfo{}
+    , mImgPath("")
 {
     log_debug("%s path:%s", __func__, camdev_name.c_str());
     // Create a camera device based on device path
@@ -47,6 +51,7 @@ CameraComponent::CameraComponent(std::string camdev_name, std::string camdef_uri
     , mCamInfo{}
     , mStoreInfo{}
     , mCamDefURI(camdef_uri)
+    , mImgPath("")
 {
     log_debug("%s path:%s", __func__, camdev_name.c_str());
     // Create a camera device based on device path
@@ -280,6 +285,39 @@ int CameraComponent::getCameraMode()
     return mCamDev->getMode();
 }
 
+int CameraComponent::startImageCapture(int interval, int count, capture_callback_t cb)
+{
+    mImgCapCB = cb;
+    mImgCap = std::make_shared<ImageCaptureGst>(mCamDev);
+    if (!mImgPath.empty())
+        mImgCap->setLocation(mImgPath);
+    mImgCap->start(interval, count, std::bind(&CameraComponent::cbImageCaptured, this, _1, _2));
+    return 0;
+}
+
+int CameraComponent::stopImageCapture()
+{
+    if (mImgCap)
+        mImgCap->stop();
+
+    mImgCap.reset();
+    return 0;
+}
+
+void CameraComponent::cbImageCaptured(int result, int seq_num)
+{
+    log_debug("%s result:%d sequenc:%d", __func__, result, seq_num);
+    // TODO :: Get the file path of the image and host it via http
+    if (mImgCapCB)
+        mImgCapCB(result, seq_num);
+}
+
+int CameraComponent::setImageLocation(std::string imgPath)
+{
+    mImgPath = imgPath;
+    return 0;
+}
+
 int CameraComponent::setImazeSize(uint32_t param_value)
 {
     return 0;
@@ -304,7 +342,7 @@ std::shared_ptr<CameraDevice> CameraComponent::create_camera_device(std::string 
 {
     if (camdev_name.find("/dev/video") != std::string::npos) {
         log_debug("V4L2 device : %s", camdev_name.c_str());
-        return std::make_shared<CameraDevice_V4L2>(camdev_name);
+        return std::make_shared<CameraDeviceV4l2>(camdev_name);
     } else
         return nullptr;
 }

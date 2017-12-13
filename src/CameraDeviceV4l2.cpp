@@ -18,20 +18,20 @@
 #include <cstring>
 #include <linux/videodev2.h>
 
-#include "CameraDevice_V4L2.h"
+#include "CameraDeviceV4l2.h"
 #include "v4l2_interface.h"
 
-CameraDevice_V4L2::CameraDevice_V4L2(std::string device)
-    : mDevice(device)
+CameraDeviceV4l2::CameraDeviceV4l2(std::string device)
+    : mDeviceId(device)
     , mMode(-1)
 {
 }
 
-CameraDevice_V4L2::~CameraDevice_V4L2()
+CameraDeviceV4l2::~CameraDeviceV4l2()
 {
 }
 
-int CameraDevice_V4L2::init(CameraParameters &camParam)
+int CameraDeviceV4l2::init(CameraParameters &camParam)
 {
     // TODO::Query supported parameters
     // TODO::Set default parameters set
@@ -63,27 +63,32 @@ int CameraDevice_V4L2::init(CameraParameters &camParam)
     return 0;
 }
 
-int CameraDevice_V4L2::uninit()
+int CameraDeviceV4l2::uninit()
 {
     return 0;
 }
 
-int CameraDevice_V4L2::start()
+int CameraDeviceV4l2::start()
 {
     return 0;
 }
 
-int CameraDevice_V4L2::stop()
+int CameraDeviceV4l2::stop()
 {
     return 0;
 }
 
-std::vector<uint8_t> CameraDevice_V4L2::read()
+std::vector<uint8_t> CameraDeviceV4l2::read()
 {
     return std::vector<uint8_t>();
 }
 
-int CameraDevice_V4L2::getInfo(struct CameraInfo &camInfo)
+std::string CameraDeviceV4l2::getDeviceId()
+{
+    return mDeviceId;
+}
+
+int CameraDeviceV4l2::getInfo(struct CameraInfo &camInfo)
 {
     strcpy((char *)camInfo.vendorName, "Intel");
     strcpy((char *)camInfo.modelName, "RealSense R200");
@@ -99,100 +104,100 @@ int CameraDevice_V4L2::getInfo(struct CameraInfo &camInfo)
     return 0;
 }
 
-int CameraDevice_V4L2::setSize(uint32_t width, uint32_t height)
+int CameraDeviceV4l2::setSize(uint32_t width, uint32_t height)
 {
     return 0;
 }
 
-int CameraDevice_V4L2::setPixelFormat(uint32_t format)
+int CameraDeviceV4l2::setPixelFormat(uint32_t format)
 {
     return 0;
 }
 
-int CameraDevice_V4L2::setMode(uint32_t mode)
+int CameraDeviceV4l2::setMode(uint32_t mode)
 {
     return 0;
 }
 
-int CameraDevice_V4L2::getMode()
+int CameraDeviceV4l2::getMode()
 {
     return mMode;
 }
 
-int CameraDevice_V4L2::setBrightness(uint32_t value)
+int CameraDeviceV4l2::setBrightness(uint32_t value)
 {
     return set_control(V4L2_CID_BRIGHTNESS, value);
 }
 
-int CameraDevice_V4L2::setContrast(uint32_t value)
+int CameraDeviceV4l2::setContrast(uint32_t value)
 {
     return set_control(V4L2_CID_CONTRAST, value);
 }
 
-int CameraDevice_V4L2::setSaturation(uint32_t value)
+int CameraDeviceV4l2::setSaturation(uint32_t value)
 {
     return set_control(V4L2_CID_SATURATION, value);
 }
 
-int CameraDevice_V4L2::setWhiteBalanceMode(uint32_t value)
+int CameraDeviceV4l2::setWhiteBalanceMode(uint32_t value)
 {
     // TODO :: Translate to v4l2 enum value from exported values
     return set_control(V4L2_CID_AUTO_WHITE_BALANCE, value);
 }
 
-int CameraDevice_V4L2::setGamma(uint32_t value)
+int CameraDeviceV4l2::setGamma(uint32_t value)
 {
     return set_control(V4L2_CID_GAMMA, value);
 }
 
-int CameraDevice_V4L2::setGain(uint32_t value)
+int CameraDeviceV4l2::setGain(uint32_t value)
 {
     return set_control(V4L2_CID_GAIN, value);
 }
 
-int CameraDevice_V4L2::setPowerLineFrequency(uint32_t value)
+int CameraDeviceV4l2::setPowerLineFrequency(uint32_t value)
 {
     return set_control(V4L2_CID_POWER_LINE_FREQUENCY, value);
 }
 
-int CameraDevice_V4L2::setWhiteBalanceTemperature(uint32_t value)
+int CameraDeviceV4l2::setWhiteBalanceTemperature(uint32_t value)
 {
     return set_control(V4L2_CID_WHITE_BALANCE_TEMPERATURE, value);
 }
 
-int CameraDevice_V4L2::setSharpness(uint32_t value)
+int CameraDeviceV4l2::setSharpness(uint32_t value)
 {
     return set_control(V4L2_CID_SHARPNESS, value);
 }
 
-int CameraDevice_V4L2::setBacklightCompensation(uint32_t value)
+int CameraDeviceV4l2::setBacklightCompensation(uint32_t value)
 {
     return set_control(V4L2_CID_BACKLIGHT_COMPENSATION, value);
 }
 
-int CameraDevice_V4L2::setExposureMode(uint32_t value)
+int CameraDeviceV4l2::setExposureMode(uint32_t value)
 {
     return set_control(V4L2_CID_EXPOSURE_AUTO, value);
 }
 
-int CameraDevice_V4L2::setExposureAbsolute(uint32_t value)
+int CameraDeviceV4l2::setExposureAbsolute(uint32_t value)
 {
     return set_control(V4L2_CID_EXPOSURE_ABSOLUTE, value);
 }
 
-int CameraDevice_V4L2::setSceneMode(uint32_t value)
+int CameraDeviceV4l2::setSceneMode(uint32_t value)
 {
     return 0;
 }
 
-int CameraDevice_V4L2::setHue(int32_t value)
+int CameraDeviceV4l2::setHue(int32_t value)
 {
     return set_control(V4L2_CID_HUE, value);
 }
 
-int CameraDevice_V4L2::set_control(int ctrl_id, int value)
+int CameraDeviceV4l2::set_control(int ctrl_id, int value)
 {
-    int fd = v4l2_open(mDevice.c_str());
+    int fd = v4l2_open(mDeviceId.c_str());
     int ret = v4l2_set_control(fd, ctrl_id, value);
     if (ret)
         log_error("Error in setting control : %d Error:%d", ctrl_id, errno);

@@ -16,33 +16,24 @@
  * limitations under the License.
  */
 #pragma once
-#include <map>
+#include <atomic>
+#include <functional>
 #include <string>
-#include <vector>
+#include <thread>
 
-#include "conf_file.h"
-#include "mavlink_server.h"
-#include "rtsp_server.h"
-#include "stream.h"
+#include "CameraDevice.h"
 
-#include "CameraComponent.h"
-#include "log.h"
-
-class CameraServer {
+class ImageCapture {
 public:
-    CameraServer(ConfFile &conf);
-    ~CameraServer();
-    void start();
-    void stop();
-    int getCameraCount() { return cameraCount; }
+    ImageCapture() {}
+    ~ImageCapture() {}
 
-private:
-    std::string getImgCapLocation(ConfFile &conf);
-    int detectCamera(ConfFile &conf);
-    int detect_devices_v4l2(ConfFile &conf, std::vector<CameraComponent *> &cameraList);
-    MavlinkServer mavlink_server;
-    RTSPServer rtsp_server;
-    int cameraCount;
-    std::vector<CameraComponent *> cameraList;
-    std::vector<std::unique_ptr<Stream>> streams; // Remove it
+    enum State { STATE_ERROR = -1, STATE_IDLE = 0, STATE_IN_PROGRESS = 1 };
+
+    virtual int start(int num, int interval, std::function<void(int result, int seq_num)> cb) = 0;
+    virtual int stop() = 0;
+    virtual int getState() = 0;
+    virtual int setResolution(int imgWidth, int imgHeight) = 0;
+    virtual int setFormat(int imgFormat) = 0;
+    virtual int setLocation(const std::string imgPath) = 0;
 };
