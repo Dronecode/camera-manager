@@ -16,13 +16,12 @@
  * limitations under the License.
  */
 #include "CameraComponent.h"
+#include "CameraDeviceGazebo.h"
 #include "CameraDeviceV4l2.h"
 #include "ImageCaptureGst.h"
 #include "mavlink_server.h"
 #include "util.h"
 #include <algorithm>
-
-using namespace std::placeholders;
 
 CameraComponent::CameraComponent(std::string camdev_name)
     : mCamDevName(camdev_name)
@@ -42,6 +41,9 @@ CameraComponent::CameraComponent(std::string camdev_name)
 
     // Get list of Parameters supported & its default value
     mCamDev->init(mCamParam);
+
+    // start the camera device
+    mCamDev->start();
 
     initStorageInfo(mStoreInfo);
 }
@@ -71,6 +73,9 @@ CameraComponent::CameraComponent(std::string camdev_name, std::string camdef_uri
 
     // Get list of Parameters supported & its default value
     mCamDev->init(mCamParam);
+
+    // start the camera device
+    mCamDev->start();
 
     initStorageInfo(mStoreInfo);
 }
@@ -291,7 +296,8 @@ int CameraComponent::startImageCapture(int interval, int count, capture_callback
     mImgCap = std::make_shared<ImageCaptureGst>(mCamDev);
     if (!mImgPath.empty())
         mImgCap->setLocation(mImgPath);
-    mImgCap->start(interval, count, std::bind(&CameraComponent::cbImageCaptured, this, _1, _2));
+    mImgCap->start(interval, count, std::bind(&CameraComponent::cbImageCaptured, this,
+                                              std::placeholders::_1, std::placeholders::_2));
     return 0;
 }
 
@@ -343,6 +349,9 @@ std::shared_ptr<CameraDevice> CameraComponent::create_camera_device(std::string 
     if (camdev_name.find("/dev/video") != std::string::npos) {
         log_debug("V4L2 device : %s", camdev_name.c_str());
         return std::make_shared<CameraDeviceV4l2>(camdev_name);
+    } else if (camdev_name.find("camera/image") != std::string::npos) {
+        log_debug("Gazebo device : %s", camdev_name.c_str());
+        return std::make_shared<CameraDeviceGazebo>(camdev_name);
     } else
         return nullptr;
 }

@@ -70,7 +70,8 @@ AM_CFLAGS = \
 	-fvisibility=hidden \
 	-ffunction-sections \
 	-fdata-sections \
-	${GST_CFLAGS}
+	${GST_CFLAGS} \
+	${GZB_CFLAGS}
 
 AM_CXXFLAGS = \
 	-I$(top_builddir)/src \
@@ -110,7 +111,8 @@ AM_CXXFLAGS = \
 	-fvisibility=hidden \
 	-ffunction-sections \
 	-fdata-sections \
-	${GST_CFLAGS}
+	${GST_CFLAGS} \
+	${GZB_CFLAGS}
 
 AM_LDFLAGS = \
 	-Wl,--as-needed \
@@ -180,7 +182,7 @@ csd_SOURCES = \
 	${BASE_FILES} \
 	src/main.cpp
 
-csd_LDADD = $(GLIB_LIBS) $(GST_LIBS)
+csd_LDADD = $(GLIB_LIBS) $(GST_LIBS) $(GZB_LIBS)
 
 CLEANFILES += csd.service
 
@@ -262,7 +264,9 @@ BASE_FILES += \
 	src/CameraDeviceV4l2.h \
 	src/ImageCapture.h \
 	src/ImageCaptureGst.h \
-	src/ImageCaptureGst.cpp
+	src/ImageCaptureGst.cpp \
+	src/CameraDeviceGazebo.h \
+	src/CameraDeviceGazebo.cpp
 
 samples_camera_sample_mavlink_client_SOURCES = \
 	samples/main_sample_mavlink_client.cpp \

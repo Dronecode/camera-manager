@@ -67,31 +67,42 @@ void CameraServer::stop()
     mavlink_server.stop();
 }
 
-std::string CameraServer::getImgCapLocation(ConfFile &conf)
-{
-    // Location must start and end with "/"
-    char *imgPath = 0;
-    const char *key = "location";
-    std::string ret;
-    if (!conf.extract_options("imgcap", key, &imgPath)) {
-        ret = std::string(imgPath);
-        free(imgPath);
-    } else {
-        log_error("Image Capture location not found");
-        ret = {};
-    }
-
-    return ret;
-}
-
 // prepare the list of cameras in the system
 int CameraServer::detectCamera(ConfFile &conf)
 {
     int count = 0;
 
+    // Check for SITL gazebo first, if not found search for other devices
+    // It is possible to have gazebo camera with real camera but not enabling
+    // this for now
+    count += detect_devices_gazebo(conf, cameraList);
+    if (count > 0)
+        return count;
+
     count += detect_devices_v4l2(conf, cameraList);
 
     return count;
+}
+
+int CameraServer::detect_devices_gazebo(ConfFile &conf, std::vector<CameraComponent *> &camList)
+{
+    char *uri_addr = 0;
+    std::string camTopic = getGazeboCamTopic(conf);
+    if (camTopic.empty())
+        return 0;
+
+    log_debug("Found Gazebo camera :%s", camTopic.c_str());
+    // TODO::Check if the topic found is valid
+    if (!conf.extract_options("uri", "gazebo", &uri_addr)) {
+        std::string uriString(uri_addr);
+        camList.push_back(new CameraComponent(camTopic, uriString));
+        free(uri_addr);
+    } else {
+        log_warning("Camera Definition for gazebo camera not found");
+        camList.push_back(new CameraComponent(camTopic));
+    }
+
+    return 1;
 }
 
 int CameraServer::detect_devices_v4l2(ConfFile &conf, std::vector<CameraComponent *> &camList)
@@ -131,4 +142,38 @@ int CameraServer::detect_devices_v4l2(ConfFile &conf, std::vector<CameraComponen
     }
 
     return count;
+}
+
+std::string CameraServer::getImgCapLocation(ConfFile &conf)
+{
+    // Location must start and end with "/"
+    char *imgPath = 0;
+    const char *key = "location";
+    std::string ret;
+    if (!conf.extract_options("imgcap", key, &imgPath)) {
+        ret = std::string(imgPath);
+        free(imgPath);
+    } else {
+        log_error("Image Capture location not found");
+        ret = {};
+    }
+
+    return ret;
+}
+
+std::string CameraServer::getGazeboCamTopic(ConfFile &conf)
+{
+    // Location must start and end with "/"
+    char *topic = 0;
+    const char *key = "camtopic";
+    std::string ret;
+    if (!conf.extract_options("gazebo", key, &topic)) {
+        ret = std::string(topic);
+        free(topic);
+    } else {
+        log_error("Gazebo Camera Topic not found");
+        ret = {};
+    }
+
+    return ret;
 }
