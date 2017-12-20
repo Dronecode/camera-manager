@@ -58,7 +58,9 @@ public:
     virtual int setParam(std::string param_id, uint32_t param_value) { return -ENOTSUP; }
     virtual int setParam(std::string param_id, uint8_t param_value) { return -ENOTSUP; }
     virtual int setSize(uint32_t width, uint32_t height) { return -ENOTSUP; }
+    virtual int getSize(uint32_t &width, uint32_t &height) { return -ENOTSUP; }
     virtual int setPixelFormat(uint32_t format) { return -ENOTSUP; }
+    virtual int getPixelFormat(uint32_t &format) { return -ENOTSUP; }
     virtual int setMode(uint32_t mode) { return -ENOTSUP; }
     virtual int getMode() { return -ENOTSUP; };
     virtual int setBrightness(uint32_t value) { return -ENOTSUP; }

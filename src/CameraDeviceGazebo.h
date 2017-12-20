@@ -34,18 +34,16 @@ public:
     int start();
     int stop();
     std::vector<uint8_t> read();
-    std::string getDevice();
-    int getWidth();
-    int getHeight();
-    int getPixelFormat();
+    int getSize(uint32_t &width, uint32_t &height);
+    int getPixelFormat(uint32_t &format);
 
 private:
     void cbOnImages(ConstImagesStampedPtr &_msg);
     int getImage(const gazebo::msgs::Image &_msg);
     std::string mDeviceId;
-    int mWidth;
-    int mHeight;
-    int mPixelFormat;
+    uint32_t mWidth;
+    uint32_t mHeight;
+    uint32_t mPixelFormat;
     std::string mTopicName;
     gazebo::transport::NodePtr mNode;
     gazebo::transport::SubscriberPtr mSub;

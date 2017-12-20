@@ -30,6 +30,7 @@ public:
     int setResolution(int imgWidth, int imgHeight);
     int setFormat(int imgFormat);
     int setLocation(const std::string imgPath);
+    std::shared_ptr<CameraDevice> mCamDev;
 
 private:
     int setState(int state);
@@ -39,13 +40,12 @@ private:
     std::string getGstImgEncName(int format);
     std::string getImgExt(int format);
     std::string getGstPipelineNameV4l2(int seq_num);
-    std::shared_ptr<CameraDevice> mCamDev;
     std::string mDevice;
     std::atomic<int> mState;
-    int mWidth;
-    int mHeight;
-    int mImgFormat;
-    int mPixelFormat;
+    uint32_t mWidth;
+    uint32_t mHeight;
+    uint32_t mImgFormat;
+    uint32_t mPixelFormat;
     std::string mImgPath;
     std::function<void(int result, int seq_num)> mResultCB;
     std::thread mThread;

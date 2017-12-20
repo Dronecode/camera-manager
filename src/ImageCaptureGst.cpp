@@ -32,10 +32,13 @@ ImageCaptureGst::ImageCaptureGst(std::shared_ptr<CameraDevice> camDev)
     , mWidth(640)
     , mHeight(480)
     , mImgFormat(CameraParameters::ID_IMAGE_FORMAT_JPEG)
-    , mPixelFormat(-1)
+    , mPixelFormat(0)
     , mImgPath("/tmp/")
     , mResultCB(nullptr)
 {
+    mCamDev->getSize(mWidth, mHeight);
+
+    mCamDev->getPixelFormat(mPixelFormat);
 }
 
 ImageCaptureGst::~ImageCaptureGst()

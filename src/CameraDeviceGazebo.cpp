@@ -26,9 +26,9 @@
 
 CameraDeviceGazebo::CameraDeviceGazebo(std::string device)
     : mDeviceId(device)
-    , mWidth(0)
-    , mHeight(0)
-    , mPixelFormat(-1)
+    , mWidth(640)
+    , mHeight(360)
+    , mPixelFormat(CameraParameters::ID_PIXEL_FORMAT_RGB24)
 {
     log_debug("%s path:%s", __func__, mDeviceId.c_str());
 }
@@ -100,6 +100,21 @@ std::vector<uint8_t> CameraDeviceGazebo::read()
     return mFrameBuffer;
 }
 
+int CameraDeviceGazebo::getSize(uint32_t &width, uint32_t &height)
+{
+    width = mWidth;
+    height = mHeight;
+
+    return 0;
+}
+
+int CameraDeviceGazebo::getPixelFormat(uint32_t &format)
+{
+    format = mPixelFormat;
+
+    return 0;
+}
+
 void CameraDeviceGazebo::cbOnImages(ConstImagesStampedPtr &_msg)
 {
     std::lock_guard<std::mutex> locker(mLock);
@@ -118,10 +133,11 @@ int CameraDeviceGazebo::getImage(const gazebo::msgs::Image &_msg)
     if (_msg.width() == 0 || _msg.height() == 0)
         return failure;
 
-    log_debug("Width: %u", _msg.width());
-    log_debug("Height: %u", _msg.height());
+    // log_debug("Width: %u", _msg.width());
+    // log_debug("Height: %u", _msg.height());
+    mWidth = _msg.width();
+    mHeight = _msg.height();
 
-    int pixFormat;
     switch (_msg.pixel_format()) {
     case gazebo::common::Image::L_INT8:
     case gazebo::common::Image::L_INT16: {
@@ -130,7 +146,7 @@ int CameraDeviceGazebo::getImage(const gazebo::msgs::Image &_msg)
     }
     case gazebo::common::Image::RGB_INT8:
     case gazebo::common::Image::RGBA_INT8: {
-        pixFormat = CameraParameters::ID_PIXEL_FORMAT_RGB24;
+        mPixelFormat = CameraParameters::ID_PIXEL_FORMAT_RGB24;
         break;
     }
     default: {
@@ -140,7 +156,7 @@ int CameraDeviceGazebo::getImage(const gazebo::msgs::Image &_msg)
     }
 
     // copy image data to frame buffer
-    log_debug("Image Size: %lu Format:%d", _msg.data().size(), pixFormat);
+    // log_debug("Image Size: %lu Format:%d", _msg.data().size(), pixFormat);
     const char *buffer = (const char *)_msg.data().c_str();
     uint buffer_size = _msg.data().size();
     mFrameBuffer = std::vector<uint8_t>(buffer, buffer + buffer_size);
