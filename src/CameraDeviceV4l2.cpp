@@ -104,6 +104,11 @@ int CameraDeviceV4l2::getInfo(struct CameraInfo &camInfo)
     return 0;
 }
 
+bool CameraDeviceV4l2::isGstV4l2Src()
+{
+    return true;
+}
+
 int CameraDeviceV4l2::setSize(uint32_t width, uint32_t height)
 {
     return 0;

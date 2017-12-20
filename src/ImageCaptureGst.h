@@ -38,8 +38,10 @@ private:
     void captureThread(int num, int interval);
     int createV4l2Pipeline(int seq_num);
     std::string getGstImgEncName(int format);
+    std::string getGstPixFormat(int pixFormat);
     std::string getImgExt(int format);
     std::string getGstPipelineNameV4l2(int seq_num);
+    int createAppsrcPipeline(int seq_num);
     std::string mDevice;
     std::atomic<int> mState;
     uint32_t mWidth;

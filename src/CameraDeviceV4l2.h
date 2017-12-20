@@ -30,8 +30,9 @@ public:
     int start();
     int stop();
     std::vector<uint8_t> read();
-    int getInfo(struct CameraInfo &camInfo);
     std::string getDeviceId();
+    int getInfo(struct CameraInfo &camInfo);
+    bool isGstV4l2Src();
     int setSize(uint32_t width, uint32_t height);
     int setPixelFormat(uint32_t format);
     int setMode(uint32_t mode);

@@ -44,6 +44,7 @@ public:
 
     virtual std::string getDeviceId() = 0;
     virtual int getInfo(struct CameraInfo &camInfo) = 0;
+    virtual bool isGstV4l2Src() = 0;
     virtual int init(CameraParameters &camParam) = 0;
     virtual int uninit() = 0;
     virtual int start() { return -ENOTSUP; }

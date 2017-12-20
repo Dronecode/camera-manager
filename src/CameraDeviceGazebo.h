@@ -29,6 +29,7 @@ public:
     ~CameraDeviceGazebo();
     std::string getDeviceId();
     int getInfo(struct CameraInfo &camInfo);
+    bool isGstV4l2Src();
     int init(CameraParameters &camParam);
     int uninit();
     int start();

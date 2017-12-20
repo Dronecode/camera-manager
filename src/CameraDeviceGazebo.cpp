@@ -60,6 +60,11 @@ int CameraDeviceGazebo::getInfo(struct CameraInfo &camInfo)
     return 0;
 }
 
+bool CameraDeviceGazebo::isGstV4l2Src()
+{
+    return false;
+}
+
 int CameraDeviceGazebo::init(CameraParameters &camParam)
 {
     return 0;
