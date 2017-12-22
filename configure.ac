@@ -8,7 +8,6 @@ AC_INIT([camera-streaming-daemon],
 PKG_CHECK_MODULES(GLIB, [glib-2.0])
 PKG_CHECK_MODULES(AVAHI, [avahi-client, avahi-core, avahi-glib])
 PKG_CHECK_MODULES(GST, [gstreamer-rtsp-1.0, gstreamer-1.0, gstreamer-rtsp-server-1.0 gstreamer-app-1.0])
-PKG_CHECK_MODULES(GZB, [gazebo])
 
 AC_CONFIG_SRCDIR([src/main.cpp])
 AC_CONFIG_MACRO_DIR([m4])
@@ -55,6 +54,20 @@ AC_ARG_ENABLE([avahi],
  [
    enable_avahi=yes
    AM_CONDITIONAL([DISABLE_AVAHI], false)
+ ])
+
+
+AC_ARG_ENABLE([gazebo],
+ AS_HELP_STRING([--enable-gazebo], [Enable Gazebo Simulator Mode]),
+ [
+   PKG_CHECK_MODULES(GZB, [gazebo])
+   enable_gazebo=yes
+   AM_CONDITIONAL([ENABLE_GAZEBO], true)
+   AC_DEFINE(ENABLE_GAZEBO, 1, [Enable Gazebo Simulator Mode])
+ ],
+ [
+   enable_gazebo=no
+   AM_CONDITIONAL([ENABLE_GAZEBO], false)
  ])
 
 
@@ -167,4 +180,5 @@ AC_MSG_RESULT([
     MAVLink support:     $enable_mavlink
     AVAHI support:       $enable_avahi
     Intel Aero support:  $enable_aero
+    Gazebo support:      $enable_gazebo
 ])

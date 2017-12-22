@@ -16,12 +16,14 @@
  * limitations under the License.
  */
 #include "CameraComponent.h"
-#include "CameraDeviceGazebo.h"
 #include "CameraDeviceV4l2.h"
 #include "ImageCaptureGst.h"
 #include "mavlink_server.h"
 #include "util.h"
 #include <algorithm>
+#ifdef ENABLE_GAZEBO
+#include "CameraDeviceGazebo.h"
+#endif
 
 CameraComponent::CameraComponent(std::string camdev_name)
     : mCamDevName(camdev_name)
@@ -344,6 +346,7 @@ int CameraComponent::setVideoFrameFormat(uint32_t param_value)
     return 0;
 }
 
+// TODO:: Move this operation to a factory class
 std::shared_ptr<CameraDevice> CameraComponent::create_camera_device(std::string camdev_name)
 {
     if (camdev_name.find("/dev/video") != std::string::npos) {
@@ -351,9 +354,16 @@ std::shared_ptr<CameraDevice> CameraComponent::create_camera_device(std::string 
         return std::make_shared<CameraDeviceV4l2>(camdev_name);
     } else if (camdev_name.find("camera/image") != std::string::npos) {
         log_debug("Gazebo device : %s", camdev_name.c_str());
+#ifdef ENABLE_GAZEBO
         return std::make_shared<CameraDeviceGazebo>(camdev_name);
-    } else
+#else
+        log_error("Gazebo device not supported");
         return nullptr;
+#endif
+    } else {
+        log_error("Camera device not found");
+        return nullptr;
+    }
 }
 
 /* Input string can be either null-terminated or not */

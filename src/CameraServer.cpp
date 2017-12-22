@@ -72,18 +72,21 @@ int CameraServer::detectCamera(ConfFile &conf)
 {
     int count = 0;
 
+#ifdef ENABLE_GAZEBO
     // Check for SITL gazebo first, if not found search for other devices
     // It is possible to have gazebo camera with real camera but not enabling
     // this for now
     count += detect_devices_gazebo(conf, cameraList);
     if (count > 0)
         return count;
+#endif
 
     count += detect_devices_v4l2(conf, cameraList);
 
     return count;
 }
 
+#ifdef ENABLE_GAZEBO
 int CameraServer::detect_devices_gazebo(ConfFile &conf, std::vector<CameraComponent *> &camList)
 {
     char *uri_addr = 0;
@@ -104,6 +107,7 @@ int CameraServer::detect_devices_gazebo(ConfFile &conf, std::vector<CameraCompon
 
     return 1;
 }
+#endif
 
 int CameraServer::detect_devices_v4l2(ConfFile &conf, std::vector<CameraComponent *> &camList)
 {
