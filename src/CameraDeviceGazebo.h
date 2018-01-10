@@ -37,11 +37,14 @@ public:
     std::vector<uint8_t> read();
     int getSize(uint32_t &width, uint32_t &height);
     int getPixelFormat(uint32_t &format);
+    int setMode(uint32_t mode);
+    int getMode();
 
 private:
     void cbOnImages(ConstImagesStampedPtr &_msg);
     int getImage(const gazebo::msgs::Image &_msg);
     std::string mDeviceId;
+    int mMode;
     uint32_t mWidth;
     uint32_t mHeight;
     uint32_t mPixelFormat;

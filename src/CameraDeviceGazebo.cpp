@@ -120,6 +120,17 @@ int CameraDeviceGazebo::getPixelFormat(uint32_t &format)
     return 0;
 }
 
+int CameraDeviceGazebo::setMode(uint32_t mode)
+{
+    mMode = mode;
+    return 0;
+}
+
+int CameraDeviceGazebo::getMode()
+{
+    return mMode;
+}
+
 void CameraDeviceGazebo::cbOnImages(ConstImagesStampedPtr &_msg)
 {
     std::lock_guard<std::mutex> locker(mLock);
