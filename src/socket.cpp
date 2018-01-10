@@ -138,6 +138,13 @@ int UDPSocket::open(bool broadcast)
         return -1;
     }
 
+#ifdef ENABLE_GAZEBO
+    // bind socket to port
+    if (bind("0.0.0.0", 34550) == -1) {
+        log_error("bind");
+    }
+#endif
+
     if (broadcast) {
         if (setsockopt(_fd, SOL_SOCKET, SO_BROADCAST, &broadcast_val, sizeof(broadcast_val))) {
             log_error("Error enabling broadcast in socket (%m)");

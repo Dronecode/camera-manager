@@ -57,6 +57,20 @@ AC_ARG_ENABLE([avahi],
  ])
 
 
+AC_ARG_ENABLE([gazebo],
+ AS_HELP_STRING([--enable-gazebo], [Enable Gazebo Simulator Mode]),
+ [
+   PKG_CHECK_MODULES(GZB, [gazebo])
+   enable_gazebo=yes
+   AM_CONDITIONAL([ENABLE_GAZEBO], true)
+   AC_DEFINE(ENABLE_GAZEBO, 1, [Enable Gazebo Simulator Mode])
+ ],
+ [
+   enable_gazebo=no
+   AM_CONDITIONAL([ENABLE_GAZEBO], false)
+ ])
+
+
 AC_USE_SYSTEM_EXTENSIONS
 AC_SYS_LARGEFILE
 AC_PREFIX_DEFAULT([/usr])
@@ -166,4 +180,5 @@ AC_MSG_RESULT([
     MAVLink support:     $enable_mavlink
     AVAHI support:       $enable_avahi
     Intel Aero support:  $enable_aero
+    Gazebo support:      $enable_gazebo
 ])

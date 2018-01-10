@@ -30,6 +30,7 @@ public:
     int setResolution(int imgWidth, int imgHeight);
     int setFormat(int imgFormat);
     int setLocation(const std::string imgPath);
+    std::shared_ptr<CameraDevice> mCamDev;
 
 private:
     int setState(int state);
@@ -37,15 +38,16 @@ private:
     void captureThread(int num, int interval);
     int createV4l2Pipeline(int seq_num);
     std::string getGstImgEncName(int format);
+    std::string getGstPixFormat(int pixFormat);
     std::string getImgExt(int format);
     std::string getGstPipelineNameV4l2(int seq_num);
-    std::shared_ptr<CameraDevice> mCamDev;
+    int createAppsrcPipeline(int seq_num);
     std::string mDevice;
     std::atomic<int> mState;
-    int mWidth;
-    int mHeight;
-    int mImgFormat;
-    int mPixelFormat;
+    uint32_t mWidth;
+    uint32_t mHeight;
+    uint32_t mImgFormat;
+    uint32_t mPixelFormat;
     std::string mImgPath;
     std::function<void(int result, int seq_num)> mResultCB;
     std::thread mThread;

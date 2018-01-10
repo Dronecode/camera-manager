@@ -16,44 +16,41 @@
  * limitations under the License.
  */
 #pragma once
+#include <gazebo/msgs/msgs.hh>
+#include <gazebo/transport/transport.hh>
 #include <string>
 
 #include "CameraDevice.h"
 #include "CameraParameters.h"
 
-class CameraDeviceV4l2 final : public CameraDevice {
+class CameraDeviceGazebo final : public CameraDevice {
 public:
-    CameraDeviceV4l2(std::string device);
-    ~CameraDeviceV4l2();
+    CameraDeviceGazebo(std::string device);
+    ~CameraDeviceGazebo();
+    std::string getDeviceId();
+    int getInfo(struct CameraInfo &camInfo);
+    bool isGstV4l2Src();
     int init(CameraParameters &camParam);
     int uninit();
     int start();
     int stop();
     std::vector<uint8_t> read();
-    std::string getDeviceId();
-    int getInfo(struct CameraInfo &camInfo);
-    bool isGstV4l2Src();
-    int setSize(uint32_t width, uint32_t height);
-    int setPixelFormat(uint32_t format);
+    int getSize(uint32_t &width, uint32_t &height);
+    int getPixelFormat(uint32_t &format);
     int setMode(uint32_t mode);
     int getMode();
-    int setBrightness(uint32_t value);
-    int setContrast(uint32_t value);
-    int setSaturation(uint32_t value);
-    int setWhiteBalanceMode(uint32_t value);
-    int setGamma(uint32_t value);
-    int setGain(uint32_t value);
-    int setPowerLineFrequency(uint32_t value);
-    int setWhiteBalanceTemperature(uint32_t value);
-    int setSharpness(uint32_t value);
-    int setBacklightCompensation(uint32_t value);
-    int setExposureMode(uint32_t value);
-    int setExposureAbsolute(uint32_t value);
-    int setSceneMode(uint32_t value);
-    int setHue(int32_t value);
 
 private:
+    void cbOnImages(ConstImagesStampedPtr &_msg);
+    int getImage(const gazebo::msgs::Image &_msg);
     std::string mDeviceId;
     int mMode;
-    int set_control(int ctrl_id, int value);
+    uint32_t mWidth;
+    uint32_t mHeight;
+    uint32_t mPixelFormat;
+    std::string mTopicName;
+    gazebo::transport::NodePtr mNode;
+    gazebo::transport::SubscriberPtr mSub;
+    std::mutex mLock;
+    std::vector<uint8_t> mFrameBuffer = {};
 };

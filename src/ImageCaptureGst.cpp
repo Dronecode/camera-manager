@@ -32,10 +32,13 @@ ImageCaptureGst::ImageCaptureGst(std::shared_ptr<CameraDevice> camDev)
     , mWidth(640)
     , mHeight(480)
     , mImgFormat(CameraParameters::ID_IMAGE_FORMAT_JPEG)
-    , mPixelFormat(-1)
+    , mPixelFormat(0)
     , mImgPath("/tmp/")
     , mResultCB(nullptr)
 {
+    mCamDev->getSize(mWidth, mHeight);
+
+    mCamDev->getPixelFormat(mPixelFormat);
 }
 
 ImageCaptureGst::~ImageCaptureGst()
@@ -67,12 +70,11 @@ int ImageCaptureGst::start(int interval, int count, std::function<void(int resul
 
 int ImageCaptureGst::stop()
 {
-    if (mState == STATE_IDLE)
-        return 0;
-
     setState(STATE_IDLE);
 
-    // TODO::thread_join if mThread legal
+    if (mThread.joinable())
+        mThread.join();
+
     return 0;
 }
 
@@ -144,9 +146,13 @@ void ImageCaptureGst::captureThread(int num, int interval)
 
 int ImageCaptureGst::click(int seq_num)
 {
-    int ret = 0;
     log_debug("%s", __func__);
-    ret = createV4l2Pipeline(seq_num);
+
+    int ret = 0;
+    if (mCamDev->isGstV4l2Src())
+        ret = createV4l2Pipeline(seq_num);
+    else
+        ret = createAppsrcPipeline(seq_num);
     return ret;
 }
 
@@ -163,16 +169,27 @@ std::string ImageCaptureGst::getGstImgEncName(int format)
     }
 }
 
+std::string ImageCaptureGst::getGstPixFormat(int pixFormat)
+{
+    switch (pixFormat) {
+    case CameraParameters::ID_PIXEL_FORMAT_RGB24:
+        return "RGB";
+        break;
+    default:
+        return {};
+    }
+}
+
 std::string ImageCaptureGst::getImgExt(int format)
 {
     switch (format) {
     case CameraParameters::ID_IMAGE_FORMAT_JPEG:
         return "jpg";
-        break;
-    case CameraParameters::ID_IMAGE_FORMAT_RAW:
     case CameraParameters::ID_IMAGE_FORMAT_PNG:
+        return "png";
+    case CameraParameters::ID_IMAGE_FORMAT_RAW:
     default:
-        return {};
+        return "raw";
     }
 }
 
@@ -200,6 +217,8 @@ std::string ImageCaptureGst::getGstPipelineNameV4l2(int seq_num)
 
 int ImageCaptureGst::createV4l2Pipeline(int seq_num)
 {
+    log_info("%s", __func__);
+
     int ret = 0;
     GError *error = nullptr;
     GstElement *pipeline;
@@ -255,5 +274,116 @@ int ImageCaptureGst::createV4l2Pipeline(int seq_num)
     gst_object_unref(bus);
 
     log_debug("Image Captured Successfully");
+    return ret;
+}
+
+static void cbNeedData(GstElement *appsrc, guint unused_size, ImageCaptureGst *obj)
+{
+    log_debug("%s", __func__);
+
+    GstFlowReturn ret;
+    std::vector<uint8_t> frame = obj->mCamDev->read();
+    uint8_t *data = &frame[0];
+    gsize size = frame.size(); // width*height*3/2/1.5
+    gsize offset = 0;
+    gsize maxsize = size;
+    GstBuffer *buffer
+        = gst_buffer_new_wrapped_full((GstMemoryFlags)0, data, maxsize, offset, size, NULL, NULL);
+    assert(buffer);
+
+    g_signal_emit_by_name(appsrc, "push-buffer", buffer, &ret);
+    gst_buffer_unref(buffer);
+    if (ret != GST_FLOW_OK) {
+        /* some error */
+        log_error("Error in sending data to gst pipeline");
+    }
+    g_signal_emit_by_name(appsrc, "end-of-stream", &ret);
+    // gst_app_src_end_of_stream (appsrc);
+}
+
+int ImageCaptureGst::createAppsrcPipeline(int seq_num)
+{
+    log_info("%s", __func__);
+
+    int ret = 0;
+    GstElement *pipeline, *appsrc, *enc, *imagesink;
+    GstMessage *msg;
+
+    std::string encname = getGstImgEncName(mImgFormat);
+    if (encname.empty())
+        return {};
+
+    std::string fmt = getGstPixFormat(mPixelFormat);
+    if (fmt.empty())
+        return {};
+
+    std::string ext = getImgExt(mImgFormat);
+    if (ext.empty())
+        return {};
+
+    /* setup pipeline */
+    pipeline = gst_pipeline_new("pipeline");
+    appsrc = gst_element_factory_make("appsrc", "source");
+    enc = gst_element_factory_make(encname.c_str(), "enc");
+    imagesink = gst_element_factory_make("filesink", "imagesink");
+    std::string filepath = mImgPath + "img_" + std::to_string(seq_num) + "." + ext;
+    g_object_set(G_OBJECT(imagesink), "location", filepath.c_str(), NULL);
+
+    log_info("Pipeline Format:RGB, width:%d, Height:%d", mWidth, mHeight);
+    log_info("Pipeline File:%s", filepath.c_str());
+
+    /* setup */
+    g_object_set(G_OBJECT(appsrc), "caps",
+                 gst_caps_new_simple("video/x-raw", "format", G_TYPE_STRING, fmt.c_str(), "width",
+                                     G_TYPE_INT, mWidth, "height", G_TYPE_INT, mHeight, "framerate",
+                                     GST_TYPE_FRACTION, 0, 1, NULL),
+                 NULL);
+    gst_bin_add_many(GST_BIN(pipeline), appsrc, enc, imagesink, NULL);
+    gst_element_link_many(appsrc, enc, imagesink, NULL);
+
+    /* setup appsrc */
+    g_object_set(G_OBJECT(appsrc), "stream-type", 0, // GST_APP_STREAM_TYPE_STREAM
+                 "format", GST_FORMAT_TIME, "is-live", TRUE, NULL);
+    g_signal_connect(appsrc, "need-data", G_CALLBACK(cbNeedData), this);
+
+    /* play */
+    gst_element_set_state(pipeline, GST_STATE_PLAYING);
+
+    /* add watch for messages */
+    GstBus *bus = gst_pipeline_get_bus(GST_PIPELINE(pipeline));
+    // gst_bus_add_watch (bus, (GstBusFunc) bus_message, NULL);
+    msg = gst_bus_poll(bus, (GstMessageType)(GST_MESSAGE_EOS | GST_MESSAGE_ERROR), -1);
+    switch (GST_MESSAGE_TYPE(msg)) {
+    case GST_MESSAGE_EOS: {
+        log_error("EOS\n");
+        ret = 0;
+        break;
+    }
+    case GST_MESSAGE_ERROR: {
+        GError *err = NULL; /* error to show to users                 */
+        gchar *dbg = NULL;  /* additional debug string for developers */
+
+        gst_message_parse_error(msg, &err, &dbg);
+        if (err) {
+            log_error("ERROR: %s\n", err->message);
+            g_error_free(err);
+        }
+        if (dbg) {
+            log_error("[Debug details: %s]\n", dbg);
+            g_free(dbg);
+        }
+        ret = 1;
+        break;
+    }
+    default:
+        log_error("Unexpected message of type %d", GST_MESSAGE_TYPE(msg));
+        ret = 1;
+        break;
+    }
+
+    /* clean up */
+    gst_element_set_state(pipeline, GST_STATE_NULL);
+    gst_object_unref(GST_OBJECT(pipeline));
+
     return ret;
 }

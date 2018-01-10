@@ -38,7 +38,11 @@ public:
 
 private:
     std::string getImgCapLocation(ConfFile &conf);
+    std::string getGazeboCamTopic(ConfFile &conf);
     int detectCamera(ConfFile &conf);
+#ifdef ENABLE_GAZEBO
+    int detect_devices_gazebo(ConfFile &conf, std::vector<CameraComponent *> &camList);
+#endif
     int detect_devices_v4l2(ConfFile &conf, std::vector<CameraComponent *> &cameraList);
     MavlinkServer mavlink_server;
     RTSPServer rtsp_server;

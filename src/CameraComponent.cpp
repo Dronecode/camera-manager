@@ -21,8 +21,9 @@
 #include "mavlink_server.h"
 #include "util.h"
 #include <algorithm>
-
-using namespace std::placeholders;
+#ifdef ENABLE_GAZEBO
+#include "CameraDeviceGazebo.h"
+#endif
 
 CameraComponent::CameraComponent(std::string camdev_name)
     : mCamDevName(camdev_name)
@@ -42,6 +43,9 @@ CameraComponent::CameraComponent(std::string camdev_name)
 
     // Get list of Parameters supported & its default value
     mCamDev->init(mCamParam);
+
+    // start the camera device
+    mCamDev->start();
 
     initStorageInfo(mStoreInfo);
 }
@@ -71,6 +75,9 @@ CameraComponent::CameraComponent(std::string camdev_name, std::string camdef_uri
 
     // Get list of Parameters supported & its default value
     mCamDev->init(mCamParam);
+
+    // start the camera device
+    mCamDev->start();
 
     initStorageInfo(mStoreInfo);
 }
@@ -288,10 +295,18 @@ int CameraComponent::getCameraMode()
 int CameraComponent::startImageCapture(int interval, int count, capture_callback_t cb)
 {
     mImgCapCB = cb;
+
+    // Delete imgCap instance if already exists
+    // This could be because of no StopImageCapture call after done
+    // Or new startImageCapture call while prev call is still not done
+    if (mImgCap)
+        mImgCap.reset();
+
     mImgCap = std::make_shared<ImageCaptureGst>(mCamDev);
     if (!mImgPath.empty())
         mImgCap->setLocation(mImgPath);
-    mImgCap->start(interval, count, std::bind(&CameraComponent::cbImageCaptured, this, _1, _2));
+    mImgCap->start(interval, count, std::bind(&CameraComponent::cbImageCaptured, this,
+                                              std::placeholders::_1, std::placeholders::_2));
     return 0;
 }
 
@@ -338,13 +353,24 @@ int CameraComponent::setVideoFrameFormat(uint32_t param_value)
     return 0;
 }
 
+// TODO:: Move this operation to a factory class
 std::shared_ptr<CameraDevice> CameraComponent::create_camera_device(std::string camdev_name)
 {
     if (camdev_name.find("/dev/video") != std::string::npos) {
         log_debug("V4L2 device : %s", camdev_name.c_str());
         return std::make_shared<CameraDeviceV4l2>(camdev_name);
-    } else
+    } else if (camdev_name.find("camera/image") != std::string::npos) {
+        log_debug("Gazebo device : %s", camdev_name.c_str());
+#ifdef ENABLE_GAZEBO
+        return std::make_shared<CameraDeviceGazebo>(camdev_name);
+#else
+        log_error("Gazebo device not supported");
         return nullptr;
+#endif
+    } else {
+        log_error("Camera device not found");
+        return nullptr;
+    }
 }
 
 /* Input string can be either null-terminated or not */

@@ -200,8 +200,9 @@ public:
     static const int ID_PIXEL_FORMAT_YUV420SP = 1;
     static const int ID_PIXEL_FORMAT_YUV422I = 2;
     static const int ID_PIXEL_FORMAT_YUV420P = 3;
-    static const int ID_PIXEL_FORMAT_RGB565 = 4;
-    static const int ID_PIXEL_FORMAT_RGBA8888 = 5;
+    static const int ID_PIXEL_FORMAT_RGB565 = 4; // RGBP
+    static const int ID_PIXEL_FORMAT_RGB24 = 5;  // RGB3
+    static const int ID_PIXEL_FORMAT_RGB32 = 6;  // RGB4
 
     // TODO :: Make exhaustive list of parameters and its possible values
 private:
