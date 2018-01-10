@@ -295,6 +295,13 @@ int CameraComponent::getCameraMode()
 int CameraComponent::startImageCapture(int interval, int count, capture_callback_t cb)
 {
     mImgCapCB = cb;
+
+    // Delete imgCap instance if already exists
+    // This could be because of no StopImageCapture call after done
+    // Or new startImageCapture call while prev call is still not done
+    if (mImgCap)
+        mImgCap.reset();
+
     mImgCap = std::make_shared<ImageCaptureGst>(mCamDev);
     if (!mImgPath.empty())
         mImgCap->setLocation(mImgPath);

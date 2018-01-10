@@ -70,12 +70,11 @@ int ImageCaptureGst::start(int interval, int count, std::function<void(int resul
 
 int ImageCaptureGst::stop()
 {
-    if (mState == STATE_IDLE)
-        return 0;
-
     setState(STATE_IDLE);
 
-    // TODO::thread_join if mThread legal
+    if (mThread.joinable())
+        mThread.join();
+
     return 0;
 }
 
