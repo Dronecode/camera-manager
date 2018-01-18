@@ -22,7 +22,7 @@
 #include <string>
 #include <vector>
 
-#ifndef DISABLE_AVAHI
+#ifdef ENABLE_AVAHI
 #include "avahi_publisher.h"
 #endif
 #include "conf_file.h"
@@ -43,7 +43,7 @@ public:
 private:
     std::vector<std::unique_ptr<Stream>> streams;
     bool is_running;
-#ifndef DISABLE_AVAHI
+#ifdef ENABLE_AVAHI
     AvahiPublisher avahi_publisher;
 #endif
     RTSPServer rtsp_server;

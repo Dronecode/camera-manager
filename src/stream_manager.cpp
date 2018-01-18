@@ -29,7 +29,7 @@
 
 StreamManager::StreamManager(ConfFile &conf)
     : is_running(false)
-#ifndef DISABLE_AVAHI
+#ifdef ENABLE_AVAHI
     , avahi_publisher(streams, DEFAULT_SERVICE_PORT, DEFAULT_SERVICE_TYPE)
 #endif
     , rtsp_server(streams, DEFAULT_SERVICE_PORT)
@@ -58,7 +58,7 @@ void StreamManager::start()
     is_running = true;
 
     rtsp_server.start();
-#ifndef DISABLE_AVAHI
+#ifdef ENABLE_AVAHI
     avahi_publisher.start();
 #endif
 }
@@ -70,7 +70,7 @@ void StreamManager::stop()
     is_running = false;
 
     rtsp_server.stop();
-#ifndef DISABLE_AVAHI
+#ifdef ENABLE_AVAHI
     avahi_publisher.stop();
 #endif
 }

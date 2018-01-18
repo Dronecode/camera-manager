@@ -21,7 +21,9 @@
 #include <vector>
 
 #include "conf_file.h"
+#ifdef ENABLE_MAVLINK
 #include "mavlink_server.h"
+#endif
 #include "rtsp_server.h"
 #include "stream.h"
 
@@ -44,7 +46,9 @@ private:
     int detect_devices_gazebo(ConfFile &conf, std::vector<CameraComponent *> &camList);
 #endif
     int detect_devices_v4l2(ConfFile &conf, std::vector<CameraComponent *> &cameraList);
+#ifdef ENABLE_MAVLINK
     MavlinkServer mavlink_server;
+#endif
     RTSPServer rtsp_server;
     int cameraCount;
     std::vector<CameraComponent *> cameraList;

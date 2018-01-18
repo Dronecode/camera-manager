@@ -17,6 +17,7 @@
  */
 #pragma once
 
+#ifdef ENABLE_AVAHI
 #include <avahi-client/client.h>
 #include <avahi-client/publish.h>
 #include <avahi-common/watch.h>
@@ -49,3 +50,4 @@ private:
                                      void *userdata);
     AvahiStringList *txt_record_from_stream(const std::unique_ptr<Stream> &s);
 };
+#endif

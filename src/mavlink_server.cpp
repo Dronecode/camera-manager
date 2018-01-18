@@ -29,7 +29,7 @@ using namespace std::placeholders;
 
 #define DEFAULT_MAVLINK_PORT 14550
 // TODO::Query from flight stack instead of hardcode
-#define DEFAULT_SYSID 1
+#define DEFAULT_SYSID 1 
 #define DEFAULT_MAVLINK_BROADCAST_ADDR "255.255.255.255"
 #define DEFAULT_RTSP_SERVER_ADDR "0.0.0.0"
 #define MAX_MAVLINK_MESSAGE_SIZE 1024

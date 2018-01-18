@@ -148,7 +148,19 @@ BASE_FILES = \
 	src/util.c \
 	src/util.h \
 	src/v4l2_interface.cpp \
-	src/v4l2_interface.h
+	src/v4l2_interface.h\
+        src/CameraParameters.cpp \
+        src/CameraParameters.h \
+        src/CameraComponent.cpp \
+        src/CameraComponent.h \
+        src/CameraServer.cpp \
+        src/CameraServer.h \
+        src/CameraDevice.h \
+        src/CameraDeviceV4l2.cpp \
+        src/CameraDeviceV4l2.h \
+        src/ImageCapture.h \
+        src/ImageCaptureGst.h \
+        src/ImageCaptureGst.cpp
 
 if HAVE_REALSENSE
 BASE_FILES += \
@@ -197,7 +209,7 @@ samples_camera_sample_custom_SOURCES = \
 	samples/stream_custom.cpp \
 	samples/stream_custom.h
 
-if !DISABLE_AVAHI
+if ENABLE_AVAHI
 EXTRA_PROGRAMS += samples/camera-sample-client
 BASE_FILES += \
 	src/avahi_publisher.cpp \
@@ -250,19 +262,30 @@ AM_CPPFLAGS += \
 
 BASE_FILES += \
 	src/mavlink_server.cpp \
-	src/mavlink_server.h \
-	src/CameraParameters.cpp \
-	src/CameraParameters.h \
-	src/CameraComponent.cpp \
-	src/CameraComponent.h \
-	src/CameraServer.cpp \
-	src/CameraServer.h \
-	src/CameraDevice.h \
-	src/CameraDeviceV4l2.cpp \
-	src/CameraDeviceV4l2.h \
-	src/ImageCapture.h \
-	src/ImageCaptureGst.h \
-	src/ImageCaptureGst.cpp
+	src/mavlink_server.h
+
+samples_camera_sample_mavlink_client_SOURCES = \
+        samples/main_sample_mavlink_client.cpp \
+        src/log.cpp \
+        src/log.h \
+        src/glib_mainloop.cpp \
+        src/glib_mainloop.h \
+        src/mainloop.cpp \
+        src/mainloop.h \
+        src/pollable.cpp \
+        src/pollable.h \
+        src/socket.cpp \
+        src/socket.h \
+        src/util.c \
+        src/util.h
+
+samples_camera_sample_mavlink_client_LDADD = $(GLIB_LIBS)
+if ENABLE_AVAHI
+samples_camera_sample_mavlink_client_LDADD += $(AVAHI_LIBS)
+endif
+
+samples_deps = samples_camera_sample_mavlink_client_LDADD
+endif
 
 if ENABLE_GAZEBO
 AM_CFLAGS += \
@@ -274,29 +297,6 @@ AM_CXXFLAGS += \
 BASE_FILES += \
 	src/CameraDeviceGazebo.h \
 	src/CameraDeviceGazebo.cpp
-endif
-
-samples_camera_sample_mavlink_client_SOURCES = \
-	samples/main_sample_mavlink_client.cpp \
-	src/log.cpp \
-	src/log.h \
-	src/glib_mainloop.cpp \
-	src/glib_mainloop.h \
-	src/mainloop.cpp \
-	src/mainloop.h \
-	src/pollable.cpp \
-	src/pollable.h \
-	src/socket.cpp \
-	src/socket.h \
-	src/util.c \
-	src/util.h
-
-samples_camera_sample_mavlink_client_LDADD = $(GLIB_LIBS)
-if !DISABLE_AVAHI
-samples_camera_sample_mavlink_client_LDADD += $(AVAHI_LIBS)
-endif
-
-samples_deps = samples_camera_sample_mavlink_client_LDADD
 endif
 
 .PHONY: samples
