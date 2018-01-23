@@ -17,7 +17,9 @@
  */
 #pragma once
 
+#ifdef ENABLE_AVAHI
 #include <avahi-common/watch.h>
+#endif
 #include <functional>
 
 class Pollable {

@@ -52,7 +52,7 @@ static void setup_signal_handlers()
 }
 
 GlibMainloop::GlibMainloop()
-#ifndef DISABLE_AVAHI
+#ifdef ENABLE_AVAHI
     : avahi_poll(nullptr)
 #endif
 {
@@ -64,7 +64,7 @@ GlibMainloop::GlibMainloop()
 GlibMainloop::~GlibMainloop()
 {
     mainloop = nullptr;
-#ifndef DISABLE_AVAHI
+#ifdef ENABLE_AVAHI
     if (avahi_poll) {
         avahi_glib_poll_free(avahi_poll);
         avahi_poll = nullptr;
@@ -80,7 +80,7 @@ void GlibMainloop::loop()
     g_main_loop_run(gmainloop);
 }
 
-#ifndef DISABLE_AVAHI
+#ifdef ENABLE_AVAHI
 const AvahiPoll *GlibMainloop::get_avahi_poll_api()
 {
     if (!avahi_poll)

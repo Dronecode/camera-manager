@@ -15,10 +15,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <cstring>
+
 #include "CameraComponent.h"
 #include "CameraDeviceV4l2.h"
 #include "ImageCaptureGst.h"
+#ifdef ENABLE_MAVLINK
 #include "mavlink_server.h"
+#endif
 #include "util.h"
 #include <algorithm>
 #ifdef ENABLE_GAZEBO

@@ -17,7 +17,7 @@
  */
 #pragma once
 
-#ifndef DISABLE_AVAHI
+#ifdef ENABLE_AVAHI
 #include <avahi-glib/glib-watch.h>
 #endif
 #include <vector>
@@ -30,7 +30,7 @@ public:
     ~GlibMainloop();
     void loop() override;
     void quit() override;
-#ifndef DISABLE_AVAHI
+#ifdef ENABLE_AVAHI
     const AvahiPoll *get_avahi_poll_api() override;
 #endif
 
@@ -40,7 +40,7 @@ public:
     int add_fd(int fd, int flags, bool (*cb)(const void *data, int flags), const void *data) override;
     void remove_fd(int handler) override;
 
-#ifndef DISABLE_AVAHI
+#ifdef ENABLE_AVAHI
 private:
     AvahiGLibPoll *avahi_poll;
 #endif

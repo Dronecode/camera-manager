@@ -6,7 +6,6 @@ AC_INIT([camera-streaming-daemon],
     [])
 
 PKG_CHECK_MODULES(GLIB, [glib-2.0])
-PKG_CHECK_MODULES(AVAHI, [avahi-client, avahi-core, avahi-glib])
 PKG_CHECK_MODULES(GST, [gstreamer-rtsp-1.0, gstreamer-1.0, gstreamer-rtsp-server-1.0 gstreamer-app-1.0])
 
 AC_CONFIG_SRCDIR([src/main.cpp])
@@ -45,15 +44,16 @@ AC_ARG_ENABLE([mavlink],
  ])
 
 AC_ARG_ENABLE([avahi],
- AS_HELP_STRING([--disable-avahi], [Disable avahi advertisement]),
+ AS_HELP_STRING([--enable-avahi], [Enable avahi advertisement]),
  [
-   enable_avahi=no
-   AM_CONDITIONAL([DISABLE_AVAHI], true)
-   AC_DEFINE(DISABLE_AVAHI, 1, [Disable avahi advertisement])
+   PKG_CHECK_MODULES(AVAHI, [avahi-client, avahi-core, avahi-glib])
+   enable_avahi=yes
+   AM_CONDITIONAL([ENABLE_AVAHI], true)
+   AC_DEFINE(ENABLE_AVAHI, 1, [Enable avahi advertisement])
  ],
  [
-   enable_avahi=yes
-   AM_CONDITIONAL([DISABLE_AVAHI], false)
+   enable_avahi=no
+   AM_CONDITIONAL([ENABLE_AVAHI], false)
  ])
 
 

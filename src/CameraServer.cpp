@@ -21,11 +21,14 @@
 #include "CameraComponent.h"
 #include "CameraServer.h"
 #include "log.h"
+#ifdef ENABLE_MAVLINK
 #include "mavlink_server.h"
+#endif
 #include "v4l2_interface.h"
 
 #define DEFAULT_SERVICE_PORT 8554
 
+#ifdef ENABLE_MAVLINK
 CameraServer::CameraServer(ConfFile &conf)
     : mavlink_server(conf, streams, rtsp_server)
     , rtsp_server(streams, DEFAULT_SERVICE_PORT)
@@ -47,6 +50,30 @@ CameraServer::CameraServer(ConfFile &conf)
         }
     }
 }
+#else
+CameraServer::CameraServer(ConfFile &conf)
+    : rtsp_server(streams, DEFAULT_SERVICE_PORT)
+    , cameraCount(0)
+{
+    cameraCount = detectCamera(conf);
+
+    // Read image capture file location
+    std::string imgPath = getImgCapLocation(conf);
+
+    std::vector<CameraComponent *>::iterator it;
+    for (it = cameraList.begin(); it != cameraList.end(); it++) {
+        if (*it) {
+         #ifdef ENABLE_MAVLINK
+            if (mavlink_server.addCameraComponent(*it) == -1)
+                log_error("Error in adding Camera Component");
+        #endif
+
+            if (!imgPath.empty())
+                (*it)->setImageLocation(imgPath);
+        }
+    }
+}
+#endif
 
 CameraServer::~CameraServer()
 {
@@ -58,13 +85,16 @@ CameraServer::~CameraServer()
 void CameraServer::start()
 {
     log_error("CAMERA SERVER START");
-
+#ifdef ENABLE_MAVLINK
     mavlink_server.start();
+#endif
 }
 
 void CameraServer::stop()
 {
+#ifdef ENABLE_MAVLINK
     mavlink_server.stop();
+#endif
 }
 
 // prepare the list of cameras in the system
