@@ -1,6 +1,6 @@
 # Camera Streaming Daemon
 
-[![Build Status](https://travis-ci.org/01org/camera-streaming-daemon.svg?branch=master)](https://travis-ci.org/01org/camera-streaming-daemon)
+[![Build Status](https://travis-ci.org/intel/camera-streaming-daemon.svg?branch=master)](https://travis-ci.org/intel/camera-streaming-daemon)
 <a href="https://scan.coverity.com/projects/01org-camera-streaming-daemon">
   <img alt="Coverity Scan Build Status"
        src="https://scan.coverity.com/projects/12056/badge.svg"/>
