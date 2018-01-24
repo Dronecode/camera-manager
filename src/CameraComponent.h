@@ -21,6 +21,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <functional>
 
 #include "CameraDevice.h"
 #include "CameraParameters.h"
