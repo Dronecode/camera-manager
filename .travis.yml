@@ -3,7 +3,7 @@ language: generic
 services: docker
 
 before_install:
- - CONTAINER=$(docker run -it -d -v $PWD:/build ubuntu:16.10 /bin/bash)
+ - CONTAINER=$(docker run -it -d -v $PWD:/build ubuntu:16.04 /bin/bash)
  - docker exec -i $CONTAINER /bin/bash -c "apt-get update -qq && apt-get install -y -qq libavahi-glib-dev libavahi-client-dev libavahi-core-dev libgstreamer1.0-dev libgstrtspserver-1.0-dev libgstreamer-plugins-base1.0-dev build-essential autoconf libtool wget libgstrtspserver-1.0-dev python2.7 python-future"
 
 script:  
