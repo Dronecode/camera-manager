@@ -53,8 +53,26 @@
 #
 # Keys:
 #   Blacklist
-#       Coma separated list of /dev/video devices that won't be exported by
-#       camera-streaming-daemon. If the video streams from cameras /dev/video123
-#       and /dev/video456 can't be exported, set:
-#       blacklist = video123,video456
-#       Default: <empty>
+#      Coma separated list of /dev/video devices that won't be exported by
+#      camera-streaming-daemon. If the video streams from cameras /dev/video123
+#      and /dev/video456 can't be exported, set:
+#      blacklist = video123,video456
+#      Default: <empty>
+#
+# Section [uri]:
+#
+# Keys:
+#  <camera-device-id>
+#      URI for the Camera Definition File of the camera device <camera-device-id>
+#       
+# Section [imgcap]
+#    
+# Keys:
+#   location
+#      The local path with write permission where captured images will be saved. For e.g : /tmp/
+#
+# Section [gazebo]:
+#
+# Keys:
+#   camtopic
+#      Gazebo topic where camera images are published.
