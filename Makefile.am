@@ -160,7 +160,10 @@ BASE_FILES = \
         src/CameraDeviceV4l2.h \
         src/ImageCapture.h \
         src/ImageCaptureGst.h \
-        src/ImageCaptureGst.cpp
+        src/ImageCaptureGst.cpp \
+        src/VideoStream.h \
+        src/VideoStreamUdp.h \
+        src/VideoStreamUdp.cpp
 
 if HAVE_REALSENSE
 BASE_FILES += \
