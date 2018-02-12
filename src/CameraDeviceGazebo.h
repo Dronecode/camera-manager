@@ -44,6 +44,7 @@ private:
     void cbOnImages(ConstImagesStampedPtr &_msg);
     int getImage(const gazebo::msgs::Image &_msg);
     std::string mDeviceId;
+    std::atomic<int> mState;
     int mMode;
     uint32_t mWidth;
     uint32_t mHeight;

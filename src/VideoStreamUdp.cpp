@@ -80,12 +80,48 @@ int VideoStreamUdp::setState(int state)
 
 int VideoStreamUdp::setResolution(int imgWidth, int imgHeight)
 {
+    mWidth = imgWidth;
+    mHeight = imgHeight;
+    return 0;
+}
+
+int VideoStreamUdp::getResolution(int &imgWidth, int &imgHeight)
+{
+    imgWidth = mWidth;
+    imgHeight = mHeight;
     return 0;
 }
 
 int VideoStreamUdp::setFormat(int vidFormat)
 {
     return 0;
+}
+
+int VideoStreamUdp::getFormat()
+{
+    return 0;
+}
+
+int VideoStreamUdp::setAddress(std::string ipAddr)
+{
+    mHost = ipAddr;
+    return 0;
+}
+
+std::string VideoStreamUdp::getAddress()
+{
+    return mHost;
+}
+
+int VideoStreamUdp::setPort(uint32_t port)
+{
+    mPort = port;
+    return 0;
+}
+
+int VideoStreamUdp::getPort()
+{
+    return mPort;
 }
 
 GstBuffer *VideoStreamUdp::readFrame()

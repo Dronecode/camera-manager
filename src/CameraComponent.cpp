@@ -95,10 +95,20 @@ CameraComponent::CameraComponent(std::string camdev_name, std::string camdef_uri
 
 CameraComponent::~CameraComponent()
 {
+    log_debug("%s", __func__);
+
 #ifdef ENABLE_GAZEBO
-    mVidStream->stop();
-    mVidStream->uninit();
+    if (mVidStream) {
+        mVidStream->stop();
+        mVidStream->uninit();
+    }
 #endif
+
+    // stop the camera device
+    mCamDev->stop();
+
+    // Uninit the camera device
+    mCamDev->uninit();
 }
 
 const CameraInfo &CameraComponent::getCameraInfo() const
