@@ -27,6 +27,7 @@
 #include <algorithm>
 #ifdef ENABLE_GAZEBO
 #include "CameraDeviceGazebo.h"
+#include "VideoStreamUdp.h"
 #endif
 
 CameraComponent::CameraComponent(std::string camdev_name)
@@ -52,6 +53,12 @@ CameraComponent::CameraComponent(std::string camdev_name)
     mCamDev->start();
 
     initStorageInfo(mStoreInfo);
+
+#ifdef ENABLE_GAZEBO
+    mVidStream = std::make_shared<VideoStreamUdp>(mCamDev);
+    mVidStream->init();
+    mVidStream->start();
+#endif
 }
 
 CameraComponent::CameraComponent(std::string camdev_name, std::string camdef_uri)
@@ -61,7 +68,7 @@ CameraComponent::CameraComponent(std::string camdev_name, std::string camdef_uri
     , mCamDefURI(camdef_uri)
     , mImgPath("")
 {
-    log_debug("%s path:%s", __func__, camdev_name.c_str());
+    log_debug("%s path:%s with Camera Definition", __func__, camdev_name.c_str());
     // Create a camera device based on device path
     mCamDev = create_camera_device(camdev_name);
     if (!mCamDev)
@@ -88,6 +95,10 @@ CameraComponent::CameraComponent(std::string camdev_name, std::string camdef_uri
 
 CameraComponent::~CameraComponent()
 {
+#ifdef ENABLE_GAZEBO
+    mVidStream->stop();
+    mVidStream->uninit();
+#endif
 }
 
 const CameraInfo &CameraComponent::getCameraInfo() const

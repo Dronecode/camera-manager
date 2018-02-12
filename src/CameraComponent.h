@@ -26,6 +26,7 @@
 #include "CameraDevice.h"
 #include "CameraParameters.h"
 #include "ImageCapture.h"
+#include "VideoStream.h"
 #include "log.h"
 
 struct CameraInfo {
@@ -85,6 +86,7 @@ private:
     std::string mCamDefURI;                /* Camera Definition URI */
     std::shared_ptr<CameraDevice> mCamDev; /* Camera Device Object */
     std::shared_ptr<ImageCapture> mImgCap; /* Image Capture Object */
+    std::shared_ptr<VideoStream> mVidStream; /* Video Streaming Object*/
     std::function<void(int result, int seq_num)> mImgCapCB;
     std::string mImgPath;
     void initStorageInfo(struct StorageInfo &storeInfo);
