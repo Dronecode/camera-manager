@@ -28,8 +28,6 @@
 using namespace std::placeholders;
 
 #define DEFAULT_MAVLINK_PORT 14550
-// TODO::Query from flight stack instead of hardcode
-#define DEFAULT_SYSID 1 
 #define DEFAULT_MAVLINK_BROADCAST_ADDR "255.255.255.255"
 #define DEFAULT_RTSP_SERVER_ADDR "0.0.0.0"
 #define MAX_MAVLINK_MESSAGE_SIZE 1024
@@ -40,7 +38,7 @@ MavlinkServer::MavlinkServer(ConfFile &conf, std::vector<std::unique_ptr<Stream>
     , _is_running(false)
     , _timeout_handler(0)
     , _broadcast_addr{}
-    , _system_id(DEFAULT_SYSID)
+    , _system_id(-1)
     , _comp_id(MAV_COMP_ID_CAMERA)
     , _rtsp_server_addr(nullptr)
     , _rtsp(rtsp)
@@ -67,9 +65,9 @@ MavlinkServer::MavlinkServer(ConfFile &conf, std::vector<std::unique_ptr<Stream>
         _broadcast_addr.sin_port = htons(DEFAULT_MAVLINK_PORT);
 
     if (opt.sysid) {
-        if (opt.sysid <= 1 || opt.sysid >= 255)
-            log_error("Invalid System ID for MAVLink communication (%d). Using default (%d)",
-                      opt.sysid, DEFAULT_SYSID);
+        if (opt.sysid < 1 || opt.sysid >= 255)
+            log_error("Invalid System ID for MAVLink communication (%d).Waiting for heartbeat from
+             Vehicle",opt.sysid);
         else
             _system_id = opt.sysid;
     }
@@ -518,6 +516,15 @@ void MavlinkServer::_handle_param_ext_set(const struct sockaddr_in &addr, mavlin
     }
 }
 
+void MavlinkServer::_handle_heartbeat(const struct sockaddr_in &addr, mavlink_message_t *msg)
+{
+    mavlink_heartbeat_t heartbeat;
+    mavlink_msg_heartbeat_decode(msg, &heartbeat);
+
+    if (heartbeat.autopilot == 12)
+        _system_id = msg->sysid;
+}
+
 void MavlinkServer::_handle_mavlink_message(const struct sockaddr_in &addr, mavlink_message_t *msg)
 {
     // log_debug("Message received: (sysid: %d compid: %d msgid: %d)", msg->sysid, msg->compid,
@@ -579,6 +586,9 @@ void MavlinkServer::_handle_mavlink_message(const struct sockaddr_in &addr, mavl
         }
     } else {
         switch (msg->msgid) {
+        case MAVLINK_MSG_ID_HEARTBEAT:
+            this->_handle_heartbeat(addr, msg);
+            break;
         case MAVLINK_MSG_ID_SET_VIDEO_STREAM_SETTINGS:
             this->_handle_camera_set_video_stream_settings(addr, msg);
             break;
@@ -628,9 +638,15 @@ bool _heartbeat_cb(void *data)
     MavlinkServer *server = (MavlinkServer *)data;
     mavlink_message_t msg;
 
+    if (server->_system_id < 1 || server->_system_id >= 255) {
+        log_error("Invalid system_id. Heartbeat not sent.");
+        return false;
+    }
+
     for (std::map<int, CameraComponent *>::iterator it = server->compIdToObj.begin();
          it != server->compIdToObj.end(); it++) {
-        // log_debug("Sending heartbeat for component :%d",it->first);
+        /* log_debug("Sending heartbeat for component :%d system_id:%d", it->first,
+                  server->_system_id);*/
         mavlink_msg_heartbeat_pack(server->_system_id, it->first, &msg, MAV_TYPE_GENERIC,
                                    MAV_AUTOPILOT_INVALID, MAV_MODE_PREFLIGHT, 0, MAV_STATE_ACTIVE);
         if (!server->_send_mavlink_message(nullptr, msg))
