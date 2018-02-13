@@ -6,12 +6,25 @@
        src="https://scan.coverity.com/projects/12056/badge.svg"/>
 </a>
 
-## Features
-Camera streaming daemon currently supports the following features:
+The *Camera Streaming Daemon* is an extensible Linux camera server for interfacing cameras with the Dronecode platform. 
 
- - Video Streaming: RTSP
- - Mavlink Camera Protocol: https://mavlink.io/en/protocol/camera.html
- - Image Capture
+It provides a [MAVLink Camera Protocol](https://mavlink.io/en/protocol/camera.html) compatible API for video and image capture etc., and an RTSP service for advertising and sharing video streams. The server can connect to and manage multiple cameras, and has been designed so that it can be extended to support new camera types and protocols when needed. 
+
+> **Tip** The daemon is the easiest way for Camera OEMs to interface with the Dronecode platform. Many cameras will just work "out of the box". At most OEMs will need to implement a camera integration layer.
+
+## Overview
+
+The diagram below shows the main components of a system running the *Camera Streaming Daemon* on a Linux companion computer.
+
+<img src="https://github.com/hamishwillee/camera-streaming-daemon/blob/readme_overview/docs/assets/camera_streaming_daemon_overview.png" width="600px" title="Camera streaming daemon overview" />
+
+The server:
+
+* Scans and attaches to all compatible cameras. Cameras that support the [Video4Linux (V4L2) API](https://linuxtv.org/downloads/v4l-dvb-apis/uapi/v4l/v4l2.html) work out of the box (the server can be extended to support other camera protocols/APIs).
+* Advertises and shares RTSP video streams for all connected cameras. These can be consumed by the GCS and other video player services.
+* Captures and stores/shares video and still images for all connected cameras via the [MAVLink Camera Protocol](https://mavlink.io/en/protocol/camera.html). GCS requests for camera actions are forwarded by PX4. 
+
+> **Note** The *Camera Streaming Daemon* also integrates with Gazebo, providing a simulated camera backend. In this case the diagram/configuration can be slightly different as the GCS can communicate directly with the server (there is no need for messages to be forwarded by PX4). 
 
 ## Prerequisites
 In order to compile you need the following packages:
