@@ -14,9 +14,9 @@ It provides a [MAVLink Camera Protocol](https://mavlink.io/en/protocol/camera.ht
 
 ## Overview
 
-The diagram below shows the main components of a system running the *Camera Streaming Daemon* on a Linux companion computer.
+The diagram below shows the main components of a system that is running the *Camera Streaming Daemon* on a Linux companion computer.
 
-<img src="https://github.com/hamishwillee/camera-streaming-daemon/blob/readme_overview/docs/assets/camera_streaming_daemon_overview.png" width="600px" title="Camera streaming daemon overview" />
+![Camera streaming daemon overview](./docs/assets/camera_streaming_daemon_overview.png)
 
 The server:
 
