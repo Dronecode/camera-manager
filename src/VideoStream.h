@@ -39,4 +39,6 @@ public:
     // The port to send the packets to
     virtual int setPort(uint32_t port) = 0;
     virtual int getPort() = 0;
+    virtual int setTextOverlay(std::string text, int timeSec) = 0;
+    virtual std::string getTextOverlay() = 0;
 };

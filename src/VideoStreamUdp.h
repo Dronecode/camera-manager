@@ -42,6 +42,8 @@ public:
     // The port to send the packets to
     int setPort(uint32_t port);
     int getPort();
+    int setTextOverlay(std::string text, int timeSec);
+    std::string getTextOverlay();
     GstBuffer *readFrame();
 
 private:
@@ -54,5 +56,9 @@ private:
     uint32_t mHeight;
     std::string mHost;
     uint32_t mPort;
+    std::string mOvText;
+    int mOvTime;   // Time in sec to keep overlay, -1 forever
+    int mOvFrmCnt; // framerate * mOvTime
     GstElement *mPipeline;
+    GstElement *mTextOverlay;
 };
