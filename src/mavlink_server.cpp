@@ -271,8 +271,14 @@ void MavlinkServer::_image_captured_cb(image_callback_t cb_data, int result, int
     bool success = !result;
     mavlink_message_t msg;
     float q[4] = {0}; // Quaternion of camera orientation
+    
+  log_error("Insideimage captured cb!");
+/*  log_error("Altitude:%f",gps.find(“Altitude”)->second);
+  log_error("Latitude:%f",gps.find(“Latitude”)->second);
+  log_error("Longitude:%f",gps.find(“Longitude”)->second);
+ */   
     mavlink_msg_camera_image_captured_pack(
-        _system_id, 100, &msg, 0 /*time_boot_ms*/, 0 /*time_utc*/, 0 /*camera_id*/, 0 /*lat*/,
+        _system_id, 100, &msg, 0 /*time_boot_ms*/, 0 /*time_utc*/, 0 /*camera_id*/,0 /*lat*/,
         0 /*lon*/, 0 /*alt*/, 0 /*relative_alt*/, q, seq_num /*image_index*/,
         success /*capture_result*/, nullptr /*file_url*/);
 
@@ -518,6 +524,33 @@ void MavlinkServer::_handle_param_ext_set(const struct sockaddr_in &addr, mavlin
     }
 }
 
+
+void MavlinkServer::_handle_global_position_int(const struct sockaddr_in &addr, mavlink_message_t *msg)
+{
+    mavlink_global_position_int_t globalPositionInt;
+    mavlink_msg_global_position_int_decode(msg, &globalPositionInt);
+
+
+    // ArduPilot sends bogus GLOBAL_POSITION_INT messages with lat/lat 0/0 even when it has no gps signal
+    // Apparently, this is in order to transport relative altitude information.
+    if (globalPositionInt.lat == 0 && globalPositionInt.lon == 0) {
+        return;
+    }
+     log_error("GLOBAL_POSITION_INT available!");
+
+/*     gps.insert("Latitude",(globalPositionInt.lat / (double)1E7));
+     gps.insert("Longitude",(globalPositionInt.lon  / (double)1E7));
+     gps.insert("Altitude",(globalPositionInt.alt  / 1000.0));
+*/       
+    
+   log_debug(" Latitude=%f",(globalPositionInt.lat  / (double)1E7));
+   log_debug(" Longitude=%f",(globalPositionInt.lon / (double)1E7));
+   log_debug(" Altitude=%f",(globalPositionInt.alt  / 1000.0));
+}
+
+
+
+
 void MavlinkServer::_handle_mavlink_message(const struct sockaddr_in &addr, mavlink_message_t *msg)
 {
     // log_debug("Message received: (sysid: %d compid: %d msgid: %d)", msg->sysid, msg->compid,
@@ -590,6 +623,9 @@ void MavlinkServer::_handle_mavlink_message(const struct sockaddr_in &addr, mavl
             break;
         case MAVLINK_MSG_ID_PARAM_EXT_SET:
             this->_handle_param_ext_set(addr, msg);
+            break;
+        case MAVLINK_MSG_ID_GLOBAL_POSITION_INT:
+            _handle_global_position_int(addr,msg);
             break;
         default:
             // log_debug("Message %d unhandled, Discarding", msg->msgid);
