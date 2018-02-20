@@ -77,6 +77,7 @@ public:
     virtual int stopImageCapture();
     void cbImageCaptured(int result, int seq_num);
     virtual int setImageLocation(std::string imgPath);
+    int resetCameraSettings(void);
 
 private:
     std::string mCamDevName;               /* Camera device name */

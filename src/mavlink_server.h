@@ -77,6 +77,7 @@ private:
     void _handle_param_ext_request_read(const struct sockaddr_in &addr, mavlink_message_t *msg);
     void _handle_param_ext_request_list(const struct sockaddr_in &addr, mavlink_message_t *msg);
     void _handle_param_ext_set(const struct sockaddr_in &addr, mavlink_message_t *msg);
+    void _handle_reset_camera_settings(const struct sockaddr_in &addr, mavlink_command_long_t &cmd);
     bool _send_mavlink_message(const struct sockaddr_in *addr, mavlink_message_t &msg);
     void _send_ack(const struct sockaddr_in &addr, int cmd, int comp_id, bool success);
     const Stream::FrameSize *_find_best_frame_size(Stream &s, uint32_t w, uint32_t v);
