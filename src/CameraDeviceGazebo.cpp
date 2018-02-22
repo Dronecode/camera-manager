@@ -26,6 +26,7 @@
 
 CameraDeviceGazebo::CameraDeviceGazebo(std::string device)
     : mDeviceId(device)
+    , mMode(-1)
     , mWidth(640)
     , mHeight(360)
     , mPixelFormat(CameraParameters::ID_PIXEL_FORMAT_RGB24)
@@ -89,11 +90,14 @@ int CameraDeviceGazebo::start()
 
     // Listen to Gazebo <device> topic
     mSub = mNode->Subscribe(mDeviceId, &CameraDeviceGazebo::cbOnImages, this);
+    mState = STATE_RUN;
     return 0;
 }
 
 int CameraDeviceGazebo::stop()
 {
+    std::lock_guard<std::mutex> locker(mLock);
+    mState = STATE_INIT;
     // Make sure to shut everything down.
     gazebo::client::shutdown();
     return 0;
@@ -102,6 +106,8 @@ int CameraDeviceGazebo::stop()
 std::vector<uint8_t> CameraDeviceGazebo::read()
 {
     std::lock_guard<std::mutex> locker(mLock);
+    if (mState != STATE_RUN)
+        return {};
     return mFrameBuffer;
 }
 

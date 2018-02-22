@@ -30,5 +30,15 @@ public:
     virtual int stop() = 0;
     virtual int getState() = 0;
     virtual int setResolution(int imgWidth, int imgHeight) = 0;
+    virtual int getResolution(int &imgWidth, int &imgHeight) = 0;
     virtual int setFormat(int vidFormat) = 0;
+    virtual int getFormat() = 0;
+    // The host/IP/Multicast group to send the packets to
+    virtual int setAddress(std::string ipAddr) = 0;
+    virtual std::string getAddress() = 0;
+    // The port to send the packets to
+    virtual int setPort(uint32_t port) = 0;
+    virtual int getPort() = 0;
+    virtual int setTextOverlay(std::string text, int timeSec) = 0;
+    virtual std::string getTextOverlay() = 0;
 };

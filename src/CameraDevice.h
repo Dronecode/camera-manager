@@ -39,7 +39,8 @@ public:
     enum State {
         STATE_ERROR = -1,
         STATE_IDLE = 0,
-        STATE_ACTIVE = 1,
+        STATE_INIT = 1,
+        STATE_RUN = 1,
     };
 
     virtual std::string getDeviceId() = 0;
