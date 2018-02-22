@@ -267,20 +267,22 @@ void MavlinkServer::_image_captured_cb(image_callback_t cb_data, int result, int
 {
     log_debug("%s result:%d seq:%d", __func__, result, seq_num);
     log_debug("Comp Id:%d", cb_data.comp_id);
-    // TODO :: Fill MAVLINK message with correct info including geo location etc
     bool success = !result;
     mavlink_message_t msg;
     float q[4] = {0}; // Quaternion of camera orientation
-    
-  log_error("Insideimage captured cb!");
-/*  log_error("Altitude:%f",gps.find(“Altitude”)->second);
-  log_error("Latitude:%f",gps.find(“Latitude”)->second);
-  log_error("Longitude:%f",gps.find(“Longitude”)->second);
- */   
+
+    /*  log_debug("Altitude:%d",gps.find("Altitude")->second);
+        log_debug("Latitude:%d",gps.find("Latitude")->second);
+        log_debug("Longitude:%d",gps.find("Longitude")->second);
+        log_debug("Relative Altitude:%d",gps.find("RelativeAltitude")->second);
+
+    */
+
     mavlink_msg_camera_image_captured_pack(
-        _system_id, 100, &msg, 0 /*time_boot_ms*/, 0 /*time_utc*/, 0 /*camera_id*/,0 /*lat*/,
-        0 /*lon*/, 0 /*alt*/, 0 /*relative_alt*/, q, seq_num /*image_index*/,
-        success /*capture_result*/, nullptr /*file_url*/);
+        _system_id, 100, &msg, 0 /*time_boot_ms*/, 0 /*time_utc*/, 0 /*camera_id*/,
+        gps.find("Latitude")->second /*lat*/, gps.find("Longitude")->second /*lon*/,
+        gps.find("Altitude")->second /*alt*/, gps.find("RelativeAltitude")->second /*relative_alt*/,
+        q, seq_num /*image_index*/, success /*capture_result*/, nullptr /*file_url*/);
 
     if (!_send_mavlink_message(&cb_data.addr, msg)) {
         log_error("Sending camera image captured failed for camera %d.", cb_data.comp_id);
@@ -536,16 +538,11 @@ void MavlinkServer::_handle_global_position_int(const struct sockaddr_in &addr, 
     if (globalPositionInt.lat == 0 && globalPositionInt.lon == 0) {
         return;
     }
-     log_error("GLOBAL_POSITION_INT available!");
 
-/*     gps.insert("Latitude",(globalPositionInt.lat / (double)1E7));
-     gps.insert("Longitude",(globalPositionInt.lon  / (double)1E7));
-     gps.insert("Altitude",(globalPositionInt.alt  / 1000.0));
-*/       
-    
-   log_debug(" Latitude=%f",(globalPositionInt.lat  / (double)1E7));
-   log_debug(" Longitude=%f",(globalPositionInt.lon / (double)1E7));
-   log_debug(" Altitude=%f",(globalPositionInt.alt  / 1000.0));
+    gps["Altitude"] = globalPositionInt.alt;
+    gps["Latitude"] = globalPositionInt.lat;
+    gps["Longitude"] = globalPositionInt.lon;
+    gps["RelativeAltitude"] = globalPositionInt.relative_alt;
 }
 
 
@@ -596,7 +593,7 @@ void MavlinkServer::_handle_mavlink_message(const struct sockaddr_in &addr, mavl
             this->_handle_set_camera_mode(addr, cmd);
             break;
         case MAV_CMD_IMAGE_START_CAPTURE:
-            log_debug("MAV_CMD_IMAGE_START_CAPTURE");
+            log_error("MAV_CMD_IMAGE_START_CAPTURE");
             this->_handle_image_start_capture(addr, cmd);
             break;
         case MAV_CMD_IMAGE_STOP_CAPTURE:
@@ -625,7 +622,8 @@ void MavlinkServer::_handle_mavlink_message(const struct sockaddr_in &addr, mavl
             this->_handle_param_ext_set(addr, msg);
             break;
         case MAVLINK_MSG_ID_GLOBAL_POSITION_INT:
-            _handle_global_position_int(addr,msg);
+            log_error("MAVLINK_MSG_ID_GLOBAL_POSITION_INT");
+            this->_handle_global_position_int(addr, msg);
             break;
         default:
             // log_debug("Message %d unhandled, Discarding", msg->msgid);
