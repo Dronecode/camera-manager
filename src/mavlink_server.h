@@ -54,6 +54,7 @@ private:
     char *_rtsp_server_addr;
     RTSPServer &_rtsp;
     std::map<int, CameraComponent *> compIdToObj;
+    std::map<const char *, int32_t> gps;
 
     void _message_received(const struct sockaddr_in &sockaddr, const struct buffer &buf);
     void _handle_mavlink_message(const struct sockaddr_in &addr, mavlink_message_t *msg);
@@ -77,6 +78,7 @@ private:
     void _handle_param_ext_request_read(const struct sockaddr_in &addr, mavlink_message_t *msg);
     void _handle_param_ext_request_list(const struct sockaddr_in &addr, mavlink_message_t *msg);
     void _handle_param_ext_set(const struct sockaddr_in &addr, mavlink_message_t *msg);
+    void _handle_global_position_int(const struct sockaddr_in &addr, mavlink_message_t *msg);
     bool _send_mavlink_message(const struct sockaddr_in *addr, mavlink_message_t &msg);
     void _send_ack(const struct sockaddr_in &addr, int cmd, int comp_id, bool success);
     const Stream::FrameSize *_find_best_frame_size(Stream &s, uint32_t w, uint32_t v);
