@@ -30,8 +30,14 @@ VideoStreamUdp::VideoStreamUdp(std::shared_ptr<CameraDevice> camDev)
     , mHeight(360)
     , mHost("127.0.0.1")
     , mPort(5600)
+    , mOvText("")
+    , mOvTime(30)
+    , mOvFrmCnt(0)
     , mPipeline(nullptr)
+    , mTextOverlay(nullptr)
 {
+    mOvText = mCamDev->getDeviceId();
+    mOvFrmCnt = mOvTime * 25;
 }
 
 VideoStreamUdp::~VideoStreamUdp()
@@ -80,17 +86,72 @@ int VideoStreamUdp::setState(int state)
 
 int VideoStreamUdp::setResolution(int imgWidth, int imgHeight)
 {
+    // TODO::Check if the argument is valid
+    mWidth = imgWidth;
+    mHeight = imgHeight;
+    return 0;
+}
+
+int VideoStreamUdp::getResolution(int &imgWidth, int &imgHeight)
+{
+    imgWidth = mWidth;
+    imgHeight = mHeight;
     return 0;
 }
 
 int VideoStreamUdp::setFormat(int vidFormat)
 {
+    // TODO::Check if the argument is valid
     return 0;
+}
+
+int VideoStreamUdp::getFormat()
+{
+    return 0;
+}
+
+int VideoStreamUdp::setAddress(std::string ipAddr)
+{
+    // TODO::Check if the argument is valid
+    mHost = ipAddr;
+    return 0;
+}
+
+std::string VideoStreamUdp::getAddress()
+{
+    return mHost;
+}
+
+int VideoStreamUdp::setPort(uint32_t port)
+{
+    // TODO::Check if the argument is valid
+    mPort = port;
+    return 0;
+}
+
+int VideoStreamUdp::getPort()
+{
+    return mPort;
+}
+
+int VideoStreamUdp::setTextOverlay(std::string text, int timeSec)
+{
+    mOvText = text;
+    mOvTime = timeSec;
+    // TODO :: Replace 25 with camera frame rate
+    mOvFrmCnt = 25 * mOvTime;
+    return 0;
+}
+
+std::string VideoStreamUdp::getTextOverlay()
+{
+    return mOvText;
 }
 
 GstBuffer *VideoStreamUdp::readFrame()
 {
     GstBuffer *buffer;
+    static GstClockTime timestamp = 0;
     // TODO :: Remove the sleep once the read call is blocking
     usleep(40000);
     std::vector<uint8_t> frame = mCamDev->read();
@@ -109,6 +170,20 @@ GstBuffer *VideoStreamUdp::readFrame()
         buffer = gst_buffer_new_allocate(NULL, size, NULL);
         // this makes the image white
         gst_buffer_memset(buffer, 0, 0xff, size);
+    }
+
+    // Add timestamp
+    GST_BUFFER_PTS(buffer) = timestamp;
+    GST_BUFFER_DURATION(buffer) = gst_util_uint64_scale_int(1, GST_SECOND, 25);
+    timestamp += GST_BUFFER_DURATION(buffer);
+
+    // Add Overlay
+    if (mOvFrmCnt || mOvFrmCnt == -1) {
+        g_object_set(G_OBJECT(mTextOverlay), "text", mOvText.c_str(), NULL);
+        if (mOvFrmCnt > 0)
+            mOvFrmCnt--;
+    } else {
+        g_object_set(G_OBJECT(mTextOverlay), "text", "", NULL);
     }
     return buffer;
 }
@@ -149,13 +224,14 @@ int VideoStreamUdp::createAppsrcPipeline()
     mPipeline = gst_pipeline_new("UdpStream");
     src = gst_element_factory_make("appsrc", "VideoSrc");
     conv = gst_element_factory_make("videoconvert", "Conv");
+    mTextOverlay = gst_element_factory_make("textoverlay", "textoverlay");
     enc = gst_element_factory_make("x264enc", "H264Enc");
     parser = gst_element_factory_make("h264parse", "Parser");
     payload = gst_element_factory_make("rtph264pay", "H264Rtp");
     sink = gst_element_factory_make("udpsink", "UdpSink");
 
     // TODO::Check if all the elements are created
-    if (!mPipeline || !src || !conv || !enc || !parser || !payload || !sink) {
+    if (!mPipeline || !src || !conv || !mTextOverlay || !enc || !parser || !payload || !sink) {
         log_error("One element could not be created. Exiting.\n");
         return -1;
     }
@@ -182,15 +258,16 @@ int VideoStreamUdp::createAppsrcPipeline()
     g_object_set(G_OBJECT(sink), "port", mPort, NULL);
 
     // Add element to bin
-    gst_bin_add_many(GST_BIN(mPipeline), src, conv, enc, parser, payload, sink, NULL);
+    // gst_bin_add_many(GST_BIN(mPipeline), src, conv, enc, parser, payload, sink, NULL);
+    gst_bin_add_many(GST_BIN(mPipeline), src, conv, mTextOverlay, enc, parser, payload, sink, NULL);
 
     // Link src to sink
     gst_element_link_many(src, conv, NULL);
-    link_ok = gst_element_link_filtered(conv, enc, caps);
+    link_ok = gst_element_link_filtered(conv, mTextOverlay, caps);
     if (!link_ok) {
         log_error("Failed to link convertor and encoder!");
     }
-    gst_element_link_many(enc, payload, sink, NULL);
+    gst_element_link_many(mTextOverlay, enc, payload, sink, NULL);
 
     // Connect signals
     GstAppSrcCallbacks cbs;
