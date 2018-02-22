@@ -312,6 +312,14 @@ int CameraComponent::setCameraMode(uint32_t mode)
     return 0;
 }
 
+int CameraComponent::resetCameraSettings()
+{
+    int ret = mCamDev->resetParams(mCamParam);
+    if (ret != 0)
+        log_debug("Error in reset of camera parameters. Could not open the device.");
+    return ret;
+}
+
 int CameraComponent::getCameraMode()
 {
     return mCamDev->getMode();

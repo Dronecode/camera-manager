@@ -516,6 +516,25 @@ void MavlinkServer::_handle_param_ext_set(const struct sockaddr_in &addr, mavlin
     }
 }
 
+void MavlinkServer::_handle_reset_camera_settings(const struct sockaddr_in &addr,
+                                                  mavlink_command_long_t &cmd)
+{
+
+    if (cmd.param1 != 1) {
+        _send_ack(addr, cmd.command, cmd.target_component, true);
+        return;
+    }
+
+    bool success = false;
+    CameraComponent *tgtComp = getCameraComponent(cmd.target_component);
+
+    if (tgtComp) {
+        if (!tgtComp->resetCameraSettings())
+            success = true;
+    }
+
+    _send_ack(addr, cmd.command, cmd.target_component, success);
+}
 void MavlinkServer::_handle_heartbeat(const struct sockaddr_in &addr, mavlink_message_t *msg)
 {
     mavlink_heartbeat_t heartbeat;
@@ -523,6 +542,7 @@ void MavlinkServer::_handle_heartbeat(const struct sockaddr_in &addr, mavlink_me
 
     if (heartbeat.autopilot == 12)
         _system_id = msg->sysid;
+
 }
 
 void MavlinkServer::_handle_mavlink_message(const struct sockaddr_in &addr, mavlink_message_t *msg)
@@ -558,7 +578,7 @@ void MavlinkServer::_handle_mavlink_message(const struct sockaddr_in &addr, mavl
             this->_handle_request_camera_capture_status(addr, cmd);
             break;
         case MAV_CMD_RESET_CAMERA_SETTINGS:
-            log_debug("MAV_CMD_RESET_CAMERA_SETTINGS");
+            this->_handle_reset_camera_settings(addr, cmd);
             break;
         case MAV_CMD_REQUEST_STORAGE_INFORMATION:
             this->_handle_request_storage_information(addr, cmd);

@@ -51,6 +51,7 @@ public:
     int setExposureAbsolute(uint32_t value);
     int setSceneMode(uint32_t value);
     int setHue(int32_t value);
+    int resetParams(CameraParameters &camParam);
 
 private:
     std::string mDeviceId;

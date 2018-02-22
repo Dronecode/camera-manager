@@ -17,6 +17,7 @@
  */
 #include <cstring>
 #include <linux/videodev2.h>
+#include <sys/ioctl.h>
 
 #include "CameraDeviceV4l2.h"
 #include "v4l2_interface.h"
@@ -127,6 +128,69 @@ int CameraDeviceV4l2::setMode(uint32_t mode)
 int CameraDeviceV4l2::getMode()
 {
     return mMode;
+}
+
+int CameraDeviceV4l2::resetParams(CameraParameters &camParam)
+{
+    int ret = 0;
+    struct v4l2_queryctrl queryctrl;
+
+    int fd = v4l2_open(mDeviceId.c_str());
+
+    if (fd == -1) {
+        log_debug("Error in opening camera device in resetParams()");
+        ret = 1;
+        return ret;
+    }
+
+    memset(&queryctrl, 0, sizeof(queryctrl));
+
+    for (queryctrl.id = V4L2_CID_BASE; queryctrl.id < V4L2_CID_LASTP1; queryctrl.id++) {
+        if (0 == ioctl(fd, VIDIOC_QUERYCTRL, &queryctrl)) {
+            if (queryctrl.flags & V4L2_CTRL_FLAG_DISABLED)
+                continue;
+        }
+        int ret = v4l2_set_control(fd, queryctrl.id, queryctrl.default_value);
+        //    log_debug("return value for:%s : %d : %d",queryctrl.name,queryctrl.id,ret);
+
+        switch (queryctrl.id) {
+        case V4L2_CID_BRIGHTNESS:
+            camParam.setParameter(CameraParameters::BRIGHTNESS, (uint32_t)queryctrl.default_value);
+            break;
+        case V4L2_CID_CONTRAST:
+            camParam.setParameter(CameraParameters::CONTRAST, (uint32_t)queryctrl.default_value);
+            break;
+        case V4L2_CID_WHITE_BALANCE_TEMPERATURE:
+            camParam.setParameter(CameraParameters::WHITE_BALANCE_TEMPERATURE,
+                                  (uint32_t)queryctrl.default_value);
+            break;
+        case V4L2_CID_SATURATION:
+            camParam.setParameter(CameraParameters::SATURATION, (uint32_t)queryctrl.default_value);
+            break;
+        case V4L2_CID_HUE:
+            camParam.setParameter(CameraParameters::HUE, (int32_t)queryctrl.default_value);
+            break;
+        case V4L2_CID_EXPOSURE:
+            camParam.setParameter(CameraParameters::EXPOSURE_ABSOLUTE,
+                                  (uint32_t)queryctrl.default_value);
+            break;
+        case V4L2_CID_GAIN:
+            camParam.setParameter(CameraParameters::GAIN, (uint32_t)queryctrl.default_value);
+            break;
+        case V4L2_CID_POWER_LINE_FREQUENCY:
+            camParam.setParameter(CameraParameters::POWER_LINE_FREQ_MODE,
+                                  (uint32_t)queryctrl.default_value);
+            break;
+        case V4L2_CID_SHARPNESS:
+            camParam.setParameter(CameraParameters::SHARPNESS, (uint32_t)queryctrl.default_value);
+            break;
+            //     case V4L2_CID_AUTOGAIN:
+            //     case V4L2_CID_HFLIP:
+            //     case V4L2_CID_VFLIP:
+        }
+    }
+    //    log_debug("Reset Done!");
+    return ret;
 }
 
 int CameraDeviceV4l2::setBrightness(uint32_t value)
