@@ -5,6 +5,15 @@ services: docker
 before_install:
  - CONTAINER=$(docker run -it -d -v $PWD:/build ubuntu:16.04 /bin/bash)
  - docker exec -i $CONTAINER /bin/bash -c "apt-get update -qq && apt-get install -y -qq libavahi-glib-dev libavahi-client-dev libavahi-core-dev libgstreamer1.0-dev libgstrtspserver-1.0-dev libgstreamer-plugins-base1.0-dev build-essential autoconf libtool wget libgstrtspserver-1.0-dev python2.7 python-future"
+ - docker exec -i $CONTAINER /bin/bash -c "apt-get update -qq && apt-get install -y -qq software-properties-common python-software-properties"
+ - docker exec -i $CONTAINER /bin/bash -c "add-apt-repository http://packages.osrfoundation.org/gazebo/ubuntu && wget --quiet http://packages.osrfoundation.org/gazebo.key -O - | apt-key add -"
+ - docker exec -i $CONTAINER /bin/bash -c "apt-get update -qq && apt-get install -y -qq libgazebo8-dev"
+ - docker exec -i $CONTAINER /bin/bash -c "add-apt-repository http://realsense-alm-public.s3.amazonaws.com/apt-repo | apt-key adv --keyserver keys.gnupg.net --recv-key D6FB2970"
+ - docker exec -i $CONTAINER /bin/bash -c "apt-get update -qq && apt-get install -y -qq librealsense-dev"
 
 script:  
- - docker exec -i $CONTAINER /bin/bash -c "cd /build && ./autogen.sh c --with-systemdsystemunitdir=/usr/lib/systemd/system && make -j && make -j samples"
+ - docker exec -i $CONTAINER /bin/bash -c "cd /build && ./autogen.sh c --with-systemdsystemunitdir=/usr/lib/systemd/system && make -j && make -j test"
+ - docker exec -i $CONTAINER /bin/bash -c "cd /build && make distclean && ./autogen.sh c --with-systemdsystemunitdir=/usr/lib/systemd/system --enable-aero --enable-realsense && make -j && make -j test"
+ - docker exec -i $CONTAINER /bin/bash -c "cd /build && make distclean && ./autogen.sh c --with-systemdsystemunitdir=/usr/lib/systemd/system --enable-aero --enable-realsense --enable-mavlink --enable-avahi && make -j && make -j test"
+ - docker exec -i $CONTAINER /bin/bash -c "cd /build && make distclean && ./autogen.sh c --with-systemdsystemunitdir=/usr/lib/systemd/system --enable-mavlink --enable-realsense --enable-avahi && make -j && make -j test"
+ - docker exec -i $CONTAINER /bin/bash -c "cd /build && make distclean && ./autogen.sh c --with-systemdsystemunitdir=/usr/lib/systemd/system --enable-gazebo --enable-mavlink && make -j && make -j test"
