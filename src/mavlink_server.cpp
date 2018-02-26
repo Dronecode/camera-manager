@@ -66,7 +66,7 @@ MavlinkServer::MavlinkServer(ConfFile &conf, std::vector<std::unique_ptr<Stream>
 
     if (opt.sysid) {
         if (opt.sysid < 1 || opt.sysid >= 255)
-            log_error("Invalid System ID for MAVLink communication (%d).Waiting for heartbeat from
+            log_error("Invalid System ID for MAVLink communication (%d).Waiting for heartbeat from \
              Vehicle",opt.sysid);
         else
             _system_id = opt.sysid;
