@@ -150,7 +150,7 @@ int CameraDeviceV4l2::resetParams(CameraParameters &camParam)
             if (queryctrl.flags & V4L2_CTRL_FLAG_DISABLED)
                 continue;
         }
-        int ret = v4l2_set_control(fd, queryctrl.id, queryctrl.default_value);
+        ret = v4l2_set_control(fd, queryctrl.id, queryctrl.default_value);
         //    log_debug("return value for:%s : %d : %d",queryctrl.name,queryctrl.id,ret);
 
         switch (queryctrl.id) {
