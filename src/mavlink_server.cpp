@@ -16,6 +16,7 @@
  * limitations under the License.
  */
 #include <assert.h>
+#include <cmath>
 #include <mavlink.h>
 #include <sys/socket.h>
 #include <unistd.h>
@@ -31,6 +32,8 @@ using namespace std::placeholders;
 #define DEFAULT_MAVLINK_BROADCAST_ADDR "255.255.255.255"
 #define DEFAULT_RTSP_SERVER_ADDR "0.0.0.0"
 #define MAX_MAVLINK_MESSAGE_SIZE 1024
+
+static const float epsilon = std::numeric_limits<float>::epsilon();
 
 MavlinkServer::MavlinkServer(ConfFile &conf, std::vector<std::unique_ptr<Stream>> &streams,
                              RTSPServer &rtsp)
@@ -115,8 +118,9 @@ void MavlinkServer::_handle_request_camera_information(const struct sockaddr_in 
     mavlink_message_t msg;
     bool success = false;
 
-    /* Check for Request camera capabilities flag*/
-    if (cmd.param1 != 1) {
+    // Take no action if flag not set
+    if (std::abs(cmd.param1) <= epsilon) {
+        log_warning("No Action");
         _send_ack(addr, cmd.command, cmd.target_component, true);
         return;
     }
@@ -147,8 +151,9 @@ void MavlinkServer::_handle_request_camera_settings(const struct sockaddr_in &ad
 {
     log_debug("%s", __func__);
 
-    // Check for Request camera settings flag
-    if (cmd.param1 != 1) {
+    // Take no action if flag not set
+    if (std::abs(cmd.param1) <= epsilon) {
+        log_warning("No Action");
         _send_ack(addr, cmd.command, cmd.target_component, true);
         return;
     }
@@ -178,8 +183,9 @@ void MavlinkServer::_handle_request_storage_information(const struct sockaddr_in
 {
     log_debug("%s", __func__);
 
-    // Check for Request storage information flag
-    if (cmd.param2 != 1) {
+    // Take no action if flag not set
+    if (std::abs(cmd.param2) <= epsilon) {
+        log_warning("No Action");
         _send_ack(addr, cmd.command, cmd.target_component, true);
         return;
     }
@@ -285,8 +291,9 @@ void MavlinkServer::_handle_request_camera_capture_status(const struct sockaddr_
 {
     log_debug("%s", __func__);
 
-    // Check for Request camera capture status flag
-    if (cmd.param1 != 1) {
+    // Take no action if flag not set
+    if (std::abs(cmd.param1) <= epsilon) {
+        log_warning("No Action");
         _send_ack(addr, cmd.command, cmd.target_component, true);
         return;
     }
@@ -519,8 +526,11 @@ void MavlinkServer::_handle_param_ext_set(const struct sockaddr_in &addr, mavlin
 void MavlinkServer::_handle_reset_camera_settings(const struct sockaddr_in &addr,
                                                   mavlink_command_long_t &cmd)
 {
+    log_debug("%s", __func__);
 
-    if (cmd.param1 != 1) {
+    // Take no action if flag not set
+    if (std::abs(cmd.param1) <= epsilon) {
+        log_warning("No Action");
         _send_ack(addr, cmd.command, cmd.target_component, true);
         return;
     }
