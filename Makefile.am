@@ -291,8 +291,6 @@ samples_deps = samples_camera_sample_mavlink_client_LDADD
 endif
 
 if ENABLE_GAZEBO
-AM_CFLAGS += \
-        ${GZB_CFLAGS}
 
 AM_CXXFLAGS += \
         ${GZB_CFLAGS}
