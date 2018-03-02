@@ -17,13 +17,13 @@
  */
 #pragma once
 
-#include <avahi-common/watch.h>
 #include <memory>
 #include <string>
 #include <vector>
 
 #ifdef ENABLE_AVAHI
 #include "avahi_publisher.h"
+#include <avahi-common/watch.h>
 #endif
 #include "conf_file.h"
 #ifdef ENABLE_MAVLINK
