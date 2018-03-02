@@ -165,7 +165,7 @@ BASE_FILES = \
         src/VideoStreamUdp.h \
         src/VideoStreamUdp.cpp
 
-if HAVE_REALSENSE
+if ENABLE_REALSENSE
 BASE_FILES += \
 	src/stream_builder_realsense.h \
 	src/stream_builder_realsense.cpp \
