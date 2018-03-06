@@ -12,14 +12,22 @@ AC_CONFIG_SRCDIR([src/main.cpp])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS(config.h)
 AC_CONFIG_AUX_DIR([build-aux])
-AC_SEARCH_LIBS([rs_create_context], [realsense],
+AC_ARG_ENABLE([realsense], AS_HELP_STRING([--enable-realsense], [Enable Realsense Support]),
  [
-   have_realsense=yes
-   AM_CONDITIONAL([HAVE_REALSENSE], true)
+   AC_SEARCH_LIBS([rs_create_context], [realsense],
+    [
+      enable_realsense=yes
+      AM_CONDITIONAL([ENABLE_REALSENSE], true)
+    ],
+    [
+      AC_MSG_ERROR([librealsense not installed, cannot enable realsense support])
+      enable_realsense=no
+      AM_CONDITIONAL([ENABLE_REALSENSE], false)
+    ])
  ],
  [
-   have_realsense=no
-   AM_CONDITIONAL([HAVE_REALSENSE], false)
+   enable_realsense=no
+   AM_CONDITIONAL([ENABLE_REALSENSE], false)
  ])
 AC_ARG_ENABLE([aero], AS_HELP_STRING([--enable-aero], [Include streams specific for Intel Aero drone]),
  [
@@ -176,7 +184,7 @@ AC_MSG_RESULT([
     CXXFLAGS:            ${CXXFLAGS}
     LDFLAGS:             ${LDFLAGS}
 
-    RealSense support:   $have_realsense
+    RealSense support:   $enable_realsense
     MAVLink support:     $enable_mavlink
     AVAHI support:       $enable_avahi
     Intel Aero support:  $enable_aero
