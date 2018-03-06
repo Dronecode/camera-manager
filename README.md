@@ -68,9 +68,9 @@ Building for Aero requires Avahi 0.6 or newer (https://github.com/lathiat/avahi)
 
     $ sudo apt-get install libavahi-client-dev libavahi-core-dev libavahi-glib-dev
 
-In order to build for aero, use --enable-aero option along with ./configure:
+In order to build for aero, use --enable-aero and --enable-realsense options along with ./configure:
 
-    $ ./autogen.sh && ./configure --enable-aero --enable-mavlink --enable-avahi
+    $ ./autogen.sh && ./configure --enable-aero --enable-realsense --enable-mavlink --enable-avahi
 
 ### Webcam: Ubuntu
 
