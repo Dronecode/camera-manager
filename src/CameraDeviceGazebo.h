@@ -42,6 +42,7 @@ public:
     int getPixelFormat(uint32_t &format);
     int setMode(uint32_t mode);
     int getMode();
+    std::string getOverlayText();
 
 private:
     // Declare parameter name & ID
@@ -56,6 +57,7 @@ private:
     static const int ID_PARAMETER_CUSTOM_REAL32;
     static const char PARAMETER_CUSTOM_ENUM[];
     static const int ID_PARAMETER_CUSTOM_ENUM;
+    int setOverlayText(std::string text);
     void cbOnImages(ConstImagesStampedPtr &_msg);
     int getImage(const gazebo::msgs::Image &_msg);
     std::string mDeviceId;
@@ -69,4 +71,5 @@ private:
     gazebo::transport::SubscriberPtr mSub;
     std::mutex mLock;
     std::vector<uint8_t> mFrameBuffer = {};
+    std::string mOvText;
 };

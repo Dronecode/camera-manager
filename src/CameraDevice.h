@@ -66,6 +66,7 @@ public:
     virtual int getPixelFormat(uint32_t &format) { return -ENOTSUP; }
     virtual int setMode(uint32_t mode) { return -ENOTSUP; }
     virtual int getMode() { return -ENOTSUP; };
+    virtual std::string getOverlayText() { return {}; };
     virtual int setBrightness(uint32_t value) { return -ENOTSUP; }
     virtual int setContrast(uint32_t value) { return -ENOTSUP; }
     virtual int setSaturation(uint32_t value) { return -ENOTSUP; }

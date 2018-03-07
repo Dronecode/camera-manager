@@ -36,6 +36,8 @@ VideoStreamUdp::VideoStreamUdp(std::shared_ptr<CameraDevice> camDev)
     , mPipeline(nullptr)
     , mTextOverlay(nullptr)
 {
+    log_info("%s Device:%s", __func__, mCamDev->getDeviceId().c_str());
+
     mOvText = mCamDev->getDeviceId();
     mOvFrmCnt = mOvTime * 25;
 }
@@ -58,6 +60,7 @@ int VideoStreamUdp::uninit()
 
 int VideoStreamUdp::start()
 {
+    log_info("%s::%s", typeid(this).name(), __func__);
     int ret = -1;
     ret = createAppsrcPipeline();
     setState(STATE_RUN);
@@ -66,6 +69,7 @@ int VideoStreamUdp::start()
 
 int VideoStreamUdp::stop()
 {
+    log_info("%s::%s", typeid(this).name(), __func__);
     int ret = -1;
     ret = destroyAppsrcPipeline();
     setState(STATE_INIT);
@@ -178,8 +182,15 @@ GstBuffer *VideoStreamUdp::readFrame()
     timestamp += GST_BUFFER_DURATION(buffer);
 
     // Add Overlay
+    std::string camText = mCamDev->getOverlayText();
+    if (mOvText.compare(camText) != 0 && !camText.empty()) {
+        mOvText = camText;
+        mOvFrmCnt = 25 * mOvTime;
+    }
+
     if (mOvFrmCnt || mOvFrmCnt == -1) {
-        g_object_set(G_OBJECT(mTextOverlay), "text", mOvText.c_str(), NULL);
+        g_object_set(G_OBJECT(mTextOverlay), "text", mOvText.c_str(), "valignment", 2, "halignment",
+                     0, "shaded-background", TRUE, NULL);
         if (mOvFrmCnt > 0)
             mOvFrmCnt--;
     } else {
@@ -214,7 +225,7 @@ static gboolean cb_seek_data(GstAppSrc *src, guint64 offset, gpointer user_data)
 
 int VideoStreamUdp::createAppsrcPipeline()
 {
-    log_info("%s", __func__);
+    log_info("%s::%s", typeid(this).name(), __func__);
 
     int ret = 0;
     gboolean link_ok;
@@ -284,7 +295,7 @@ int VideoStreamUdp::createAppsrcPipeline()
 
 int VideoStreamUdp::destroyAppsrcPipeline()
 {
-    log_info("%s", __func__);
+    log_info("%s::%s", typeid(this).name(), __func__);
 
     int ret = 0;
 

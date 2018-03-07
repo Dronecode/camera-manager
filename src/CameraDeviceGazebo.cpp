@@ -41,6 +41,7 @@ CameraDeviceGazebo::CameraDeviceGazebo(std::string device)
     , mWidth(640)
     , mHeight(360)
     , mPixelFormat(CameraParameters::ID_PIXEL_FORMAT_RGB24)
+    , mOvText(device)
 {
     log_info("%s path:%s", __func__, mDeviceId.c_str());
 }
@@ -187,6 +188,7 @@ int CameraDeviceGazebo::setParam(CameraParameters &camParam, std::string param,
 
 {
     int ret = 0;
+    std::string ovValue;
     CameraParameters::cam_param_union_t u;
     memcpy(&u.param_float, param_value, sizeof(float));
     int paramId = camParam.getParameterID(param);
@@ -194,29 +196,50 @@ int CameraDeviceGazebo::setParam(CameraParameters &camParam, std::string param,
     case ID_PARAMETER_CUSTOM_UINT8:
         log_info("Parameter: %s Value: %d", param.c_str(), u.param_uint8);
         camParam.setParameter(param, u.param_uint8);
+        ovValue = std::to_string(u.param_uint8);
         break;
     case ID_PARAMETER_CUSTOM_UINT32:
         log_info("Parameter: %s Value: %d", param.c_str(), u.param_uint32);
         camParam.setParameter(param, u.param_uint32);
+        ovValue = std::to_string(u.param_uint32);
         break;
     case ID_PARAMETER_CUSTOM_INT32:
         log_info("Parameter: %s Value: %d", param.c_str(), u.param_int32);
         camParam.setParameter(param, u.param_int32);
+        ovValue = std::to_string(u.param_int32);
         break;
     case ID_PARAMETER_CUSTOM_REAL32:
         log_info("Parameter: %s Value: %f", param.c_str(), u.param_float);
         camParam.setParameter(param, u.param_float);
+        ovValue = std::to_string(u.param_float);
         break;
     case ID_PARAMETER_CUSTOM_ENUM:
         log_info("Parameter: %s Value: %d", param.c_str(), u.param_uint32);
         camParam.setParameter(param, u.param_uint32);
+        ovValue = std::to_string(u.param_uint32);
         break;
     default:
         ret = -ENOTSUP;
         break;
     }
 
+    if (!ret)
+        setOverlayText(param + " = " + ovValue);
+
     return ret;
+}
+
+int CameraDeviceGazebo::setOverlayText(std::string text)
+{
+    log_debug("%s", __func__);
+
+    mOvText = text;
+    return 0;
+}
+
+std::string CameraDeviceGazebo::getOverlayText()
+{
+    return mOvText;
 }
 
 void CameraDeviceGazebo::cbOnImages(ConstImagesStampedPtr &_msg)

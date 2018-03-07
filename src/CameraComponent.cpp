@@ -91,6 +91,12 @@ CameraComponent::CameraComponent(std::string camdev_name, std::string camdef_uri
     mCamDev->start();
 
     initStorageInfo(mStoreInfo);
+
+#ifdef ENABLE_GAZEBO
+    mVidStream = std::make_shared<VideoStreamUdp>(mCamDev);
+    mVidStream->init();
+    mVidStream->start();
+#endif
 }
 
 CameraComponent::~CameraComponent()
