@@ -30,15 +30,16 @@ public:
     CameraParameters();
     virtual ~CameraParameters();
     const std::map<std::string, std::string> &getParameterList() const { return paramValue; }
-    bool setParameterSupported(std::string key, std::string value);
+    bool setParameterValuesSupported(std::string param, std::string value);
+    bool setParameterIdType(std::string param, int paramId, int paramType);
+    int getParameterType(std::string param);
+    int getParameterID(std::string param);
     bool setParameter(std::string param, std::string value);
     bool setParameter(std::string param_id, float param_value);
     bool setParameter(std::string param_id, uint32_t param_value);
     bool setParameter(std::string param_id, int32_t param_value);
     bool setParameter(std::string param_id, uint8_t param_value);
     std::string getParameter(std::string param);
-    int getParameterType(std::string param);
-    int getParameterID(std::string param);
 
     typedef struct {
         union {

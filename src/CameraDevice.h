@@ -53,12 +53,13 @@ public:
     virtual int stop() { return -ENOTSUP; }
     virtual std::vector<uint8_t> read() { return {}; }
     virtual int resetParams(CameraParameters &camParam) { return -ENOTSUP; }
-    virtual int setParam(const char *param_id, size_t id_size, const char *param_value,
-                         size_t value_size, int param_type) { return -ENOTSUP; }
-    virtual int setParam(std::string param_id, float param_value) { return -ENOTSUP; }
-    virtual int setParam(std::string param_id, int32_t param_value) { return -ENOTSUP; }
-    virtual int setParam(std::string param_id, uint32_t param_value) { return -ENOTSUP; }
-    virtual int setParam(std::string param_id, uint8_t param_value) { return -ENOTSUP; }
+    virtual int setParam(CameraParameters &camParam, std::string param, const char *param_value,
+                         size_t value_size, int param_type)
+        = 0;
+    virtual int setParam(std::string param, float param_value) { return -ENOTSUP; }
+    virtual int setParam(std::string param, int32_t param_value) { return -ENOTSUP; }
+    virtual int setParam(std::string param, uint32_t param_value) { return -ENOTSUP; }
+    virtual int setParam(std::string param, uint8_t param_value) { return -ENOTSUP; }
     virtual int setSize(uint32_t width, uint32_t height) { return -ENOTSUP; }
     virtual int getSize(uint32_t &width, uint32_t &height) { return -ENOTSUP; }
     virtual int setPixelFormat(uint32_t format) { return -ENOTSUP; }
