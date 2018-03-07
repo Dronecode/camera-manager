@@ -27,6 +27,13 @@
 #include "util.h"
 
 CameraParameters camParam;
+void print_param_type(void);
+void print_usage(void);
+void test_convert_logic(uint32_t value);
+void input_param_id(std::string &paramID);
+void input_param_value(CameraParameters::cam_param_union_t &u);
+int set(std::string paramID);
+void get(std::string paramID, int type);
 
 void print_param_type()
 {
@@ -98,7 +105,7 @@ void input_param_value(CameraParameters::cam_param_union_t &u)
 {
     std::cout << "Enter Parameter Type" << std::endl;
     print_param_type();
-    scanf("%d", &u.type);
+    scanf("%hhu", &u.type);
     std::cout << "Enter Parameter Value ";
     switch (u.type) {
     case CameraParameters::PARAM_TYPE_REAL32:

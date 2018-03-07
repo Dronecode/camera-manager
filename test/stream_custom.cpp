@@ -21,7 +21,7 @@
 #include <unistd.h>
 
 #include "log.h"
-#include "samples/stream_custom.h"
+#include "test/stream_custom.h"
 
 StreamCustom::StreamCustom()
     : Stream()
