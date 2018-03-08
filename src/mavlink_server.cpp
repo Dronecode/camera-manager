@@ -42,7 +42,7 @@ MavlinkServer::MavlinkServer(ConfFile &conf, std::vector<std::unique_ptr<Stream>
     , _timeout_handler(0)
     , _broadcast_addr{}
     , _system_id(-1)
-    , _comp_id(MAV_COMP_ID_CAMERA)
+    , _comp_id(MAV_COMP_ID_CAMERA2)
     , _rtsp_server_addr(nullptr)
     , _rtsp(rtsp)
 {
@@ -78,7 +78,8 @@ MavlinkServer::MavlinkServer(ConfFile &conf, std::vector<std::unique_ptr<Stream>
     if (opt.compid) {
         if (opt.compid <= 1 || opt.compid >= 255)
             log_error("Invalid Component ID for MAVLink communication (%d). Using default "
-                      "MAV_COMP_ID_CAMERA (%d)", opt.compid, MAV_COMP_ID_CAMERA);
+                      "MAV_COMP_ID_CAMERA2 (%d)",
+                      opt.compid, MAV_COMP_ID_CAMERA2);
         else
             _comp_id = opt.compid;
     }
@@ -713,7 +714,7 @@ int MavlinkServer::addCameraComponent(CameraComponent *camComp)
 {
     log_debug("%s", __func__);
     int ret = -1;
-    int id = MAV_COMP_ID_CAMERA;
+    int id = MAV_COMP_ID_CAMERA2;
     while (id < MAV_COMP_ID_CAMERA6 + 1) {
         if (compIdToObj.find(id) == compIdToObj.end()) {
             compIdToObj.insert(std::make_pair(id, camComp));
