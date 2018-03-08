@@ -150,8 +150,7 @@ int CameraDeviceV4l2::resetParams(CameraParameters &camParam)
             if (queryctrl.flags & V4L2_CTRL_FLAG_DISABLED)
                 continue;
         }
-        ret = v4l2_set_control(fd, queryctrl.id, queryctrl.default_value);
-        //    log_debug("return value for:%s : %d : %d",queryctrl.name,queryctrl.id,ret);
+        v4l2_set_control(fd, queryctrl.id, queryctrl.default_value);
 
         switch (queryctrl.id) {
         case V4L2_CID_BRIGHTNESS:
@@ -190,6 +189,7 @@ int CameraDeviceV4l2::resetParams(CameraParameters &camParam)
         }
     }
     //    log_debug("Reset Done!");
+    v4l2_close(fd);
     return ret;
 }
 
