@@ -30,6 +30,8 @@ public:
     int start();
     int stop();
     std::vector<uint8_t> read();
+    int setParam(CameraParameters &camParam, std::string param, const char *param_value,
+                 size_t value_size, int param_type);
     std::string getDeviceId();
     int getInfo(struct CameraInfo &camInfo);
     bool isGstV4l2Src();

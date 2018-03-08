@@ -91,6 +91,12 @@ CameraComponent::CameraComponent(std::string camdev_name, std::string camdef_uri
     mCamDev->start();
 
     initStorageInfo(mStoreInfo);
+
+#ifdef ENABLE_GAZEBO
+    mVidStream = std::make_shared<VideoStreamUdp>(mCamDev);
+    mVidStream->init();
+    mVidStream->start();
+#endif
 }
 
 CameraComponent::~CameraComponent()
@@ -162,30 +168,33 @@ int CameraComponent::getParam(const char *param_id, size_t id_size, char *param_
     return 0;
 }
 
-int CameraComponent::setParam(const char *param_id, size_t id_size, const char *param_value,
+int CameraComponent::setParam(const char *param_name, size_t id_size, const char *param_value,
                               size_t value_size, int param_type)
 {
     int ret = 1;
     CameraParameters::cam_param_union_t u;
-    std::string id = toString(param_id, id_size);
+    std::string param = toString(param_name, id_size);
     memcpy(&u.param_float, param_value, sizeof(float));
     switch (param_type) {
     case CameraParameters::PARAM_TYPE_REAL32:
-        ret = setParam(id, u.param_float);
+        ret = setParam(param, u.param_float);
         break;
     case CameraParameters::PARAM_TYPE_INT32:
-        ret = setParam(id, u.param_int32);
+        ret = setParam(param, u.param_int32);
         break;
     case CameraParameters::PARAM_TYPE_UINT32:
-        ret = setParam(id, u.param_uint32);
+        ret = setParam(param, u.param_uint32);
         break;
     case CameraParameters::PARAM_TYPE_UINT8:
-        ret = setParam(id, u.param_uint8);
+        ret = setParam(param, u.param_uint8);
         break;
     default:
-        ret = mCamDev->setParam(param_id, id_size, param_value,
-                              value_size, param_type);
+        ret = -ENOTSUP;
         break;
+    }
+
+    if (ret == -ENOTSUP) {
+        ret = mCamDev->setParam(mCamParam, param, param_value, value_size, param_type);
     }
 
     return ret;

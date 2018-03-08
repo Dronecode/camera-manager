@@ -24,14 +24,26 @@
 
 #include "CameraDeviceGazebo.h"
 
+const char CameraDeviceGazebo::PARAMETER_CUSTOM_UINT8[] = "custom-uint8";
+const int CameraDeviceGazebo::ID_PARAMETER_CUSTOM_UINT8 = 101;
+const char CameraDeviceGazebo::PARAMETER_CUSTOM_UINT32[] = "custom-uint32";
+const int CameraDeviceGazebo::ID_PARAMETER_CUSTOM_UINT32 = 102;
+const char CameraDeviceGazebo::PARAMETER_CUSTOM_INT32[] = "custom-int32";
+const int CameraDeviceGazebo::ID_PARAMETER_CUSTOM_INT32 = 104;
+const char CameraDeviceGazebo::PARAMETER_CUSTOM_REAL32[] = "custom-real32";
+const int CameraDeviceGazebo::ID_PARAMETER_CUSTOM_REAL32 = 105;
+const char CameraDeviceGazebo::PARAMETER_CUSTOM_ENUM[] = "custom-enum";
+const int CameraDeviceGazebo::ID_PARAMETER_CUSTOM_ENUM = 106;
+
 CameraDeviceGazebo::CameraDeviceGazebo(std::string device)
     : mDeviceId(device)
     , mMode(-1)
     , mWidth(640)
     , mHeight(360)
     , mPixelFormat(CameraParameters::ID_PIXEL_FORMAT_RGB24)
+    , mOvText(device)
 {
-    log_debug("%s path:%s", __func__, mDeviceId.c_str());
+    log_info("%s path:%s", __func__, mDeviceId.c_str());
 }
 
 CameraDeviceGazebo::~CameraDeviceGazebo()
@@ -68,6 +80,24 @@ bool CameraDeviceGazebo::isGstV4l2Src()
 
 int CameraDeviceGazebo::init(CameraParameters &camParam)
 {
+    camParam.setParameter(CameraParameters::CAMERA_MODE,
+                          (uint32_t)CameraParameters::ID_CAMERA_MODE_VIDEO);
+    camParam.setParameterIdType(PARAMETER_CUSTOM_UINT8, ID_PARAMETER_CUSTOM_UINT8,
+                                CameraParameters::PARAM_TYPE_UINT8);
+    camParam.setParameter(PARAMETER_CUSTOM_UINT8, (uint8_t)50);
+    camParam.setParameterIdType(PARAMETER_CUSTOM_UINT32, ID_PARAMETER_CUSTOM_UINT32,
+                                CameraParameters::PARAM_TYPE_UINT32);
+    camParam.setParameter(PARAMETER_CUSTOM_UINT32, (uint32_t)50);
+    camParam.setParameterIdType(PARAMETER_CUSTOM_INT32, ID_PARAMETER_CUSTOM_INT32,
+                                CameraParameters::PARAM_TYPE_INT32);
+    camParam.setParameter(PARAMETER_CUSTOM_INT32, (int32_t)-10);
+    camParam.setParameterIdType(PARAMETER_CUSTOM_REAL32, ID_PARAMETER_CUSTOM_REAL32,
+                                CameraParameters::PARAM_TYPE_REAL32);
+    camParam.setParameter(PARAMETER_CUSTOM_REAL32, (float)0);
+    camParam.setParameterIdType(PARAMETER_CUSTOM_ENUM, ID_PARAMETER_CUSTOM_ENUM,
+                                CameraParameters::PARAM_TYPE_UINT32);
+    camParam.setParameter(PARAMETER_CUSTOM_ENUM, (uint32_t)0);
+
     return 0;
 }
 
@@ -135,6 +165,81 @@ int CameraDeviceGazebo::setMode(uint32_t mode)
 int CameraDeviceGazebo::getMode()
 {
     return mMode;
+}
+
+int CameraDeviceGazebo::resetParams(CameraParameters &camParam)
+{
+    int ret = 0;
+
+    // TODO :: The default params need to be stored in DS during init
+    camParam.setParameter(CameraParameters::CAMERA_MODE,
+                          (uint32_t)CameraParameters::ID_CAMERA_MODE_VIDEO);
+    camParam.setParameter(PARAMETER_CUSTOM_UINT8, (uint8_t)50);
+    camParam.setParameter(PARAMETER_CUSTOM_UINT32, (uint32_t)50);
+    camParam.setParameter(PARAMETER_CUSTOM_INT32, (int32_t)-10);
+    camParam.setParameter(PARAMETER_CUSTOM_REAL32, (float)0);
+    camParam.setParameter(PARAMETER_CUSTOM_ENUM, (uint32_t)0);
+
+    return ret;
+}
+
+int CameraDeviceGazebo::setParam(CameraParameters &camParam, std::string param,
+                                 const char *param_value, size_t value_size, int param_type)
+
+{
+    int ret = 0;
+    std::string ovValue;
+    CameraParameters::cam_param_union_t u;
+    memcpy(&u.param_float, param_value, sizeof(float));
+    int paramId = camParam.getParameterID(param);
+    switch (paramId) {
+    case ID_PARAMETER_CUSTOM_UINT8:
+        log_info("Parameter: %s Value: %d", param.c_str(), u.param_uint8);
+        camParam.setParameter(param, u.param_uint8);
+        ovValue = std::to_string(u.param_uint8);
+        break;
+    case ID_PARAMETER_CUSTOM_UINT32:
+        log_info("Parameter: %s Value: %d", param.c_str(), u.param_uint32);
+        camParam.setParameter(param, u.param_uint32);
+        ovValue = std::to_string(u.param_uint32);
+        break;
+    case ID_PARAMETER_CUSTOM_INT32:
+        log_info("Parameter: %s Value: %d", param.c_str(), u.param_int32);
+        camParam.setParameter(param, u.param_int32);
+        ovValue = std::to_string(u.param_int32);
+        break;
+    case ID_PARAMETER_CUSTOM_REAL32:
+        log_info("Parameter: %s Value: %f", param.c_str(), u.param_float);
+        camParam.setParameter(param, u.param_float);
+        ovValue = std::to_string(u.param_float);
+        break;
+    case ID_PARAMETER_CUSTOM_ENUM:
+        log_info("Parameter: %s Value: %d", param.c_str(), u.param_uint32);
+        camParam.setParameter(param, u.param_uint32);
+        ovValue = std::to_string(u.param_uint32);
+        break;
+    default:
+        ret = -ENOTSUP;
+        break;
+    }
+
+    if (!ret)
+        setOverlayText(param + " = " + ovValue);
+
+    return ret;
+}
+
+int CameraDeviceGazebo::setOverlayText(std::string text)
+{
+    log_debug("%s", __func__);
+
+    mOvText = text;
+    return 0;
+}
+
+std::string CameraDeviceGazebo::getOverlayText()
+{
+    return mOvText;
 }
 
 void CameraDeviceGazebo::cbOnImages(ConstImagesStampedPtr &_msg)

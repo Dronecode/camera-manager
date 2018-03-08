@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<mavlinkcamera>
+    <definition version="1">
+        <model>Gazebo Camera</model>
+        <vendor>PX4 SITL</vendor>
+    </definition>
+    <parameters>
+        <!-- control = 0 tells us this should not create an automatic UI control -->
+        <parameter name="camera-mode" type="uint32" default="1" control="0">
+            <description>Camera Mode</description>
+            <options>
+                <option name="still" value="0">
+                    <exclusions>
+                        <exclude>video-size</exclude>
+                    </exclusions>
+                </option>
+                <option name="video" value="1">
+                </option>
+            </options>
+        </parameter>
+        <parameter name="custom-uint8" type="uint8" default="50" min="0" max="100" step ="1">
+            <description>ParamInt32</description>
+        </parameter>
+        <parameter name="custom-uint32" type="uint32" default="50" min="0" max="100" step ="1">
+            <description>ParamUint32</description>
+        </parameter>
+        <parameter name="custom-int32" type="int32" default="-10" min="-100" max="100" step ="1">
+            <description>ParamInt32</description>
+        </parameter>
+        <parameter name="custom-real32" type="float" default="0" min="-10" max="10" step ="1">
+            <description>ParamInt32</description>
+        </parameter>
+        <parameter name="custom-enum" type="uint32" default="0">
+            <description>ParamEnum </description>
+            <options>
+                <option name="Option 1" value="0" />
+                <option name="Option 2" value="1" />
+                <option name="Option 3" value="2" />
+            </options>
+        </parameter>
+    </parameters>
+</mavlinkcamera>

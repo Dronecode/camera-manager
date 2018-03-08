@@ -83,13 +83,43 @@ CameraParameters::~CameraParameters()
 {
 }
 
-bool CameraParameters::setParameterSupported(std::string key, std::string value)
+bool CameraParameters::setParameterValuesSupported(std::string param, std::string value)
 {
-    if (key.size() > CAM_PARAM_ID_LEN || value.size() > CAM_PARAM_VALUE_LEN)
+    if (param.size() > CAM_PARAM_ID_LEN || value.size() > CAM_PARAM_VALUE_LEN)
         return false;
 
-    paramValuesSupported[key] = value;
+    paramValuesSupported[param] = value;
     return true;
+}
+
+bool CameraParameters::setParameterIdType(std::string param, int paramId, int paramType)
+{
+    // TODO :: Check if the param is not already declared
+    // TODO :: Check the paramid doesnt clash with others
+    paramIdType[param] = std::make_pair(paramId, paramType);
+    return true;
+}
+
+int CameraParameters::getParameterID(std::string param)
+{
+    int ret = -1;
+    std::map<std::string, std::pair<int, int>>::iterator it = paramIdType.find(param);
+    if (it != paramIdType.end()) {
+        ret = it->second.first;
+    } else
+        ret = -1;
+    return ret;
+}
+
+int CameraParameters::getParameterType(std::string param)
+{
+    int ret = -1;
+    std::map<std::string, std::pair<int, int>>::iterator it = paramIdType.find(param);
+    if (it != paramIdType.end()) {
+        ret = it->second.second;
+    } else
+        ret = -1;
+    return ret;
 }
 
 bool CameraParameters::setParameter(std::string key, std::string value)
@@ -136,28 +166,6 @@ std::string CameraParameters::getParameter(std::string key)
         return std::string();
     else
         return paramValue[key];
-}
-
-int CameraParameters::getParameterID(std::string param)
-{
-    int ret = -1;
-    std::map<std::string, std::pair<int, int>>::iterator it = paramIdType.find(param);
-    if (it != paramIdType.end()) {
-        ret = it->second.first;
-    } else
-        ret = -1;
-    return ret;
-}
-
-int CameraParameters::getParameterType(std::string param)
-{
-    int ret = -1;
-    std::map<std::string, std::pair<int, int>>::iterator it = paramIdType.find(param);
-    if (it != paramIdType.end()) {
-        ret = it->second.second;
-    } else
-        ret = -1;
-    return ret;
 }
 
 void CameraParameters::initParamIdType()

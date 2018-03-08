@@ -84,6 +84,15 @@ std::vector<uint8_t> CameraDeviceV4l2::read()
     return std::vector<uint8_t>();
 }
 
+int CameraDeviceV4l2::setParam(CameraParameters &camParam, std::string param,
+                               const char *param_value, size_t value_size, int param_type)
+
+{
+    int ret = 0;
+    // TODO::Add handler for this function
+    return ret;
+}
+
 std::string CameraDeviceV4l2::getDeviceId()
 {
     return mDeviceId;
