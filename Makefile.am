@@ -13,7 +13,7 @@ GCC_COLORS ?= 'yes'
 export GCC_COLORS
 
 BUILT_SOURCES =
-samples_deps =
+test_deps =
 
 clean-local:
 	rm -rf $(top_builddir)/include/mavlink
@@ -200,20 +200,20 @@ csd_LDADD = $(GLIB_LIBS) $(GST_LIBS) $(GZB_LIBS)
 CLEANFILES += csd.service
 
 #Samples
-EXTRA_PROGRAMS = samples/camera-sample-custom
+EXTRA_PROGRAMS = test/test-custom-stream
 
-samples_camera_sample_custom_LDADD = ${csd_LDADD}
+test_test_custom_stream_LDADD = ${csd_LDADD}
 
-samples_camera_sample_custom_SOURCES = \
+test_test_custom_stream_SOURCES = \
 	$(BASE_FILES) \
 	src/main.cpp \
-	samples/stream_builder_custom.h \
-	samples/stream_builder_custom.cpp \
-	samples/stream_custom.cpp \
-	samples/stream_custom.h
+	test/stream_builder_custom.h \
+	test/stream_builder_custom.cpp \
+	test/stream_custom.cpp \
+	test/stream_custom.h
 
 if ENABLE_AVAHI
-EXTRA_PROGRAMS += samples/camera-sample-client
+EXTRA_PROGRAMS += test/test-rtsp-udp-stream-discovery
 BASE_FILES += \
 	src/avahi_publisher.cpp \
 	src/avahi_publisher.h
@@ -222,8 +222,8 @@ AM_CXXFLAGS += ${AVAHI_CFLAGS}
 AM_CXXFLAGS += ${AVAHI_CFLAGS}
 csd_LDADD += $(AVAHI_LIBS)
 
-samples_camera_sample_client_SOURCES = \
-	samples/main_sample_client.cpp \
+test_test_rtsp_udp_stream_discovery_SOURCES = \
+	test/test_rtsp_udp_stream_discovery.cpp \
 	src/log.cpp \
 	src/log.h \
 	src/glib_mainloop.cpp \
@@ -231,25 +231,25 @@ samples_camera_sample_client_SOURCES = \
 	src/mainloop.cpp \
 	src/mainloop.h
 
-samples_camera_sample_client_LDADD = $(GLIB_LIBS) $(AVAHI_LIBS)
+test_test_rtsp_udp_stream_discovery_LDADD = $(GLIB_LIBS) $(AVAHI_LIBS)
 endif
 
-EXTRA_PROGRAMS += samples/camera-params-client
+if ENABLE_MAVLINK
 
-samples_camera_params_client_SOURCES = \
+EXTRA_PROGRAMS += test/test-camera-parameters
+
+test_test_camera_parameters_SOURCES = \
         src/CameraParameters.cpp \
         src/CameraParameters.h \
-        samples/main_sample_camparams_client.cpp \
+        test/test_camera_parameters.cpp \
         src/log.cpp \
         src/log.h \
         src/util.c \
         src/util.h
 
-samples_camera_params_client_LDADD = $(GLIB_LIBS)
+test_test_camera_parameters_LDADD = $(GLIB_LIBS)
 
-if ENABLE_MAVLINK
-
-EXTRA_PROGRAMS += samples/camera-sample-mavlink-client
+EXTRA_PROGRAMS += test/test-mavlink-protocol
 
 BUILT_SOURCES += include/mavlink/ardupilotmega/mavlink.h
 include/mavlink/ardupilotmega/mavlink.h: modules/mavlink/pymavlink/tools/mavgen.py modules/mavlink/message_definitions/v1.0/ardupilotmega.xml
@@ -267,8 +267,8 @@ BASE_FILES += \
 	src/mavlink_server.cpp \
 	src/mavlink_server.h
 
-samples_camera_sample_mavlink_client_SOURCES = \
-        samples/main_sample_mavlink_client.cpp \
+test_test_mavlink_protocol_SOURCES = \
+        test/test_mavlink_protocol.cpp \
         src/log.cpp \
         src/log.h \
         src/glib_mainloop.cpp \
@@ -282,12 +282,12 @@ samples_camera_sample_mavlink_client_SOURCES = \
         src/util.c \
         src/util.h
 
-samples_camera_sample_mavlink_client_LDADD = $(GLIB_LIBS)
+test_test_mavlink_protocol_LDADD = $(GLIB_LIBS)
 if ENABLE_AVAHI
-samples_camera_sample_mavlink_client_LDADD += $(AVAHI_LIBS)
+test_test_mavlink_protocol_LDADD += $(AVAHI_LIBS)
 endif
 
-samples_deps = samples_camera_sample_mavlink_client_LDADD
+test_deps = test_test_mavlink_protocol_LDADD
 endif
 
 if ENABLE_GAZEBO
@@ -300,8 +300,8 @@ BASE_FILES += \
 	src/CameraDeviceGazebo.cpp
 endif
 
-.PHONY: samples
-samples: $(samples_deps)
+.PHONY: test
+test: $(test_deps)
 	$(MAKE) $(EXTRA_PROGRAMS)
 
 # ------------------------------------------------------------------------------
