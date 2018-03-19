@@ -26,7 +26,7 @@ int v4l2_ioctl(int fd, int request, void *arg);
 int v4l2_list_devices(std::vector<std::string> &devList);
 int v4l2_open(const char *devicepath);
 int v4l2_close(int fd);
-int v4l2_query_cap(int fd);
+int v4l2_query_cap(int fd, struct v4l2_capability &vcap);
 int v4l2_query_control(int fd);
 int v4l2_query_framesizes(int fd);
 int v4l2_get_control(int fd, int ctrl_id);

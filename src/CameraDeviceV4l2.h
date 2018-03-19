@@ -57,6 +57,10 @@ public:
 
 private:
     std::string mDeviceId;
+    std::string mCardName;
+    std::string mDriverName;
+    uint32_t mVersion;
     int mMode;
+    int initInfo();
     int set_control(int ctrl_id, int value);
 };

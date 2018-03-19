@@ -24,8 +24,14 @@
 
 CameraDeviceV4l2::CameraDeviceV4l2(std::string device)
     : mDeviceId(device)
+    , mCardName("v4l2-card")
+    , mDriverName("v4l2-drv")
     , mMode(-1)
 {
+    log_info("%s Node: %s", __func__, mDeviceId.c_str());
+    int ret = initInfo();
+    if (ret)
+        log_error("Error in reading camera info");
 }
 
 CameraDeviceV4l2::~CameraDeviceV4l2()
@@ -98,18 +104,50 @@ std::string CameraDeviceV4l2::getDeviceId()
     return mDeviceId;
 }
 
+int CameraDeviceV4l2::initInfo()
+{
+    int ret = 0;
+    struct v4l2_capability vCap;
+    int camFd = v4l2_open(mDeviceId.c_str());
+    if (camFd < 0) {
+        log_error("Error in opening camera device");
+        return -1;
+    }
+
+    ret = v4l2_query_cap(camFd, vCap);
+    if (ret) {
+        log_error("Error in Query Capability : Error:%d", errno);
+    } else {
+        mCardName = std::string(reinterpret_cast<char *>(vCap.card));
+        mDriverName = std::string(reinterpret_cast<char *>(vCap.driver));
+    }
+
+    mVersion = vCap.version;
+
+    log_info("card = %s driver = %s", mCardName.c_str(), mDriverName.c_str());
+    log_info("version = %d", mVersion);
+
+    v4l2_close(camFd);
+
+    // TODO:: Info not available from v4l2 IOCTLs can be read from xml file
+
+    return ret;
+}
+
 int CameraDeviceV4l2::getInfo(struct CameraInfo &camInfo)
 {
-    strcpy((char *)camInfo.vendorName, "Intel");
-    strcpy((char *)camInfo.modelName, "RealSense R200");
-    camInfo.firmware_version = 1;
+    strncpy((char *)camInfo.vendorName, mCardName.c_str(), sizeof(camInfo.vendorName));
+    camInfo.vendorName[sizeof(camInfo.vendorName) - 1] = 0;
+    strncpy((char *)camInfo.modelName, mDriverName.c_str(), sizeof(camInfo.modelName));
+    camInfo.modelName[sizeof(camInfo.modelName) - 1] = 0;
+    camInfo.firmware_version = mVersion;
     camInfo.focal_length = 0;
     camInfo.sensor_size_h = 0;
     camInfo.sensor_size_v = 0;
     camInfo.resolution_h = 0;
     camInfo.resolution_v = 0;
     camInfo.lens_id = 0;
-    camInfo.flags = ~0u;
+    camInfo.flags = ~0u; // TODO :: Replace with flags
     camInfo.cam_definition_version = 1;
     return 0;
 }

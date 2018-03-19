@@ -68,6 +68,15 @@ public:
         PARAM_TYPE_REAL64
     };
 
+    enum camera_cap_flags {
+        CAMERA_CAP_CAPTURE_VIDEO = 1,
+        CAMERA_CAP_CAPTURE_IMAGE = 2,
+        CAMERA_CAP_HAS_MODES = 4,
+        CAMERA_CAP_CAN_CAPTURE_IMAGE_IN_VIDEO_MODE = 8,
+        CAMERA_CAP_CAN_CAPTURE_VIDEO_IN_IMAGE_MODE = 16,
+        CAMERA_CAP_HAS_IMAGE_SURVEY_MODE = 32
+    };
+
     // List of the params
     static const char CAMERA_MODE[];
     static const char BRIGHTNESS[];
