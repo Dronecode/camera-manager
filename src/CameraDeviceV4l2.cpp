@@ -42,31 +42,7 @@ int CameraDeviceV4l2::init(CameraParameters &camParam)
 {
     // TODO::Query supported parameters
     // TODO::Set default parameters set
-    mMode = CameraParameters::ID_CAMERA_MODE_VIDEO;
-    camParam.setParameter(CameraParameters::CAMERA_MODE,
-                          (uint32_t)CameraParameters::ID_CAMERA_MODE_VIDEO);
-    camParam.setParameter(CameraParameters::BRIGHTNESS, (uint32_t)56);
-    camParam.setParameter(CameraParameters::CONTRAST, (uint32_t)32);
-    camParam.setParameter(CameraParameters::SATURATION, (uint32_t)128);
-    camParam.setParameter(CameraParameters::HUE, (int32_t)0);
-    camParam.setParameter(CameraParameters::WHITE_BALANCE_MODE,
-                          (uint32_t)CameraParameters::ID_WHITE_BALANCE_AUTO);
-    camParam.setParameter(CameraParameters::GAMMA, (uint32_t)220);
-    camParam.setParameter(CameraParameters::GAIN, (uint32_t)32);
-    camParam.setParameter(CameraParameters::POWER_LINE_FREQ_MODE, (uint32_t)0);
-    camParam.setParameter(CameraParameters::WHITE_BALANCE_TEMPERATURE, (uint32_t)6500);
-    camParam.setParameter(CameraParameters::SHARPNESS, (uint32_t)0);
-    camParam.setParameter(CameraParameters::BACKLIGHT_COMPENSATION, (uint32_t)1);
-    camParam.setParameter(CameraParameters::EXPOSURE_MODE, (uint32_t)3);
-    camParam.setParameter(CameraParameters::EXPOSURE_ABSOLUTE, (uint32_t)1);
-    camParam.setParameter(CameraParameters::VIDEO_SIZE,
-                          (uint32_t)CameraParameters::ID_VIDEO_SIZE_640x480x30);
-
-    // dummy values
-    camParam.setParameter(CameraParameters::IMAGE_SIZE, CameraParameters::ID_IMAGE_SIZE_3264x2448);
-    camParam.setParameter(CameraParameters::IMAGE_FORMAT, CameraParameters::ID_IMAGE_FORMAT_JPEG);
-    camParam.setParameter(CameraParameters::PIXEL_FORMAT,
-                          CameraParameters::ID_PIXEL_FORMAT_YUV420P);
+    initParams(camParam);
     return 0;
 }
 
@@ -95,7 +71,80 @@ int CameraDeviceV4l2::setParam(CameraParameters &camParam, std::string param,
 
 {
     int ret = 0;
-    // TODO::Add handler for this function
+    int cid = 0;
+    CameraParameters::cam_param_union_t u;
+    memcpy(&u.param_float, param_value, sizeof(float));
+    int paramId = camParam.getParameterID(param);
+    log_info("Parameter: %s Value: %d", param.c_str(), u.param_int32);
+    switch (paramId) {
+    case CameraParameters::PARAM_ID_BRIGHTNESS:
+        cid = V4L2_CID_BRIGHTNESS;
+        break;
+    case CameraParameters::PARAM_ID_CONTRAST:
+        cid = V4L2_CID_CONTRAST;
+        break;
+    case CameraParameters::PARAM_ID_SATURATION:
+        cid = V4L2_CID_SATURATION;
+        break;
+    case CameraParameters::PARAM_ID_WHITE_BALANCE_MODE:
+        cid = V4L2_CID_AUTO_WHITE_BALANCE;
+        break;
+
+    case CameraParameters::PARAM_ID_GAIN:
+        cid = V4L2_CID_GAIN;
+        break;
+
+    case CameraParameters::PARAM_ID_HUE:
+        cid = V4L2_CID_HUE;
+        break;
+
+    case CameraParameters::PARAM_ID_GAMMA:
+        cid = V4L2_CID_GAMMA;
+        break;
+
+    case CameraParameters::PARAM_ID_POWER_LINE_FREQ_MODE:
+        cid = V4L2_CID_POWER_LINE_FREQUENCY;
+        break;
+
+    case CameraParameters::PARAM_ID_WHITE_BALANCE_TEMPERATURE:
+        cid = V4L2_CID_WHITE_BALANCE_TEMPERATURE;
+        break;
+
+    case CameraParameters::PARAM_ID_SHARPNESS:
+        cid = V4L2_CID_SHARPNESS;
+        break;
+
+    case CameraParameters::PARAM_ID_BACKLIGHT_COMPENSATION:
+        cid = V4L2_CID_BACKLIGHT_COMPENSATION;
+        break;
+
+    case CameraParameters::PARAM_ID_EXPOSURE_MODE:
+        cid = V4L2_CID_EXPOSURE_AUTO;
+        break;
+
+    case CameraParameters::PARAM_ID_EXPOSURE_ABSOLUTE:
+        cid = V4L2_CID_EXPOSURE_ABSOLUTE;
+        break;
+
+    case CameraParameters::PARAM_ID_EXPOSURE_AUTO_PRIORITY:
+        cid = V4L2_CID_EXPOSURE_AUTO_PRIORITY;
+        break;
+
+    default:
+        log_error("Unknown Parameter : %s Id:%d", param.c_str(), paramId);
+        break;
+    }
+
+    if (cid) {
+        if (param_type == CameraParameters::PARAM_TYPE_INT32)
+            ret = set_control(cid, u.param_int32);
+        else
+            log_error("Unhandled Parameter Type");
+    }
+
+    if (!ret)
+        camParam.setParameter(param, u.param_int32);
+
     return ret;
 }
 
@@ -125,7 +174,7 @@ int CameraDeviceV4l2::initInfo()
     mVersion = vCap.version;
 
     log_info("card = %s driver = %s", mCardName.c_str(), mDriverName.c_str());
-    log_info("version = %d", mVersion);
+    log_debug("Kernel version = %d", mVersion);
 
     v4l2_close(camFd);
 
@@ -240,75 +289,189 @@ int CameraDeviceV4l2::resetParams(CameraParameters &camParam)
     return ret;
 }
 
-int CameraDeviceV4l2::setBrightness(uint32_t value)
+CameraParameters::param_type CameraDeviceV4l2::getParamType(v4l2_ctrl_type type)
 {
-    return set_control(V4L2_CID_BRIGHTNESS, value);
+    CameraParameters::param_type ret;
+    switch (type) {
+    case V4L2_CTRL_TYPE_INTEGER:
+    case V4L2_CTRL_TYPE_BOOLEAN:
+    case V4L2_CTRL_TYPE_MENU:
+        ret = CameraParameters::PARAM_TYPE_INT32;
+        break;
+    case V4L2_CTRL_TYPE_INTEGER64:
+        ret = CameraParameters::PARAM_TYPE_INT64;
+        break;
+    case V4L2_CTRL_TYPE_U8:
+        ret = CameraParameters::PARAM_TYPE_UINT8;
+        break;
+    case V4L2_CTRL_TYPE_U16:
+        ret = CameraParameters::PARAM_TYPE_UINT16;
+        break;
+    case V4L2_CTRL_TYPE_U32:
+        ret = CameraParameters::PARAM_TYPE_UINT32;
+        break;
+    case V4L2_CTRL_TYPE_BUTTON:
+    case V4L2_CTRL_TYPE_CTRL_CLASS:
+    case V4L2_CTRL_TYPE_STRING:
+    case V4L2_CTRL_TYPE_BITMASK:
+    case V4L2_CTRL_TYPE_INTEGER_MENU:
+    default:
+        ret = CameraParameters::PARAM_TYPE_UINT32;
+        break;
+    }
+
+    return ret;
 }
 
-int CameraDeviceV4l2::setContrast(uint32_t value)
+int CameraDeviceV4l2::declareParams(CameraParameters &camParam)
 {
-    return set_control(V4L2_CID_CONTRAST, value);
+    int ret = 0;
+
+    camParam.setParameterIdType(CameraParameters::CAMERA_MODE,
+                                CameraParameters::PARAM_ID_CAMERA_MODE,
+                                CameraParameters::PARAM_TYPE_UINT32);
+    camParam.setParameter(CameraParameters::CAMERA_MODE,
+                          (uint32_t)CameraParameters::ID_CAMERA_MODE_VIDEO);
+
+    return ret;
 }
 
-int CameraDeviceV4l2::setSaturation(uint32_t value)
+int CameraDeviceV4l2::declareV4l2Params(CameraParameters &camParam,
+                                        struct v4l2_query_ext_ctrl &qctrl, int32_t value)
 {
-    return set_control(V4L2_CID_SATURATION, value);
+    int ret = 0;
+    log_info("Add Param:%s Type:%d Value:%d", qctrl.name, qctrl.type, value);
+
+    switch (qctrl.id) {
+    case V4L2_CID_BRIGHTNESS:
+        camParam.setParameterIdType(CameraParameters::BRIGHTNESS,
+                                    CameraParameters::PARAM_ID_BRIGHTNESS,
+                                    getParamType((v4l2_ctrl_type)qctrl.type));
+        camParam.setParameter(CameraParameters::BRIGHTNESS, (int32_t)value);
+        break;
+    case V4L2_CID_CONTRAST:
+        camParam.setParameterIdType(CameraParameters::CONTRAST, CameraParameters::PARAM_ID_CONTRAST,
+                                    getParamType((v4l2_ctrl_type)qctrl.type));
+        camParam.setParameter(CameraParameters::CONTRAST, (int32_t)value);
+        break;
+    case V4L2_CID_SATURATION:
+        camParam.setParameterIdType(CameraParameters::SATURATION,
+                                    CameraParameters::PARAM_ID_SATURATION,
+                                    getParamType((v4l2_ctrl_type)qctrl.type));
+        camParam.setParameter(CameraParameters::SATURATION, (int32_t)value);
+        break;
+
+    case V4L2_CID_AUTO_WHITE_BALANCE:
+        camParam.setParameterIdType(CameraParameters::WHITE_BALANCE_MODE,
+                                    CameraParameters::PARAM_ID_WHITE_BALANCE_MODE,
+                                    getParamType((v4l2_ctrl_type)qctrl.type));
+        camParam.setParameter(CameraParameters::WHITE_BALANCE_MODE, (int32_t)value);
+        break;
+
+    case V4L2_CID_GAIN:
+        camParam.setParameterIdType(CameraParameters::GAIN, CameraParameters::PARAM_ID_GAIN,
+                                    getParamType((v4l2_ctrl_type)qctrl.type));
+        camParam.setParameter(CameraParameters::GAIN, (int32_t)value);
+        break;
+
+    case V4L2_CID_HUE:
+        camParam.setParameterIdType(CameraParameters::HUE, CameraParameters::PARAM_ID_HUE,
+                                    getParamType((v4l2_ctrl_type)qctrl.type));
+        camParam.setParameter(CameraParameters::HUE, (int32_t)value);
+        break;
+
+    case V4L2_CID_GAMMA:
+        camParam.setParameterIdType(CameraParameters::GAMMA, CameraParameters::PARAM_ID_GAMMA,
+                                    getParamType((v4l2_ctrl_type)qctrl.type));
+        camParam.setParameter(CameraParameters::GAMMA, (int32_t)value);
+        break;
+
+    case V4L2_CID_POWER_LINE_FREQUENCY:
+        camParam.setParameterIdType(CameraParameters::POWER_LINE_FREQ_MODE,
+                                    CameraParameters::PARAM_ID_POWER_LINE_FREQ_MODE,
+                                    getParamType((v4l2_ctrl_type)qctrl.type));
+        camParam.setParameter(CameraParameters::POWER_LINE_FREQ_MODE, (int32_t)value);
+        break;
+
+    case V4L2_CID_WHITE_BALANCE_TEMPERATURE:
+        camParam.setParameterIdType(CameraParameters::WHITE_BALANCE_TEMPERATURE,
+                                    CameraParameters::PARAM_ID_WHITE_BALANCE_TEMPERATURE,
+                                    getParamType((v4l2_ctrl_type)qctrl.type));
+        camParam.setParameter(CameraParameters::WHITE_BALANCE_TEMPERATURE, (int32_t)value);
+        break;
+
+    case V4L2_CID_SHARPNESS:
+        camParam.setParameterIdType(CameraParameters::SHARPNESS,
+                                    CameraParameters::PARAM_ID_SHARPNESS,
+                                    getParamType((v4l2_ctrl_type)qctrl.type));
+        camParam.setParameter(CameraParameters::SHARPNESS, (int32_t)value);
+        break;
+
+    case V4L2_CID_BACKLIGHT_COMPENSATION:
+        camParam.setParameterIdType(CameraParameters::BACKLIGHT_COMPENSATION,
+                                    CameraParameters::PARAM_ID_BACKLIGHT_COMPENSATION,
+                                    getParamType((v4l2_ctrl_type)qctrl.type));
+        camParam.setParameter(CameraParameters::BACKLIGHT_COMPENSATION, (int32_t)value);
+        break;
+
+    case V4L2_CID_EXPOSURE_AUTO:
+        camParam.setParameterIdType(CameraParameters::EXPOSURE_MODE,
+                                    CameraParameters::PARAM_ID_EXPOSURE_MODE,
+                                    getParamType((v4l2_ctrl_type)qctrl.type));
+        camParam.setParameter(CameraParameters::EXPOSURE_MODE, (int32_t)value);
+        break;
+
+    case V4L2_CID_EXPOSURE_ABSOLUTE:
+        camParam.setParameterIdType(CameraParameters::EXPOSURE_ABSOLUTE,
+                                    CameraParameters::PARAM_ID_EXPOSURE_ABSOLUTE,
+                                    getParamType((v4l2_ctrl_type)qctrl.type));
+        camParam.setParameter(CameraParameters::EXPOSURE_ABSOLUTE, (int32_t)value);
+        break;
+
+    case V4L2_CID_EXPOSURE_AUTO_PRIORITY:
+        camParam.setParameterIdType(CameraParameters::EXPOSURE_AUTO_PRIORITY,
+                                    CameraParameters::PARAM_ID_EXPOSURE_AUTO_PRIORITY,
+                                    getParamType((v4l2_ctrl_type)qctrl.type));
+        camParam.setParameter(CameraParameters::EXPOSURE_AUTO_PRIORITY, (int32_t)value);
+        break;
+
+    default:
+        log_error("Unknown V4L2 Control Parameter ");
+        ret = -1;
+        break;
+    }
+
+    return ret;
 }
 
-int CameraDeviceV4l2::setWhiteBalanceMode(uint32_t value)
+int CameraDeviceV4l2::initParams(CameraParameters &camParam)
 {
-    // TODO :: Translate to v4l2 enum value from exported values
-    return set_control(V4L2_CID_AUTO_WHITE_BALANCE, value);
-}
+    int ret = 0;
+    int32_t value;
+    int camFd = v4l2_open(mDeviceId.c_str());
 
-int CameraDeviceV4l2::setGamma(uint32_t value)
-{
-    return set_control(V4L2_CID_GAMMA, value);
-}
+    const unsigned next_fl = V4L2_CTRL_FLAG_NEXT_CTRL | V4L2_CTRL_FLAG_NEXT_COMPOUND;
+    struct v4l2_query_ext_ctrl qctrl = {0};
+    struct v4l2_control ctrl = {0};
 
-int CameraDeviceV4l2::setGain(uint32_t value)
-{
-    return set_control(V4L2_CID_GAIN, value);
-}
+    qctrl.id = next_fl;
+    while (v4l2_ioctl(camFd, VIDIOC_QUERYCTRL, &qctrl) == 0) {
+        ctrl.id = qctrl.id;
+        if (v4l2_ioctl(camFd, VIDIOC_G_CTRL, &ctrl) == 0)
+            value = ctrl.value;
+        else
+            value = qctrl.default_value;
+        ret = declareV4l2Params(camParam, qctrl, value);
+        if (ret)
+            log_error("Error in declaring v4l2 param :%s", qctrl.name);
+        qctrl.id |= next_fl;
+    }
 
-int CameraDeviceV4l2::setPowerLineFrequency(uint32_t value)
-{
-    return set_control(V4L2_CID_POWER_LINE_FREQUENCY, value);
-}
+    v4l2_close(camFd);
 
-int CameraDeviceV4l2::setWhiteBalanceTemperature(uint32_t value)
-{
-    return set_control(V4L2_CID_WHITE_BALANCE_TEMPERATURE, value);
-}
+    ret = declareParams(camParam);
 
-int CameraDeviceV4l2::setSharpness(uint32_t value)
-{
-    return set_control(V4L2_CID_SHARPNESS, value);
-}
-
-int CameraDeviceV4l2::setBacklightCompensation(uint32_t value)
-{
-    return set_control(V4L2_CID_BACKLIGHT_COMPENSATION, value);
-}
-
-int CameraDeviceV4l2::setExposureMode(uint32_t value)
-{
-    return set_control(V4L2_CID_EXPOSURE_AUTO, value);
-}
-
-int CameraDeviceV4l2::setExposureAbsolute(uint32_t value)
-{
-    return set_control(V4L2_CID_EXPOSURE_ABSOLUTE, value);
-}
-
-int CameraDeviceV4l2::setSceneMode(uint32_t value)
-{
-    return 0;
-}
-
-int CameraDeviceV4l2::setHue(int32_t value)
-{
-    return set_control(V4L2_CID_HUE, value);
+    return ret;
 }
 
 int CameraDeviceV4l2::set_control(int ctrl_id, int value)

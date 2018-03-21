@@ -16,6 +16,7 @@
  * limitations under the License.
  */
 #pragma once
+#include <linux/videodev2.h>
 #include <string>
 
 #include "CameraDevice.h"
@@ -39,20 +40,6 @@ public:
     int setPixelFormat(uint32_t format);
     int setMode(uint32_t mode);
     int getMode();
-    int setBrightness(uint32_t value);
-    int setContrast(uint32_t value);
-    int setSaturation(uint32_t value);
-    int setWhiteBalanceMode(uint32_t value);
-    int setGamma(uint32_t value);
-    int setGain(uint32_t value);
-    int setPowerLineFrequency(uint32_t value);
-    int setWhiteBalanceTemperature(uint32_t value);
-    int setSharpness(uint32_t value);
-    int setBacklightCompensation(uint32_t value);
-    int setExposureMode(uint32_t value);
-    int setExposureAbsolute(uint32_t value);
-    int setSceneMode(uint32_t value);
-    int setHue(int32_t value);
     int resetParams(CameraParameters &camParam);
 
 private:
@@ -63,4 +50,9 @@ private:
     int mMode;
     int initInfo();
     int set_control(int ctrl_id, int value);
+    CameraParameters::param_type getParamType(v4l2_ctrl_type type);
+    int declareParams(CameraParameters &camParam);
+    int declareV4l2Params(CameraParameters &camParam, struct v4l2_query_ext_ctrl &qctrl,
+                          int32_t value);
+    int initParams(CameraParameters &camParam);
 };

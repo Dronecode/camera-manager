@@ -91,10 +91,6 @@ private:
     std::function<void(int result, int seq_num)> mImgCapCB;
     std::string mImgPath;
     void initStorageInfo(struct StorageInfo &storeInfo);
-    int setParam(std::string param_id, float param_value);
-    int setParam(std::string param_id, int32_t param_value);
-    int setParam(std::string param_id, uint32_t param_value);
-    int setParam(std::string param_id, uint8_t param_value);
     int setVideoFrameFormat(uint32_t param_value);
     int setVideoSize(uint32_t param_value);
     int setImageFormat(uint32_t param_value);

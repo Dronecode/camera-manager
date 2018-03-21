@@ -37,6 +37,7 @@ const char CameraParameters::SHARPNESS[] = "sharpness";
 const char CameraParameters::BACKLIGHT_COMPENSATION[] = "backlight";
 const char CameraParameters::EXPOSURE_MODE[] = "exp-mode";
 const char CameraParameters::EXPOSURE_ABSOLUTE[] = "exp-absolute";
+const char CameraParameters::EXPOSURE_AUTO_PRIORITY[] = "exp-priority";
 const char CameraParameters::IMAGE_SIZE[] = "image-size";
 const char CameraParameters::IMAGE_FORMAT[] = "image-format";
 const char CameraParameters::PIXEL_FORMAT[] = "pixel-format";
@@ -76,7 +77,7 @@ const char CameraParameters::WHITE_BALANCE_SHADE[] = "shade";
 
 CameraParameters::CameraParameters()
 {
-    initParamIdType();
+    // initParamIdType();
 }
 
 CameraParameters::~CameraParameters()
