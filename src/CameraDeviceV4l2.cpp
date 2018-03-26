@@ -226,99 +226,43 @@ int CameraDeviceV4l2::getMode()
     return mMode;
 }
 
-int CameraDeviceV4l2::resetParams(CameraParameters &camParam)
+int CameraDeviceV4l2::initParams(CameraParameters &camParam)
 {
     int ret = 0;
-    struct v4l2_queryctrl queryctrl;
+    int32_t value;
+    int camFd = v4l2_open(mDeviceId.c_str());
 
-    int fd = v4l2_open(mDeviceId.c_str());
+    const unsigned next_fl = V4L2_CTRL_FLAG_NEXT_CTRL | V4L2_CTRL_FLAG_NEXT_COMPOUND;
+    struct v4l2_queryctrl qctrl = {0};
+    struct v4l2_control ctrl = {0};
 
-    if (fd == -1) {
-        log_debug("Error in opening camera device in resetParams()");
-        ret = 1;
-        return ret;
+    qctrl.id = next_fl;
+    while (v4l2_ioctl(camFd, VIDIOC_QUERYCTRL, &qctrl) == 0) {
+        ctrl.id = qctrl.id;
+        if (v4l2_ioctl(camFd, VIDIOC_G_CTRL, &ctrl) == 0)
+            value = ctrl.value;
+        else
+            value = qctrl.default_value;
+        ret = declareV4l2Params(camParam, qctrl, value);
+        if (ret)
+            log_error("Error in declaring v4l2 param :%s", qctrl.name);
+        qctrl.id |= next_fl;
     }
 
-    memset(&queryctrl, 0, sizeof(queryctrl));
+    v4l2_close(camFd);
 
-    for (queryctrl.id = V4L2_CID_BASE; queryctrl.id < V4L2_CID_LASTP1; queryctrl.id++) {
-        if (0 == ioctl(fd, VIDIOC_QUERYCTRL, &queryctrl)) {
-            if (queryctrl.flags & V4L2_CTRL_FLAG_DISABLED)
-                continue;
-        }
-        ret = v4l2_set_control(fd, queryctrl.id, queryctrl.default_value);
-        //    log_debug("return value for:%s : %d : %d",queryctrl.name,queryctrl.id,ret);
+    ret = declareParams(camParam);
 
-        switch (queryctrl.id) {
-        case V4L2_CID_BRIGHTNESS:
-            camParam.setParameter(CameraParameters::BRIGHTNESS, (uint32_t)queryctrl.default_value);
-            break;
-        case V4L2_CID_CONTRAST:
-            camParam.setParameter(CameraParameters::CONTRAST, (uint32_t)queryctrl.default_value);
-            break;
-        case V4L2_CID_WHITE_BALANCE_TEMPERATURE:
-            camParam.setParameter(CameraParameters::WHITE_BALANCE_TEMPERATURE,
-                                  (uint32_t)queryctrl.default_value);
-            break;
-        case V4L2_CID_SATURATION:
-            camParam.setParameter(CameraParameters::SATURATION, (uint32_t)queryctrl.default_value);
-            break;
-        case V4L2_CID_HUE:
-            camParam.setParameter(CameraParameters::HUE, (int32_t)queryctrl.default_value);
-            break;
-        case V4L2_CID_EXPOSURE:
-            camParam.setParameter(CameraParameters::EXPOSURE_ABSOLUTE,
-                                  (uint32_t)queryctrl.default_value);
-            break;
-        case V4L2_CID_GAIN:
-            camParam.setParameter(CameraParameters::GAIN, (uint32_t)queryctrl.default_value);
-            break;
-        case V4L2_CID_POWER_LINE_FREQUENCY:
-            camParam.setParameter(CameraParameters::POWER_LINE_FREQ_MODE,
-                                  (uint32_t)queryctrl.default_value);
-            break;
-        case V4L2_CID_SHARPNESS:
-            camParam.setParameter(CameraParameters::SHARPNESS, (uint32_t)queryctrl.default_value);
-            break;
-            //     case V4L2_CID_AUTOGAIN:
-            //     case V4L2_CID_HFLIP:
-            //     case V4L2_CID_VFLIP:
-        }
-    }
-    //    log_debug("Reset Done!");
     return ret;
 }
 
-CameraParameters::param_type CameraDeviceV4l2::getParamType(v4l2_ctrl_type type)
+int CameraDeviceV4l2::resetParams(CameraParameters &camParam)
 {
-    CameraParameters::param_type ret;
-    switch (type) {
-    case V4L2_CTRL_TYPE_INTEGER:
-    case V4L2_CTRL_TYPE_BOOLEAN:
-    case V4L2_CTRL_TYPE_MENU:
-        ret = CameraParameters::PARAM_TYPE_INT32;
-        break;
-    case V4L2_CTRL_TYPE_INTEGER64:
-        ret = CameraParameters::PARAM_TYPE_INT64;
-        break;
-    case V4L2_CTRL_TYPE_U8:
-        ret = CameraParameters::PARAM_TYPE_UINT8;
-        break;
-    case V4L2_CTRL_TYPE_U16:
-        ret = CameraParameters::PARAM_TYPE_UINT16;
-        break;
-    case V4L2_CTRL_TYPE_U32:
-        ret = CameraParameters::PARAM_TYPE_UINT32;
-        break;
-    case V4L2_CTRL_TYPE_BUTTON:
-    case V4L2_CTRL_TYPE_CTRL_CLASS:
-    case V4L2_CTRL_TYPE_STRING:
-    case V4L2_CTRL_TYPE_BITMASK:
-    case V4L2_CTRL_TYPE_INTEGER_MENU:
-    default:
-        ret = CameraParameters::PARAM_TYPE_UINT32;
-        break;
-    }
+    log_info("%s", __func__);
+
+    int ret = 0;
+
+    ret = resetV4l2Params(camParam);
 
     return ret;
 }
@@ -336,8 +280,8 @@ int CameraDeviceV4l2::declareParams(CameraParameters &camParam)
     return ret;
 }
 
-int CameraDeviceV4l2::declareV4l2Params(CameraParameters &camParam,
-                                        struct v4l2_query_ext_ctrl &qctrl, int32_t value)
+int CameraDeviceV4l2::declareV4l2Params(CameraParameters &camParam, struct v4l2_queryctrl &qctrl,
+                                        int32_t value)
 {
     int ret = 0;
     log_info("Add Param:%s Type:%d Value:%d", qctrl.name, qctrl.type, value);
@@ -421,6 +365,12 @@ int CameraDeviceV4l2::declareV4l2Params(CameraParameters &camParam,
         camParam.setParameter(CameraParameters::EXPOSURE_MODE, (int32_t)value);
         break;
 
+    case V4L2_CID_EXPOSURE:
+        camParam.setParameterIdType(CameraParameters::EXPOSURE, CameraParameters::PARAM_ID_EXPOSURE,
+                                    getParamType((v4l2_ctrl_type)qctrl.type));
+        camParam.setParameter(CameraParameters::EXPOSURE, (int32_t)value);
+        break;
+
     case V4L2_CID_EXPOSURE_ABSOLUTE:
         camParam.setParameterIdType(CameraParameters::EXPOSURE_ABSOLUTE,
                                     CameraParameters::PARAM_ID_EXPOSURE_ABSOLUTE,
@@ -444,32 +394,153 @@ int CameraDeviceV4l2::declareV4l2Params(CameraParameters &camParam,
     return ret;
 }
 
-int CameraDeviceV4l2::initParams(CameraParameters &camParam)
+int CameraDeviceV4l2::resetV4l2Params(CameraParameters &camParam)
 {
     int ret = 0;
-    int32_t value;
+    int status = -1;
+    int32_t value = 0;
+    std::string param;
+
     int camFd = v4l2_open(mDeviceId.c_str());
 
     const unsigned next_fl = V4L2_CTRL_FLAG_NEXT_CTRL | V4L2_CTRL_FLAG_NEXT_COMPOUND;
-    struct v4l2_query_ext_ctrl qctrl = {0};
-    struct v4l2_control ctrl = {0};
+    struct v4l2_queryctrl qctrl = {0};
 
     qctrl.id = next_fl;
     while (v4l2_ioctl(camFd, VIDIOC_QUERYCTRL, &qctrl) == 0) {
-        ctrl.id = qctrl.id;
-        if (v4l2_ioctl(camFd, VIDIOC_G_CTRL, &ctrl) == 0)
-            value = ctrl.value;
-        else
-            value = qctrl.default_value;
-        ret = declareV4l2Params(camParam, qctrl, value);
-        if (ret)
-            log_error("Error in declaring v4l2 param :%s", qctrl.name);
+        if (qctrl.flags & V4L2_CTRL_FLAG_DISABLED) {
+            log_warning("V4L2 Control %s ID:%d disabled", qctrl.name, qctrl.id);
+            qctrl.id |= next_fl;
+            continue;
+        }
+
+        param = getParamName(qctrl.id);
+        if (param.empty()) {
+            qctrl.id |= next_fl;
+            continue;
+        }
+
+        value = (int32_t)qctrl.default_value;
+        log_info("resetV4l2Params Id:%d Value:%d", qctrl.id, value);
+        ret = v4l2_set_control(camFd, qctrl.id, value);
+        if (!ret) {
+            if (camParam.setParameter(param, (int32_t)value))
+                status = 0;
+            else
+                log_error("Error in saving v4l2 param :%s", param.c_str());
+        } else
+            log_error("Error in setting %s to default", qctrl.name);
+
         qctrl.id |= next_fl;
     }
 
     v4l2_close(camFd);
 
-    ret = declareParams(camParam);
+    return status;
+}
+
+std::string CameraDeviceV4l2::getParamName(int cid)
+{
+    std::string param = {};
+
+    switch (cid) {
+    case V4L2_CID_BRIGHTNESS:
+        param = CameraParameters::BRIGHTNESS;
+        break;
+
+    case V4L2_CID_CONTRAST:
+        param = CameraParameters::CONTRAST;
+        break;
+    case V4L2_CID_SATURATION:
+        param = CameraParameters::SATURATION;
+        break;
+
+    case V4L2_CID_AUTO_WHITE_BALANCE:
+        param = CameraParameters::WHITE_BALANCE_MODE;
+        break;
+
+    case V4L2_CID_GAIN:
+        param = CameraParameters::GAIN;
+        break;
+
+    case V4L2_CID_HUE:
+        param = CameraParameters::HUE;
+        break;
+
+    case V4L2_CID_GAMMA:
+        param = CameraParameters::GAMMA;
+        break;
+
+    case V4L2_CID_POWER_LINE_FREQUENCY:
+        param = CameraParameters::POWER_LINE_FREQ_MODE;
+        break;
+
+    case V4L2_CID_WHITE_BALANCE_TEMPERATURE:
+        param = CameraParameters::WHITE_BALANCE_TEMPERATURE;
+        break;
+
+    case V4L2_CID_SHARPNESS:
+        param = CameraParameters::SHARPNESS;
+        break;
+
+    case V4L2_CID_BACKLIGHT_COMPENSATION:
+        param = CameraParameters::BACKLIGHT_COMPENSATION;
+        break;
+
+    case V4L2_CID_EXPOSURE_AUTO:
+        param = CameraParameters::EXPOSURE_MODE;
+        break;
+
+    case V4L2_CID_EXPOSURE:
+        param = CameraParameters::EXPOSURE_ABSOLUTE;
+        break;
+
+    case V4L2_CID_EXPOSURE_ABSOLUTE:
+        param = CameraParameters::EXPOSURE_ABSOLUTE;
+        break;
+
+    case V4L2_CID_EXPOSURE_AUTO_PRIORITY:
+        param = CameraParameters::EXPOSURE_AUTO_PRIORITY;
+        break;
+
+    default:
+        log_error("Unknown V4L2 Control Parameter ");
+        break;
+    }
+
+    return param;
+}
+
+CameraParameters::param_type CameraDeviceV4l2::getParamType(v4l2_ctrl_type type)
+{
+    CameraParameters::param_type ret;
+    switch (type) {
+    case V4L2_CTRL_TYPE_INTEGER:
+    case V4L2_CTRL_TYPE_BOOLEAN:
+    case V4L2_CTRL_TYPE_MENU:
+        ret = CameraParameters::PARAM_TYPE_INT32;
+        break;
+    case V4L2_CTRL_TYPE_INTEGER64:
+        ret = CameraParameters::PARAM_TYPE_INT64;
+        break;
+    case V4L2_CTRL_TYPE_U8:
+        ret = CameraParameters::PARAM_TYPE_UINT8;
+        break;
+    case V4L2_CTRL_TYPE_U16:
+        ret = CameraParameters::PARAM_TYPE_UINT16;
+        break;
+    case V4L2_CTRL_TYPE_U32:
+        ret = CameraParameters::PARAM_TYPE_UINT32;
+        break;
+    case V4L2_CTRL_TYPE_BUTTON:
+    case V4L2_CTRL_TYPE_CTRL_CLASS:
+    case V4L2_CTRL_TYPE_STRING:
+    case V4L2_CTRL_TYPE_BITMASK:
+    case V4L2_CTRL_TYPE_INTEGER_MENU:
+    default:
+        ret = CameraParameters::PARAM_TYPE_UINT32;
+        break;
+    }
 
     return ret;
 }

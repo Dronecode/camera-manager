@@ -36,6 +36,7 @@ const char CameraParameters::WHITE_BALANCE_TEMPERATURE[] = "wb-temp";
 const char CameraParameters::SHARPNESS[] = "sharpness";
 const char CameraParameters::BACKLIGHT_COMPENSATION[] = "backlight";
 const char CameraParameters::EXPOSURE_MODE[] = "exp-mode";
+const char CameraParameters::EXPOSURE[] = "exposure";
 const char CameraParameters::EXPOSURE_ABSOLUTE[] = "exp-absolute";
 const char CameraParameters::EXPOSURE_AUTO_PRIORITY[] = "exp-priority";
 const char CameraParameters::IMAGE_SIZE[] = "image-size";

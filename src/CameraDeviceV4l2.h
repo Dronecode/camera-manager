@@ -49,10 +49,11 @@ private:
     uint32_t mVersion;
     int mMode;
     int initInfo();
-    int set_control(int ctrl_id, int value);
-    CameraParameters::param_type getParamType(v4l2_ctrl_type type);
-    int declareParams(CameraParameters &camParam);
-    int declareV4l2Params(CameraParameters &camParam, struct v4l2_query_ext_ctrl &qctrl,
-                          int32_t value);
     int initParams(CameraParameters &camParam);
+    int declareParams(CameraParameters &camParam);
+    int resetV4l2Params(CameraParameters &camParam);
+    int declareV4l2Params(CameraParameters &camParam, struct v4l2_queryctrl &qctrl, int32_t value);
+    std::string getParamName(int cid);
+    CameraParameters::param_type getParamType(v4l2_ctrl_type type);
+    int set_control(int ctrl_id, int value);
 };

@@ -91,6 +91,7 @@ public:
     static const char SHARPNESS[];
     static const char BACKLIGHT_COMPENSATION[];
     static const char EXPOSURE_MODE[];
+    static const char EXPOSURE[];
     static const char EXPOSURE_ABSOLUTE[];
     static const char EXPOSURE_AUTO_PRIORITY[];
     static const char IMAGE_SIZE[];
@@ -154,6 +155,7 @@ public:
     static const int PARAM_ID_VIDEO_SNAPSHOT = 23;
     static const int PARAM_ID_IMAGE_VIDEOSHOT = 24;
     static const int PARAM_ID_EXPOSURE_AUTO_PRIORITY = 25;
+    static const int PARAM_ID_EXPOSURE = 25;
 
     // ID for image sizes
     static const int ID_IMAGE_SIZE_3264x2448 = 1;
