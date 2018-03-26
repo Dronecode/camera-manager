@@ -155,7 +155,7 @@ public:
     static const int PARAM_ID_VIDEO_SNAPSHOT = 23;
     static const int PARAM_ID_IMAGE_VIDEOSHOT = 24;
     static const int PARAM_ID_EXPOSURE_AUTO_PRIORITY = 25;
-    static const int PARAM_ID_EXPOSURE = 25;
+    static const int PARAM_ID_EXPOSURE = 26;
 
     // ID for image sizes
     static const int ID_IMAGE_SIZE_3264x2448 = 1;

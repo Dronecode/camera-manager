@@ -52,8 +52,10 @@ private:
     int initParams(CameraParameters &camParam);
     int declareParams(CameraParameters &camParam);
     int resetV4l2Params(CameraParameters &camParam);
-    int declareV4l2Params(CameraParameters &camParam, struct v4l2_queryctrl &qctrl, int32_t value);
+    int declareV4l2Params(CameraParameters &camParam);
     std::string getParamName(int cid);
+    int getParamId(int cid);
     CameraParameters::param_type getParamType(v4l2_ctrl_type type);
-    int set_control(int ctrl_id, int value);
+    int getV4l2ControlId(int paramId);
+    int setV4l2Control(int ctrl_id, int value);
 };

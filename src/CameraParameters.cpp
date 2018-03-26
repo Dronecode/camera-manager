@@ -98,6 +98,12 @@ bool CameraParameters::setParameterIdType(std::string param, int paramId, int pa
 {
     // TODO :: Check if the param is not already declared
     // TODO :: Check the paramid doesnt clash with others
+
+    if (param.empty() || paramId < 0 || paramType < 0) {
+        log_error("Invalid Argument");
+        return false;
+    }
+
     paramIdType[param] = std::make_pair(paramId, paramType);
     return true;
 }

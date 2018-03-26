@@ -76,68 +76,11 @@ int CameraDeviceV4l2::setParam(CameraParameters &camParam, std::string param,
     memcpy(&u.param_float, param_value, sizeof(float));
     int paramId = camParam.getParameterID(param);
     log_info("Parameter: %s Value: %d", param.c_str(), u.param_int32);
-    switch (paramId) {
-    case CameraParameters::PARAM_ID_BRIGHTNESS:
-        cid = V4L2_CID_BRIGHTNESS;
-        break;
-    case CameraParameters::PARAM_ID_CONTRAST:
-        cid = V4L2_CID_CONTRAST;
-        break;
-    case CameraParameters::PARAM_ID_SATURATION:
-        cid = V4L2_CID_SATURATION;
-        break;
-    case CameraParameters::PARAM_ID_WHITE_BALANCE_MODE:
-        cid = V4L2_CID_AUTO_WHITE_BALANCE;
-        break;
 
-    case CameraParameters::PARAM_ID_GAIN:
-        cid = V4L2_CID_GAIN;
-        break;
-
-    case CameraParameters::PARAM_ID_HUE:
-        cid = V4L2_CID_HUE;
-        break;
-
-    case CameraParameters::PARAM_ID_GAMMA:
-        cid = V4L2_CID_GAMMA;
-        break;
-
-    case CameraParameters::PARAM_ID_POWER_LINE_FREQ_MODE:
-        cid = V4L2_CID_POWER_LINE_FREQUENCY;
-        break;
-
-    case CameraParameters::PARAM_ID_WHITE_BALANCE_TEMPERATURE:
-        cid = V4L2_CID_WHITE_BALANCE_TEMPERATURE;
-        break;
-
-    case CameraParameters::PARAM_ID_SHARPNESS:
-        cid = V4L2_CID_SHARPNESS;
-        break;
-
-    case CameraParameters::PARAM_ID_BACKLIGHT_COMPENSATION:
-        cid = V4L2_CID_BACKLIGHT_COMPENSATION;
-        break;
-
-    case CameraParameters::PARAM_ID_EXPOSURE_MODE:
-        cid = V4L2_CID_EXPOSURE_AUTO;
-        break;
-
-    case CameraParameters::PARAM_ID_EXPOSURE_ABSOLUTE:
-        cid = V4L2_CID_EXPOSURE_ABSOLUTE;
-        break;
-
-    case CameraParameters::PARAM_ID_EXPOSURE_AUTO_PRIORITY:
-        cid = V4L2_CID_EXPOSURE_AUTO_PRIORITY;
-        break;
-
-    default:
-        log_error("Unknown Parameter : %s Id:%d", param.c_str(), paramId);
-        break;
-    }
-
+    cid = getV4l2ControlId(paramId);
     if (cid) {
         if (param_type == CameraParameters::PARAM_TYPE_INT32)
-            ret = set_control(cid, u.param_int32);
+            ret = setV4l2Control(cid, u.param_int32);
         else
             log_error("Unhandled Parameter Type");
     }
@@ -229,27 +172,10 @@ int CameraDeviceV4l2::getMode()
 int CameraDeviceV4l2::initParams(CameraParameters &camParam)
 {
     int ret = 0;
-    int32_t value;
-    int camFd = v4l2_open(mDeviceId.c_str());
 
-    const unsigned next_fl = V4L2_CTRL_FLAG_NEXT_CTRL | V4L2_CTRL_FLAG_NEXT_COMPOUND;
-    struct v4l2_queryctrl qctrl = {0};
-    struct v4l2_control ctrl = {0};
-
-    qctrl.id = next_fl;
-    while (v4l2_ioctl(camFd, VIDIOC_QUERYCTRL, &qctrl) == 0) {
-        ctrl.id = qctrl.id;
-        if (v4l2_ioctl(camFd, VIDIOC_G_CTRL, &ctrl) == 0)
-            value = ctrl.value;
-        else
-            value = qctrl.default_value;
-        ret = declareV4l2Params(camParam, qctrl, value);
-        if (ret)
-            log_error("Error in declaring v4l2 param :%s", qctrl.name);
-        qctrl.id |= next_fl;
-    }
-
-    v4l2_close(camFd);
+    ret = declareV4l2Params(camParam);
+    if (ret)
+        log_error("Error in declaring v4l2 param");
 
     ret = declareParams(camParam);
 
@@ -280,116 +206,33 @@ int CameraDeviceV4l2::declareParams(CameraParameters &camParam)
     return ret;
 }
 
-int CameraDeviceV4l2::declareV4l2Params(CameraParameters &camParam, struct v4l2_queryctrl &qctrl,
-                                        int32_t value)
+int CameraDeviceV4l2::declareV4l2Params(CameraParameters &camParam)
 {
     int ret = 0;
-    log_info("Add Param:%s Type:%d Value:%d", qctrl.name, qctrl.type, value);
+    int value;
+    int camFd = v4l2_open(mDeviceId.c_str());
 
-    switch (qctrl.id) {
-    case V4L2_CID_BRIGHTNESS:
-        camParam.setParameterIdType(CameraParameters::BRIGHTNESS,
-                                    CameraParameters::PARAM_ID_BRIGHTNESS,
-                                    getParamType((v4l2_ctrl_type)qctrl.type));
-        camParam.setParameter(CameraParameters::BRIGHTNESS, (int32_t)value);
-        break;
-    case V4L2_CID_CONTRAST:
-        camParam.setParameterIdType(CameraParameters::CONTRAST, CameraParameters::PARAM_ID_CONTRAST,
-                                    getParamType((v4l2_ctrl_type)qctrl.type));
-        camParam.setParameter(CameraParameters::CONTRAST, (int32_t)value);
-        break;
-    case V4L2_CID_SATURATION:
-        camParam.setParameterIdType(CameraParameters::SATURATION,
-                                    CameraParameters::PARAM_ID_SATURATION,
-                                    getParamType((v4l2_ctrl_type)qctrl.type));
-        camParam.setParameter(CameraParameters::SATURATION, (int32_t)value);
-        break;
+    const unsigned next_fl = V4L2_CTRL_FLAG_NEXT_CTRL | V4L2_CTRL_FLAG_NEXT_COMPOUND;
+    struct v4l2_queryctrl qctrl = {0};
+    struct v4l2_control ctrl = {0};
 
-    case V4L2_CID_AUTO_WHITE_BALANCE:
-        camParam.setParameterIdType(CameraParameters::WHITE_BALANCE_MODE,
-                                    CameraParameters::PARAM_ID_WHITE_BALANCE_MODE,
-                                    getParamType((v4l2_ctrl_type)qctrl.type));
-        camParam.setParameter(CameraParameters::WHITE_BALANCE_MODE, (int32_t)value);
-        break;
+    qctrl.id = next_fl;
+    while (v4l2_ioctl(camFd, VIDIOC_QUERYCTRL, &qctrl) == 0) {
+        ctrl.id = qctrl.id;
+        if (v4l2_ioctl(camFd, VIDIOC_G_CTRL, &ctrl) == 0)
+            value = ctrl.value;
+        else
+            value = qctrl.default_value;
 
-    case V4L2_CID_GAIN:
-        camParam.setParameterIdType(CameraParameters::GAIN, CameraParameters::PARAM_ID_GAIN,
+        log_info("Add Param:%s Type:%d Value:%d", qctrl.name, qctrl.type, value);
+        camParam.setParameterIdType(getParamName(qctrl.id), getParamId(qctrl.id),
                                     getParamType((v4l2_ctrl_type)qctrl.type));
-        camParam.setParameter(CameraParameters::GAIN, (int32_t)value);
-        break;
+        camParam.setParameter(getParamName(qctrl.id), (int32_t)value);
 
-    case V4L2_CID_HUE:
-        camParam.setParameterIdType(CameraParameters::HUE, CameraParameters::PARAM_ID_HUE,
-                                    getParamType((v4l2_ctrl_type)qctrl.type));
-        camParam.setParameter(CameraParameters::HUE, (int32_t)value);
-        break;
-
-    case V4L2_CID_GAMMA:
-        camParam.setParameterIdType(CameraParameters::GAMMA, CameraParameters::PARAM_ID_GAMMA,
-                                    getParamType((v4l2_ctrl_type)qctrl.type));
-        camParam.setParameter(CameraParameters::GAMMA, (int32_t)value);
-        break;
-
-    case V4L2_CID_POWER_LINE_FREQUENCY:
-        camParam.setParameterIdType(CameraParameters::POWER_LINE_FREQ_MODE,
-                                    CameraParameters::PARAM_ID_POWER_LINE_FREQ_MODE,
-                                    getParamType((v4l2_ctrl_type)qctrl.type));
-        camParam.setParameter(CameraParameters::POWER_LINE_FREQ_MODE, (int32_t)value);
-        break;
-
-    case V4L2_CID_WHITE_BALANCE_TEMPERATURE:
-        camParam.setParameterIdType(CameraParameters::WHITE_BALANCE_TEMPERATURE,
-                                    CameraParameters::PARAM_ID_WHITE_BALANCE_TEMPERATURE,
-                                    getParamType((v4l2_ctrl_type)qctrl.type));
-        camParam.setParameter(CameraParameters::WHITE_BALANCE_TEMPERATURE, (int32_t)value);
-        break;
-
-    case V4L2_CID_SHARPNESS:
-        camParam.setParameterIdType(CameraParameters::SHARPNESS,
-                                    CameraParameters::PARAM_ID_SHARPNESS,
-                                    getParamType((v4l2_ctrl_type)qctrl.type));
-        camParam.setParameter(CameraParameters::SHARPNESS, (int32_t)value);
-        break;
-
-    case V4L2_CID_BACKLIGHT_COMPENSATION:
-        camParam.setParameterIdType(CameraParameters::BACKLIGHT_COMPENSATION,
-                                    CameraParameters::PARAM_ID_BACKLIGHT_COMPENSATION,
-                                    getParamType((v4l2_ctrl_type)qctrl.type));
-        camParam.setParameter(CameraParameters::BACKLIGHT_COMPENSATION, (int32_t)value);
-        break;
-
-    case V4L2_CID_EXPOSURE_AUTO:
-        camParam.setParameterIdType(CameraParameters::EXPOSURE_MODE,
-                                    CameraParameters::PARAM_ID_EXPOSURE_MODE,
-                                    getParamType((v4l2_ctrl_type)qctrl.type));
-        camParam.setParameter(CameraParameters::EXPOSURE_MODE, (int32_t)value);
-        break;
-
-    case V4L2_CID_EXPOSURE:
-        camParam.setParameterIdType(CameraParameters::EXPOSURE, CameraParameters::PARAM_ID_EXPOSURE,
-                                    getParamType((v4l2_ctrl_type)qctrl.type));
-        camParam.setParameter(CameraParameters::EXPOSURE, (int32_t)value);
-        break;
-
-    case V4L2_CID_EXPOSURE_ABSOLUTE:
-        camParam.setParameterIdType(CameraParameters::EXPOSURE_ABSOLUTE,
-                                    CameraParameters::PARAM_ID_EXPOSURE_ABSOLUTE,
-                                    getParamType((v4l2_ctrl_type)qctrl.type));
-        camParam.setParameter(CameraParameters::EXPOSURE_ABSOLUTE, (int32_t)value);
-        break;
-
-    case V4L2_CID_EXPOSURE_AUTO_PRIORITY:
-        camParam.setParameterIdType(CameraParameters::EXPOSURE_AUTO_PRIORITY,
-                                    CameraParameters::PARAM_ID_EXPOSURE_AUTO_PRIORITY,
-                                    getParamType((v4l2_ctrl_type)qctrl.type));
-        camParam.setParameter(CameraParameters::EXPOSURE_AUTO_PRIORITY, (int32_t)value);
-        break;
-
-    default:
-        log_error("Unknown V4L2 Control Parameter ");
-        ret = -1;
-        break;
+        qctrl.id |= next_fl;
     }
+
+    v4l2_close(camFd);
 
     return ret;
 }
@@ -492,7 +335,7 @@ std::string CameraDeviceV4l2::getParamName(int cid)
         break;
 
     case V4L2_CID_EXPOSURE:
-        param = CameraParameters::EXPOSURE_ABSOLUTE;
+        param = CameraParameters::EXPOSURE;
         break;
 
     case V4L2_CID_EXPOSURE_ABSOLUTE:
@@ -509,6 +352,78 @@ std::string CameraDeviceV4l2::getParamName(int cid)
     }
 
     return param;
+}
+
+int CameraDeviceV4l2::getParamId(int cid)
+{
+    int paramId = -1;
+
+    switch (cid) {
+    case V4L2_CID_BRIGHTNESS:
+        paramId = CameraParameters::PARAM_ID_BRIGHTNESS;
+        break;
+
+    case V4L2_CID_CONTRAST:
+        paramId = CameraParameters::PARAM_ID_CONTRAST;
+        break;
+    case V4L2_CID_SATURATION:
+        paramId = CameraParameters::PARAM_ID_SATURATION;
+        break;
+
+    case V4L2_CID_AUTO_WHITE_BALANCE:
+        paramId = CameraParameters::PARAM_ID_WHITE_BALANCE_MODE;
+        break;
+
+    case V4L2_CID_GAIN:
+        paramId = CameraParameters::PARAM_ID_GAIN;
+        break;
+
+    case V4L2_CID_HUE:
+        paramId = CameraParameters::PARAM_ID_HUE;
+        break;
+
+    case V4L2_CID_GAMMA:
+        paramId = CameraParameters::PARAM_ID_GAMMA;
+        break;
+
+    case V4L2_CID_POWER_LINE_FREQUENCY:
+        paramId = CameraParameters::PARAM_ID_POWER_LINE_FREQ_MODE;
+        break;
+
+    case V4L2_CID_WHITE_BALANCE_TEMPERATURE:
+        paramId = CameraParameters::PARAM_ID_WHITE_BALANCE_TEMPERATURE;
+        break;
+
+    case V4L2_CID_SHARPNESS:
+        paramId = CameraParameters::PARAM_ID_SHARPNESS;
+        break;
+
+    case V4L2_CID_BACKLIGHT_COMPENSATION:
+        paramId = CameraParameters::PARAM_ID_BACKLIGHT_COMPENSATION;
+        break;
+
+    case V4L2_CID_EXPOSURE_AUTO:
+        paramId = CameraParameters::PARAM_ID_EXPOSURE_MODE;
+        break;
+
+    case V4L2_CID_EXPOSURE:
+        paramId = CameraParameters::PARAM_ID_EXPOSURE;
+        break;
+
+    case V4L2_CID_EXPOSURE_ABSOLUTE:
+        paramId = CameraParameters::PARAM_ID_EXPOSURE_ABSOLUTE;
+        break;
+
+    case V4L2_CID_EXPOSURE_AUTO_PRIORITY:
+        paramId = CameraParameters::PARAM_ID_EXPOSURE_AUTO_PRIORITY;
+        break;
+
+    default:
+        log_error("Unknown V4L2 Control Parameter ");
+        break;
+    }
+
+    return paramId;
 }
 
 CameraParameters::param_type CameraDeviceV4l2::getParamType(v4l2_ctrl_type type)
@@ -545,7 +460,77 @@ CameraParameters::param_type CameraDeviceV4l2::getParamType(v4l2_ctrl_type type)
     return ret;
 }
 
-int CameraDeviceV4l2::set_control(int ctrl_id, int value)
+int CameraDeviceV4l2::getV4l2ControlId(int paramId)
+{
+    int cid = -1;
+
+    switch (paramId) {
+    case CameraParameters::PARAM_ID_BRIGHTNESS:
+        cid = V4L2_CID_BRIGHTNESS;
+        break;
+    case CameraParameters::PARAM_ID_CONTRAST:
+        cid = V4L2_CID_CONTRAST;
+        break;
+    case CameraParameters::PARAM_ID_SATURATION:
+        cid = V4L2_CID_SATURATION;
+        break;
+    case CameraParameters::PARAM_ID_WHITE_BALANCE_MODE:
+        cid = V4L2_CID_AUTO_WHITE_BALANCE;
+        break;
+
+    case CameraParameters::PARAM_ID_GAIN:
+        cid = V4L2_CID_GAIN;
+        break;
+
+    case CameraParameters::PARAM_ID_HUE:
+        cid = V4L2_CID_HUE;
+        break;
+
+    case CameraParameters::PARAM_ID_GAMMA:
+        cid = V4L2_CID_GAMMA;
+        break;
+
+    case CameraParameters::PARAM_ID_POWER_LINE_FREQ_MODE:
+        cid = V4L2_CID_POWER_LINE_FREQUENCY;
+        break;
+
+    case CameraParameters::PARAM_ID_WHITE_BALANCE_TEMPERATURE:
+        cid = V4L2_CID_WHITE_BALANCE_TEMPERATURE;
+        break;
+
+    case CameraParameters::PARAM_ID_SHARPNESS:
+        cid = V4L2_CID_SHARPNESS;
+        break;
+
+    case CameraParameters::PARAM_ID_BACKLIGHT_COMPENSATION:
+        cid = V4L2_CID_BACKLIGHT_COMPENSATION;
+        break;
+
+    case CameraParameters::PARAM_ID_EXPOSURE_MODE:
+        cid = V4L2_CID_EXPOSURE_AUTO;
+        break;
+
+    case CameraParameters::PARAM_ID_EXPOSURE:
+        cid = V4L2_CID_EXPOSURE;
+        break;
+
+    case CameraParameters::PARAM_ID_EXPOSURE_ABSOLUTE:
+        cid = V4L2_CID_EXPOSURE_ABSOLUTE;
+        break;
+
+    case CameraParameters::PARAM_ID_EXPOSURE_AUTO_PRIORITY:
+        cid = V4L2_CID_EXPOSURE_AUTO_PRIORITY;
+        break;
+
+    default:
+        log_error("Unknown Parameter Id:%d", paramId);
+        break;
+    }
+
+    return cid;
+}
+
+int CameraDeviceV4l2::setV4l2Control(int ctrl_id, int value)
 {
     int fd = v4l2_open(mDeviceId.c_str());
     int ret = v4l2_set_control(fd, ctrl_id, value);
