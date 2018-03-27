@@ -17,25 +17,25 @@
                 </option>
             </options>
         </parameter>
-        <parameter name="brightness" type="uint32" default="128" min="0" max="225" step ="1">
+        <parameter name="brightness" type="int32" default="128" min="0" max="225" step ="1">
             <description>Brightness</description>
         </parameter>
-        <parameter name="contrast" type="uint32" default="32" min="0" max="255" step ="1">
+        <parameter name="contrast" type="int32" default="32" min="0" max="255" step ="1">
             <description>Contrast</description>
         </parameter>
-        <parameter name="saturation" type="uint32" default="32" min="0" max="225" step ="1">
+        <parameter name="saturation" type="int32" default="32" min="0" max="225" step ="1">
             <description>Saturation</description>
         </parameter>
-        <parameter name="gain" type="uint32" default="64" min="0" max="255" step ="1">
+        <parameter name="gain" type="int32" default="64" min="0" max="255" step ="1">
             <description>Gain</description>
         </parameter>
-        <parameter name="sharpness" type="uint32" default="24" min="0" max="255" step ="1">
+        <parameter name="sharpness" type="int32" default="24" min="0" max="255" step ="1">
             <description>Sharpness </description>
         </parameter>
-        <parameter name="backlight" type="uint32" default="0" min="0" max="1" step ="1">
+        <parameter name="backlight" type="int32" default="0" min="0" max="1" step ="1">
             <description>Backlight Compensation</description>
         </parameter>
-        <parameter name="power-mode" type="uint32" default="0">
+        <parameter name="power-mode" type="int32" default="0">
             <description>Power Line Frequency </description>
             <options>
                 <option name="Disabled" value="0" />
@@ -43,7 +43,7 @@
                 <option name="60 Hz" value="2" />
             </options>
         </parameter>
-        <parameter name="wb-mode" type="uint32" default="1">
+        <parameter name="wb-mode" type="int32" default="1">
             <description>White Balance Mode</description>
             <options>
                 <option name="Manual Mode" value="0" />
@@ -54,10 +54,10 @@
                 </option>
             </options>
         </parameter>
-        <parameter name="wb-temp" type="uint32" default="4000" min="0" max="10000" step ="1">
+        <parameter name="wb-temp" type="int32" default="4000" min="0" max="10000" step ="1">
             <description>White Balance Temperature </description>
         </parameter>
-        <parameter name="exp-mode" type="uint32" default="3">
+        <parameter name="exp-mode" type="int32" default="3">
             <description>Exposure Mode</description>
             <options>
                 <option name="Manual Mode" value="1" />
@@ -68,8 +68,15 @@
                 </option>
             </options>
         </parameter>
-        <parameter name="exp-absolute" type="uint32" default="166" min="1" max="10000" step ="1">
+        <parameter name="exp-absolute" type="int32" default="166" min="1" max="10000" step ="1">
             <description>Exposure Absolute</description>
+        </parameter>
+        <parameter name="exp-priority" type="int32" default="1">
+            <description>Exposure Auto Priority</description>
+            <options>
+                <option name="OFF" value="0" />
+                <option name="ON" value="1" />
+            </options>
         </parameter>
     </parameters>
 </mavlinkcamera>

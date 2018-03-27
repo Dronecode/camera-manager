@@ -56,10 +56,6 @@ public:
     virtual int setParam(CameraParameters &camParam, std::string param, const char *param_value,
                          size_t value_size, int param_type)
         = 0;
-    virtual int setParam(std::string param, float param_value) { return -ENOTSUP; }
-    virtual int setParam(std::string param, int32_t param_value) { return -ENOTSUP; }
-    virtual int setParam(std::string param, uint32_t param_value) { return -ENOTSUP; }
-    virtual int setParam(std::string param, uint8_t param_value) { return -ENOTSUP; }
     virtual int setSize(uint32_t width, uint32_t height) { return -ENOTSUP; }
     virtual int getSize(uint32_t &width, uint32_t &height) { return -ENOTSUP; }
     virtual int setPixelFormat(uint32_t format) { return -ENOTSUP; }
@@ -67,18 +63,4 @@ public:
     virtual int setMode(uint32_t mode) { return -ENOTSUP; }
     virtual int getMode() { return -ENOTSUP; };
     virtual std::string getOverlayText() { return {}; };
-    virtual int setBrightness(uint32_t value) { return -ENOTSUP; }
-    virtual int setContrast(uint32_t value) { return -ENOTSUP; }
-    virtual int setSaturation(uint32_t value) { return -ENOTSUP; }
-    virtual int setWhiteBalanceMode(uint32_t value) { return -ENOTSUP; }
-    virtual int setGamma(uint32_t value) { return -ENOTSUP; }
-    virtual int setGain(uint32_t value) { return -ENOTSUP; }
-    virtual int setPowerLineFrequency(uint32_t value) { return -ENOTSUP; }
-    virtual int setWhiteBalanceTemperature(uint32_t value) { return -ENOTSUP; }
-    virtual int setSharpness(uint32_t value) { return -ENOTSUP; }
-    virtual int setBacklightCompensation(uint32_t value) { return -ENOTSUP; }
-    virtual int setExposureMode(uint32_t value) { return -ENOTSUP; }
-    virtual int setExposureAbsolute(uint32_t value) { return -ENOTSUP; }
-    virtual int setSceneMode(uint32_t value) { return -ENOTSUP; }
-    virtual int setHue(int32_t value) { return -ENOTSUP; }
 };

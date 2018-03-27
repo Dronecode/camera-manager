@@ -16,6 +16,7 @@
  * limitations under the License.
  */
 #pragma once
+#include <linux/videodev2.h>
 #include <string>
 
 #include "CameraDevice.h"
@@ -39,24 +40,22 @@ public:
     int setPixelFormat(uint32_t format);
     int setMode(uint32_t mode);
     int getMode();
-    int setBrightness(uint32_t value);
-    int setContrast(uint32_t value);
-    int setSaturation(uint32_t value);
-    int setWhiteBalanceMode(uint32_t value);
-    int setGamma(uint32_t value);
-    int setGain(uint32_t value);
-    int setPowerLineFrequency(uint32_t value);
-    int setWhiteBalanceTemperature(uint32_t value);
-    int setSharpness(uint32_t value);
-    int setBacklightCompensation(uint32_t value);
-    int setExposureMode(uint32_t value);
-    int setExposureAbsolute(uint32_t value);
-    int setSceneMode(uint32_t value);
-    int setHue(int32_t value);
     int resetParams(CameraParameters &camParam);
 
 private:
     std::string mDeviceId;
+    std::string mCardName;
+    std::string mDriverName;
+    uint32_t mVersion;
     int mMode;
-    int set_control(int ctrl_id, int value);
+    int initInfo();
+    int initParams(CameraParameters &camParam);
+    int declareParams(CameraParameters &camParam);
+    int resetV4l2Params(CameraParameters &camParam);
+    int declareV4l2Params(CameraParameters &camParam);
+    std::string getParamName(int cid);
+    int getParamId(int cid);
+    CameraParameters::param_type getParamType(v4l2_ctrl_type type);
+    int getV4l2ControlId(int paramId);
+    int setV4l2Control(int ctrl_id, int value);
 };

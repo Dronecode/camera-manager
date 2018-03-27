@@ -81,13 +81,13 @@ int v4l2_close(int fd)
     return 0;
 }
 
-int v4l2_query_cap(int fd)
+int v4l2_query_cap(int fd, struct v4l2_capability &vcap)
 {
     int ret = -1;
     if (fd < 1)
         return ret;
 
-    struct v4l2_capability vcap;
+    // struct v4l2_capability vcap;
     ret = v4l2_ioctl(fd, VIDIOC_QUERYCAP, &vcap);
     if (ret)
         return ret;
