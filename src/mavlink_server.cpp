@@ -35,7 +35,7 @@ using namespace std::placeholders;
 
 static const float epsilon = std::numeric_limits<float>::epsilon();
 
-MavlinkServer::MavlinkServer(ConfFile &conf, std::vector<std::unique_ptr<Stream>> &streams,
+MavlinkServer::MavlinkServer(const ConfFile &conf, std::vector<std::unique_ptr<Stream>> &streams,
                              RTSPServer &rtsp)
     : _streams(streams)
     , _is_running(false)

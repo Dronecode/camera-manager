@@ -20,7 +20,7 @@
 
 static StreamBuilderAeroBottom stream_builder;
 
-std::vector<Stream *> StreamBuilderAeroBottom::build_streams(ConfFile &conf)
+std::vector<Stream *> StreamBuilderAeroBottom::build_streams(const ConfFile &conf)
 {
     std::vector<Stream *> streams;
 

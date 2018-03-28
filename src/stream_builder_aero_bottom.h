@@ -27,5 +27,5 @@ public:
     }
     ~StreamBuilderAeroBottom() {}
 
-    std::vector<Stream *> build_streams(ConfFile &conf);
+    std::vector<Stream *> build_streams(const ConfFile &conf);
 };

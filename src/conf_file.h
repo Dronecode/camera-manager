@@ -85,7 +85,7 @@ public:
      * @param data A pointer to the struct that will be used to hold the extracted data.
      */
     int extract_options(const char *section_name, const OptionsTable table[], size_t table_len,
-                        void *data);
+                        void *data) const;
 
     /**
      * Extract options set in @a table from section @a iter
@@ -99,7 +99,7 @@ public:
      * @see get_sections()
      */
     int extract_options(struct section_iter *iter, const OptionsTable table[], size_t table_len,
-                        void *data);
+                        void *data) const;
 
     /**
      * Extract option set in @a field from section @a section_name
@@ -110,7 +110,7 @@ public:
      * On success, value holds pointer to null terminated string.
      * Caller must free the memory allocated for value
      */
-    int extract_options(const char *section_name, const char *key, char **value);
+    int extract_options(const char *section_name, const char *key, char **value) const;
 
     /**
      * Get next section name from iterator that matches the shell wildcard @a pattern.
@@ -147,15 +147,15 @@ private:
     struct section *_sections;
 
     int _parse_file(const char *addr, size_t len, const char *filename);
-    struct section *_find_section(const char *section_name, size_t len);
-    struct config *_find_config(struct section *s, const char *key_name, size_t key_len);
+    struct section *_find_section(const char *section_name, size_t len) const;
+    struct config *_find_config(struct section *s, const char *key_name, size_t key_len) const;
 
     struct section *_add_section(const char *addr, size_t len, int line, const char *filename);
     int _add_config(struct section *s, const char *entry, size_t entry_len, const char *filename,
                     int line);
     void _trim(const char **str, size_t *len);
     int _extract_options_from_section(struct section *s, const OptionsTable table[],
-                                      size_t table_len, void *data);
+                                      size_t table_len, void *data) const;
 };
 
 /*

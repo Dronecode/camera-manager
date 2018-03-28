@@ -30,7 +30,7 @@
 #define DEFAULT_SERVICE_PORT 8554
 
 #ifdef ENABLE_MAVLINK
-CameraServer::CameraServer(ConfFile &conf)
+CameraServer::CameraServer(const ConfFile &conf)
     : mavlink_server(conf, streams, rtsp_server)
     , rtsp_server(streams, DEFAULT_SERVICE_PORT)
     , cameraCount(0)
@@ -70,7 +70,7 @@ CameraServer::CameraServer(ConfFile &conf)
     }
 }
 #else
-CameraServer::CameraServer(ConfFile &conf)
+CameraServer::CameraServer(const ConfFile &conf)
     : rtsp_server(streams, DEFAULT_SERVICE_PORT)
     , cameraCount(0)
 {
@@ -117,7 +117,7 @@ void CameraServer::stop()
 }
 
 // prepare the list of cameras in the system
-int CameraServer::detectCamera(ConfFile &conf)
+int CameraServer::detectCamera(const ConfFile &conf)
 {
     int count = 0;
 
@@ -136,7 +136,8 @@ int CameraServer::detectCamera(ConfFile &conf)
 }
 
 #ifdef ENABLE_GAZEBO
-int CameraServer::detect_devices_gazebo(ConfFile &conf, std::vector<CameraComponent *> &camList)
+int CameraServer::detect_devices_gazebo(const ConfFile &conf,
+                                        std::vector<CameraComponent *> &camList) const
 {
     char *uri_addr = 0;
     std::string camTopic = getGazeboCamTopic(conf);
@@ -158,7 +159,8 @@ int CameraServer::detect_devices_gazebo(ConfFile &conf, std::vector<CameraCompon
 }
 #endif
 
-int CameraServer::detect_devices_v4l2(ConfFile &conf, std::vector<CameraComponent *> &camList)
+int CameraServer::detect_devices_v4l2(const ConfFile &conf,
+                                      std::vector<CameraComponent *> &camList) const
 {
     int count = 0;
     char *uri_addr = 0;
@@ -197,7 +199,7 @@ int CameraServer::detect_devices_v4l2(ConfFile &conf, std::vector<CameraComponen
     return count;
 }
 
-std::string CameraServer::getImgCapLocation(ConfFile &conf)
+std::string CameraServer::getImgCapLocation(const ConfFile &conf) const
 {
     // Location must start and end with "/"
     char *imgPath = 0;
@@ -214,7 +216,7 @@ std::string CameraServer::getImgCapLocation(ConfFile &conf)
     return ret;
 }
 
-int CameraServer::getVidCapSettings(ConfFile &conf, VideoSettings &vidSetting)
+int CameraServer::getVidCapSettings(const ConfFile &conf, VideoSettings &vidSetting) const
 {
     int ret = 0;
 
@@ -253,7 +255,7 @@ int CameraServer::getVidCapSettings(ConfFile &conf, VideoSettings &vidSetting)
     return ret;
 }
 
-std::string CameraServer::getVidCapLocation(ConfFile &conf)
+std::string CameraServer::getVidCapLocation(const ConfFile &conf) const
 {
     // Location must start and end with "/"
     char *vidPath = 0;
@@ -270,7 +272,7 @@ std::string CameraServer::getVidCapLocation(ConfFile &conf)
     return ret;
 }
 
-std::string CameraServer::getGazeboCamTopic(ConfFile &conf)
+std::string CameraServer::getGazeboCamTopic(const ConfFile &conf) const
 {
     // Location must start and end with "/"
     char *topic = 0;

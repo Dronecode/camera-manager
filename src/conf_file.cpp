@@ -329,7 +329,7 @@ static void print_filenames(struct section *s)
 }
 
 int ConfFile::_extract_options_from_section(struct section *s, const OptionsTable table[],
-                                            size_t table_len, void *data)
+                                            size_t table_len, void *data) const
 {
     struct config *c;
     int ret;
@@ -360,7 +360,7 @@ int ConfFile::_extract_options_from_section(struct section *s, const OptionsTabl
 }
 
 int ConfFile::extract_options(const char *section_name, const OptionsTable table[],
-                              size_t table_len, void *data)
+                              size_t table_len, void *data) const
 {
     struct section *s;
 
@@ -385,7 +385,7 @@ int ConfFile::extract_options(const char *section_name, const OptionsTable table
 }
 
 int ConfFile::extract_options(struct section_iter *iter, const OptionsTable table[],
-                              size_t table_len, void *data)
+                              size_t table_len, void *data) const
 {
     assert(iter);
     assert(table);
@@ -393,7 +393,7 @@ int ConfFile::extract_options(struct section_iter *iter, const OptionsTable tabl
     return _extract_options_from_section((struct section *)iter->ptr, table, table_len, data);
 }
 
-int ConfFile::extract_options(const char *section_name, const char *key, char **value)
+int ConfFile::extract_options(const char *section_name, const char *key, char **value) const
 {
     assert(section_name);
     assert(key);
@@ -414,7 +414,7 @@ int ConfFile::extract_options(const char *section_name, const char *key, char **
     return ret;
 }
 
-struct config *ConfFile::_find_config(struct section *s, const char *key, size_t key_len)
+struct config *ConfFile::_find_config(struct section *s, const char *key, size_t key_len) const
 {
     struct config *c;
 
@@ -426,7 +426,7 @@ struct config *ConfFile::_find_config(struct section *s, const char *key, size_t
     return nullptr;
 }
 
-struct section *ConfFile::_find_section(const char *section_name, size_t len)
+struct section *ConfFile::_find_section(const char *section_name, size_t len) const
 {
     struct section *s;
 

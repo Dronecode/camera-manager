@@ -27,7 +27,7 @@
 #define DEFAULT_SERVICE_PORT 8554
 #define DEFAULT_SERVICE_TYPE "_rtsp._udp"
 
-StreamManager::StreamManager(ConfFile &conf)
+StreamManager::StreamManager(const ConfFile &conf)
     : is_running(false)
 #ifdef ENABLE_AVAHI
     , avahi_publisher(streams, DEFAULT_SERVICE_PORT, DEFAULT_SERVICE_TYPE)

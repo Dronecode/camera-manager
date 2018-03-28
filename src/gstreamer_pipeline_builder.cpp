@@ -42,7 +42,7 @@ static int parse_stl_string(const char *val, size_t val_len, void *storage, size
     return 0;
 }
 
-void GstreamerPipelineBuilder::apply_configs(ConfFile &conf)
+void GstreamerPipelineBuilder::apply_configs(const ConfFile &conf)
 {
     static const ConfFile::OptionsTable option_table[] = {
         {"encoder", false, parse_stl_string, OPTIONS_TABLE_STRUCT_FIELD(options, encoder)},
