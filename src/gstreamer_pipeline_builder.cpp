@@ -77,7 +77,7 @@ std::string GstreamerPipelineBuilder::create_muxer(std::map<std::string, std::st
     // TODO: support different muxers for different formats
     if (opt.muxer.size() > 0)
         return opt.muxer;
-    return "rtpjpegpay";
+    return "rtph264pay";
 }
 
 std::string GstreamerPipelineBuilder::create_converter(std::map<std::string, std::string> &params)
@@ -85,7 +85,7 @@ std::string GstreamerPipelineBuilder::create_converter(std::map<std::string, std
     // TODO: support different converters for different formats
     if (opt.converter.size() > 0)
         return opt.converter;
-    return "videoconvert";
+    return "autovideoconvert";
 }
 
 std::string GstreamerPipelineBuilder::create_encoder(std::map<std::string, std::string> &params)
@@ -93,7 +93,7 @@ std::string GstreamerPipelineBuilder::create_encoder(std::map<std::string, std::
     // TODO: support different encoders for different formats
     if (opt.encoder.size() > 0)
         return opt.encoder;
-    return "jpegenc";
+    return "x264enc";
 }
 
 std::string GstreamerPipelineBuilder::create_pipeline(std::string source,

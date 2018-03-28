@@ -34,15 +34,15 @@
 # Keys:
 #   Muxer
 #       Muxer used to create the gstreamer pipeline
-#       Default: rtpjpegpay
+#       Default: rtph264pay
 #
 #   Converter
 #       Converter used to create the gstreamer pipeline
-#       Default: videoconvert
+#       Default: autovideoconvert
 #
 #   Encoder
 #       Muxer used to create the gstreamer pipeline
-#       Default: jpegenc
+#       Default: x264enc
 #
 # Section [V4L2]
 #
