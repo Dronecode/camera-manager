@@ -19,11 +19,6 @@
 #       communications.
 #       Default: 42
 #
-#   Component_ID
-#       Component ID of the Camera-Streaming-Daemon to be used in MAVLink
-#       communications.
-#       Default: 100 (MAV_COMP_ID_CAMERA)
-#
 #   Rtsp_Server_Addr
 #       IP address or hostname of the interface where the rtsp server is
 #       running. This is the address that will be used by the client to
