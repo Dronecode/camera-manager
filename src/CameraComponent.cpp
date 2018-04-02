@@ -20,6 +20,7 @@
 #include "CameraComponent.h"
 #include "CameraDeviceV4l2.h"
 #include "ImageCaptureGst.h"
+#include "VideoCaptureGst.h"
 #ifdef ENABLE_MAVLINK
 #include "mavlink_server.h"
 #endif
@@ -35,6 +36,7 @@ CameraComponent::CameraComponent(std::string camdev_name)
     , mCamInfo{}
     , mStoreInfo{}
     , mImgPath("")
+    , mVidPath("")
 {
     log_debug("%s path:%s", __func__, camdev_name.c_str());
     // Create a camera device based on device path
@@ -109,6 +111,12 @@ CameraComponent::~CameraComponent()
         mVidStream->uninit();
     }
 #endif
+
+    if (mVidCap) {
+        mVidCap->stop();
+        mVidCap->uninit();
+        mVidCap.reset();
+    }
 
     // stop the camera device
     mCamDev->stop();
@@ -221,6 +229,69 @@ int CameraComponent::stopImageCapture()
 
     mImgCap.reset();
     return 0;
+}
+
+int CameraComponent::startVideoCapture(int status_freq)
+{
+    int ret = 0;
+
+    if (mVidCap)
+        mVidCap.reset();
+
+    mVidCap = std::make_shared<VideoCaptureGst>(mCamDev);
+    if (!mVidPath.empty())
+        mVidCap->setLocation(mVidPath);
+
+    ret = mVidCap->init();
+    if (!ret) {
+        ret = mVidCap->start();
+        if (ret) {
+            mVidCap->uninit();
+            mVidCap.reset();
+        }
+    }
+
+    return ret;
+}
+
+int CameraComponent::stopVideoCapture()
+{
+    int ret = 0;
+
+    if (!mVidCap)
+        return 0;
+
+    mVidCap->stop();
+    mVidCap->uninit();
+    mVidCap.reset();
+
+    return ret;
+}
+
+/* 0: idle, 1: capture in progress */
+uint8_t CameraComponent::getStatusVideoCapture()
+{
+    uint8_t ret = 0;
+
+    if (!mVidCap)
+        return 0;
+
+    switch (mVidCap->getState()) {
+    case VideoCapture::STATE_ERROR:
+    case VideoCapture::STATE_IDLE:
+    case VideoCapture::STATE_INIT:
+        ret = 0;
+        break;
+    case VideoCapture::STATE_RUN:
+        ret = 1;
+        break;
+    default:
+        ret = 0;
+        break;
+    }
+
+    log_debug("%s Status:%d", __func__, ret);
+    return ret;
 }
 
 void CameraComponent::cbImageCaptured(int result, int seq_num)

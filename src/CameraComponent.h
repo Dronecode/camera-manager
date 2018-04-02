@@ -26,6 +26,7 @@
 #include "CameraDevice.h"
 #include "CameraParameters.h"
 #include "ImageCapture.h"
+#include "VideoCapture.h"
 #include "VideoStream.h"
 #include "log.h"
 
@@ -77,6 +78,9 @@ public:
     virtual int stopImageCapture();
     void cbImageCaptured(int result, int seq_num);
     virtual int setImageLocation(std::string imgPath);
+    virtual int startVideoCapture(int status_freq);
+    virtual int stopVideoCapture();
+    virtual uint8_t getStatusVideoCapture();
     int resetCameraSettings(void);
 
 private:
@@ -87,9 +91,12 @@ private:
     std::string mCamDefURI;                /* Camera Definition URI */
     std::shared_ptr<CameraDevice> mCamDev; /* Camera Device Object */
     std::shared_ptr<ImageCapture> mImgCap; /* Image Capture Object */
-    std::shared_ptr<VideoStream> mVidStream; /* Video Streaming Object*/
     std::function<void(int result, int seq_num)> mImgCapCB;
     std::string mImgPath;
+    std::shared_ptr<VideoCapture> mVidCap; /* Video Capture Object */
+    std::string mVidPath;
+    std::shared_ptr<VideoStream> mVidStream; /* Video Streaming Object*/
+
     void initStorageInfo(struct StorageInfo &storeInfo);
     int setVideoFrameFormat(uint32_t param_value);
     int setVideoSize(uint32_t param_value);
