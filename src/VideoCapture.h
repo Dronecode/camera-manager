@@ -21,6 +21,17 @@
 #include <string>
 #include <thread>
 
+#include "CameraParameters.h"
+
+struct VideoSettings {
+    int width;
+    int height;
+    int frameRate;
+    int bitRate; // in kbps
+    CameraParameters::VIDEO_CODING_FORMAT encoder;
+    CameraParameters::VIDEO_FILE_FORMAT fileFormat;
+};
+
 class VideoCapture {
 public:
     VideoCapture() {}
@@ -38,10 +49,10 @@ public:
     virtual int start() = 0;
     virtual int stop() = 0;
     virtual int getState() = 0;
-    virtual int setResolution(int imgWidth, int imgHeight) = 0;
-    virtual int getResolution(int &imgWidth, int &imgHeight) = 0;
-    virtual int setEncoder(int vidEnc) = 0;
-    virtual int setFormat(int fileFormat) = 0;
+    virtual int setResolution(int vidWidth, int vidHeight) = 0;
+    virtual int getResolution(int &vidWidth, int &vidHeight) = 0;
+    virtual int setEncoder(CameraParameters::VIDEO_CODING_FORMAT vidEnc) = 0;
+    virtual int setFormat(CameraParameters::VIDEO_FILE_FORMAT fileFormat) = 0;
     virtual int setBitRate(int bitRate) = 0;
     virtual int setFrameRate(int frameRate) = 0;
     virtual int setLocation(const std::string vidPath) = 0;

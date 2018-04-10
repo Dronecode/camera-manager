@@ -27,6 +27,7 @@
 class VideoCaptureGst final : public VideoCapture {
 public:
     VideoCaptureGst(std::shared_ptr<CameraDevice> camDev);
+    VideoCaptureGst(std::shared_ptr<CameraDevice> camDev, struct VideoSettings &vidSetting);
     ~VideoCaptureGst();
 
     int init();
@@ -36,10 +37,10 @@ public:
     int getState();
     int setResolution(int imgWidth, int imgHeight);
     int getResolution(int &imgWidth, int &imgHeight);
-    int setEncoder(int vidEnc);
     int setBitRate(int bitRate);
     int setFrameRate(int frameRate);
-    int setFormat(int fileFormat);
+    int setEncoder(CameraParameters::VIDEO_CODING_FORMAT vidEnc);
+    int setFormat(CameraParameters::VIDEO_FILE_FORMAT fileFormat);
     int setLocation(const std::string vidPath);
     std::string getLocation();
 
@@ -59,8 +60,8 @@ private:
     int mHeight;
     int mBitRate;
     int mFrmRate;
-    int mEnc;
-    int mFileFmt;
+    CameraParameters::VIDEO_CODING_FORMAT mEnc;
+    CameraParameters::VIDEO_FILE_FORMAT mFileFmt;
     std::string mFilePath;
     GstElement *mPipeline;
 };

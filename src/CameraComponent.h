@@ -78,6 +78,8 @@ public:
     virtual int stopImageCapture();
     void cbImageCaptured(int result, int seq_num);
     virtual int setImageLocation(std::string imgPath);
+    int setVideoCaptureLocation(std::string vidPath);
+    int setVideoCaptureSettings(VideoSettings &vidSetting);
     virtual int startVideoCapture(int status_freq);
     virtual int stopVideoCapture();
     virtual uint8_t getStatusVideoCapture();
@@ -95,6 +97,7 @@ private:
     std::string mImgPath;
     std::shared_ptr<VideoCapture> mVidCap; /* Video Capture Object */
     std::string mVidPath;
+    std::shared_ptr<VideoSettings> mVidSetting; /* Video Setting Structure */
     std::shared_ptr<VideoStream> mVidStream; /* Video Streaming Object*/
 
     void initStorageInfo(struct StorageInfo &storeInfo);

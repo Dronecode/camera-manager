@@ -231,6 +231,23 @@ int CameraComponent::stopImageCapture()
     return 0;
 }
 
+int CameraComponent::setVideoCaptureLocation(std::string vidPath)
+{
+    mVidPath = vidPath;
+    return 0;
+}
+
+int CameraComponent::setVideoCaptureSettings(VideoSettings &vidSetting)
+{
+    if (mVidSetting)
+        mVidSetting.reset();
+
+    mVidSetting = std::make_shared<VideoSettings>();
+    *mVidSetting = vidSetting;
+
+    return 0;
+}
+
 int CameraComponent::startVideoCapture(int status_freq)
 {
     int ret = 0;
@@ -238,7 +255,12 @@ int CameraComponent::startVideoCapture(int status_freq)
     if (mVidCap)
         mVidCap.reset();
 
-    mVidCap = std::make_shared<VideoCaptureGst>(mCamDev);
+    // check if settings are available
+    if (mVidSetting)
+        mVidCap = std::make_shared<VideoCaptureGst>(mCamDev, *mVidSetting);
+    else
+        mVidCap = std::make_shared<VideoCaptureGst>(mCamDev);
+
     if (!mVidPath.empty())
         mVidCap->setLocation(mVidPath);
 

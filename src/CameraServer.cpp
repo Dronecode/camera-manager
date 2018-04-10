@@ -21,6 +21,7 @@
 #include "CameraComponent.h"
 #include "CameraServer.h"
 #include "log.h"
+#include "util.h"
 #ifdef ENABLE_MAVLINK
 #include "mavlink_server.h"
 #endif
@@ -34,16 +35,34 @@ CameraServer::CameraServer(ConfFile &conf)
     , rtsp_server(streams, DEFAULT_SERVICE_PORT)
     , cameraCount(0)
 {
+    bool isVidCapSetting = false;
+
     cameraCount = detectCamera(conf);
 
     // Read image capture file location
     std::string imgPath = getImgCapLocation(conf);
+
+    // Read video capture settings
+    VideoSettings vidSetting;
+    if (!getVidCapSettings(conf, vidSetting)) {
+        // Send the setting to camera comp
+        isVidCapSetting = true;
+    } else
+        log_info("Video Capture Settings not found, use default");
+
+    std::string vidPath = getVidCapLocation(conf);
 
     std::vector<CameraComponent *>::iterator it;
     for (it = cameraList.begin(); it != cameraList.end(); it++) {
         if (*it) {
             if (mavlink_server.addCameraComponent(*it) == -1)
                 log_error("Error in adding Camera Component");
+
+            if (isVidCapSetting)
+                (*it)->setVideoCaptureSettings(vidSetting);
+
+            if (!vidPath.empty())
+                (*it)->setVideoCaptureLocation(vidPath);
 
             if (!imgPath.empty())
                 (*it)->setImageLocation(imgPath);
@@ -189,6 +208,62 @@ std::string CameraServer::getImgCapLocation(ConfFile &conf)
         free(imgPath);
     } else {
         log_error("Image Capture location not found");
+        ret = {};
+    }
+
+    return ret;
+}
+
+int CameraServer::getVidCapSettings(ConfFile &conf, VideoSettings &vidSetting)
+{
+    int ret = 0;
+
+    struct options {
+        int width;
+        int height;
+        int framerate;
+        int bitrate;
+        int encoder;
+        int format;
+    } opt = {};
+
+    // All the settings must be available else default value for all will be used
+    static const ConfFile::OptionsTable option_table[] = {
+        {"width", true, ConfFile::parse_i, OPTIONS_TABLE_STRUCT_FIELD(options, width)},
+        {"height", true, ConfFile::parse_i, OPTIONS_TABLE_STRUCT_FIELD(options, height)},
+        {"framerate", true, ConfFile::parse_i, OPTIONS_TABLE_STRUCT_FIELD(options, framerate)},
+        {"bitrate", true, ConfFile::parse_i, OPTIONS_TABLE_STRUCT_FIELD(options, bitrate)},
+        {"encoder", true, ConfFile::parse_i, OPTIONS_TABLE_STRUCT_FIELD(options, encoder)},
+        {"format", true, ConfFile::parse_i, OPTIONS_TABLE_STRUCT_FIELD(options, format)},
+    };
+    ret = conf.extract_options("vidcap", option_table, ARRAY_SIZE(option_table), (void *)&opt);
+    if (ret)
+        return ret;
+
+    vidSetting.width = opt.width;
+    vidSetting.height = opt.height;
+    vidSetting.frameRate = opt.framerate;
+    vidSetting.bitRate = opt.bitrate;
+    vidSetting.encoder = static_cast<CameraParameters::VIDEO_CODING_FORMAT>(opt.encoder);
+    vidSetting.fileFormat = static_cast<CameraParameters::VIDEO_FILE_FORMAT>(opt.format);
+    log_info("Video Capture Width=%d Height=%d framerate=%d, bitrate=%dkbps, encoder=%d, format=%d",
+             vidSetting.width, vidSetting.height, vidSetting.frameRate, vidSetting.bitRate,
+             vidSetting.encoder, vidSetting.fileFormat);
+
+    return ret;
+}
+
+std::string CameraServer::getVidCapLocation(ConfFile &conf)
+{
+    // Location must start and end with "/"
+    char *vidPath = 0;
+    const char *key = "location";
+    std::string ret;
+    if (!conf.extract_options("vidcap", key, &vidPath)) {
+        ret = std::string(vidPath);
+        free(vidPath);
+    } else {
+        log_warning("Video Capture location not found, use default");
         ret = {};
     }
 

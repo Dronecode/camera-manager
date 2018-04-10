@@ -23,10 +23,10 @@
 
 #define DEFAULT_WIDTH 640
 #define DEFAULT_HEIGHT 480
-#define DEFAULT_BITRATE 24000
+#define DEFAULT_BITRATE 1000
 #define DEFAULT_FRAMERATE 25
-#define DEFAULT_ENCODER -1
-#define DEFAULT_FILE_FORMAT -1
+#define DEFAULT_ENCODER CameraParameters::VIDEO_CODING_AVC
+#define DEFAULT_FILE_FORMAT CameraParameters::VIDEO_FILE_MP4
 #define DEFAULT_FILE_PATH "/tmp/"
 
 int VideoCaptureGst::vidCount = 0;
@@ -46,10 +46,29 @@ VideoCaptureGst::VideoCaptureGst(std::shared_ptr<CameraDevice> camDev)
     log_info("%s Device:%s", __func__, mCamDev->getDeviceId().c_str());
 }
 
+VideoCaptureGst::VideoCaptureGst(std::shared_ptr<CameraDevice> camDev,
+                                 struct VideoSettings &vidSetting)
+    : mCamDev(camDev)
+    , mState(STATE_IDLE)
+    , mWidth(vidSetting.width)
+    , mHeight(vidSetting.height)
+    , mBitRate(vidSetting.bitRate)
+    , mFrmRate(vidSetting.frameRate)
+    , mEnc(vidSetting.encoder)
+    , mFileFmt(vidSetting.fileFormat)
+    , mFilePath(DEFAULT_FILE_PATH)
+    , mPipeline(nullptr)
+
+{
+    log_info("%s Device:%s with settings", __func__, mCamDev->getDeviceId().c_str());
+}
+
 VideoCaptureGst::~VideoCaptureGst()
 {
-    stop();
-    uninit();
+    if (getState() != STATE_IDLE) {
+        stop();
+        uninit();
+    }
 }
 
 int VideoCaptureGst::init()
@@ -86,6 +105,8 @@ int VideoCaptureGst::start()
         log_error("Invalid State : %d", getState());
         return -1;
     }
+
+    // TODO::Validate video settings
 
     int ret = 0;
     if (mCamDev->isGstV4l2Src()) {
@@ -185,18 +206,6 @@ int VideoCaptureGst::getResolution(int &vidWidth, int &vidHeight)
     return ret;
 }
 
-int VideoCaptureGst::setEncoder(int vidEnc)
-{
-    int ret = 0;
-
-    if (getState() == STATE_RUN)
-        log_warning("Change will not take effect");
-
-    mEnc = vidEnc;
-
-    return ret;
-}
-
 int VideoCaptureGst::setBitRate(int bitRate)
 {
     int ret = 0;
@@ -221,7 +230,19 @@ int VideoCaptureGst::setFrameRate(int frameRate)
     return ret;
 }
 
-int VideoCaptureGst::setFormat(int fileFormat)
+int VideoCaptureGst::setEncoder(CameraParameters::VIDEO_CODING_FORMAT vidEnc)
+{
+    int ret = 0;
+
+    if (getState() == STATE_RUN)
+        log_warning("Change will not take effect");
+
+    mEnc = vidEnc;
+
+    return ret;
+}
+
+int VideoCaptureGst::setFormat(CameraParameters::VIDEO_FILE_FORMAT fileFormat)
 {
     int ret = 0;
 
@@ -250,24 +271,68 @@ std::string VideoCaptureGst::getLocation()
     return mFilePath;
 }
 
-std::string VideoCaptureGst::getGstEncName(int format)
+std::string VideoCaptureGst::getGstEncName(int encFormat)
 {
-    return "x264enc";
+    std::string ret;
+
+    switch (encFormat) {
+    case CameraParameters::VIDEO_CODING_AVC:
+        ret = std::string("x264enc");
+        break;
+    default:
+        ret = {};
+        break;
+    }
+
+    return ret;
 }
 
-std::string VideoCaptureGst::getGstParserName(int format)
+std::string VideoCaptureGst::getGstParserName(int encFormat)
 {
-    return "h264parse";
+    std::string ret;
+
+    switch (encFormat) {
+    case CameraParameters::VIDEO_CODING_AVC:
+        ret = std::string("h264parse");
+        break;
+    default:
+        ret = {};
+        break;
+    }
+
+    return ret;
 }
 
-std::string VideoCaptureGst::getGstMuxerName(int format)
+std::string VideoCaptureGst::getGstMuxerName(int fileFormat)
 {
-    return "mp4mux";
+    std::string ret;
+
+    switch (fileFormat) {
+    case CameraParameters::VIDEO_FILE_MP4:
+        ret = std::string("mp4mux");
+        break;
+    default:
+        ret = {};
+        break;
+    }
+
+    return ret;
 }
 
-std::string VideoCaptureGst::getFileExt(int format)
+std::string VideoCaptureGst::getFileExt(int fileFormat)
 {
-    return "mp4";
+    std::string ret;
+
+    switch (fileFormat) {
+    case CameraParameters::VIDEO_FILE_MP4:
+        ret = std::string("mp4");
+        break;
+    default:
+        ret = {};
+        break;
+    }
+
+    return ret;
 }
 
 std::string VideoCaptureGst::getGstV4l2PipelineName()
@@ -278,7 +343,7 @@ std::string VideoCaptureGst::getGstV4l2PipelineName()
 
     std::string encoder = getGstEncName(mEnc);
     std::string parser = getGstParserName(mEnc);
-    std::string muxer = getGstMuxerName(mEnc);
+    std::string muxer = getGstMuxerName(mFileFmt);
     std::string ext = getFileExt(mFileFmt);
     if (encoder.empty() || parser.empty() || muxer.empty() || ext.empty())
         return {};
