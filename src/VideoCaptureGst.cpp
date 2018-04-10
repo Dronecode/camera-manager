@@ -23,7 +23,7 @@
 
 #define DEFAULT_WIDTH 640
 #define DEFAULT_HEIGHT 480
-#define DEFAULT_BITRATE 1000
+#define DEFAULT_BITRATE 512
 #define DEFAULT_FRAMERATE 25
 #define DEFAULT_ENCODER CameraParameters::VIDEO_CODING_AVC
 #define DEFAULT_FILE_FORMAT CameraParameters::VIDEO_FILE_MP4
@@ -34,10 +34,10 @@ int VideoCaptureGst::vidCount = 0;
 VideoCaptureGst::VideoCaptureGst(std::shared_ptr<CameraDevice> camDev)
     : mCamDev(camDev)
     , mState(STATE_IDLE)
-    , mWidth(DEFAULT_WIDTH)
-    , mHeight(DEFAULT_HEIGHT)
-    , mBitRate(DEFAULT_BITRATE)
-    , mFrmRate(DEFAULT_FRAMERATE)
+    , mWidth(0)
+    , mHeight(0)
+    , mBitRate(0)
+    , mFrmRate(0)
     , mEnc(DEFAULT_ENCODER)
     , mFileFmt(DEFAULT_FILE_FORMAT)
     , mFilePath(DEFAULT_FILE_PATH)
@@ -353,10 +353,21 @@ std::string VideoCaptureGst::getGstV4l2PipelineName()
     if (encoder.empty() || parser.empty() || muxer.empty() || ext.empty())
         return {};
 
-    // TODO:: append the file name with unique number
+    std::stringstream filter;
+    std::stringstream sbr;
     std::stringstream ss;
-    ss << "v4l2src device=" << device << " ! " << encoder << " ! " << parser << " ! " << muxer
-       << " ! "
+
+    filter << "video/x-raw, ";
+    if (mFrmRate > 0)
+        filter << " framerate=" << std::to_string(mFrmRate) << "/1,";
+    if (mWidth > 0 && mHeight > 0)
+        filter << " width=" << std::to_string(mWidth) << ", height=" << std::to_string(mHeight);
+
+    if (mBitRate > 0)
+        sbr << " bitrate=" << std::to_string(mBitRate);
+
+    ss << "v4l2src device=" << device << " ! " << filter.str() << " ! " << encoder << sbr.str()
+       << " ! " << parser << " ! " << muxer << " ! "
        << "filesink location=" << mFilePath + "vid_" << std::to_string(++vidCount) << "." + ext;
 
     return ss.str();
