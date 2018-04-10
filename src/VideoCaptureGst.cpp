@@ -88,7 +88,7 @@ int VideoCaptureGst::uninit()
 {
     log_info("%s::%s", typeid(this).name(), __func__);
 
-    if (getState() != STATE_INIT) {
+    if (getState() != STATE_INIT && getState() != STATE_ERROR) {
         log_error("Invalid State : %d", getState());
         return -1;
     }
@@ -111,7 +111,10 @@ int VideoCaptureGst::start()
     int ret = 0;
     if (mCamDev->isGstV4l2Src()) {
         ret = createV4l2Pipeline();
-        setState(STATE_RUN);
+        if (!ret)
+            setState(STATE_RUN);
+        else
+            setState(STATE_ERROR);
     } else
         ret = -1;
 
@@ -160,8 +163,10 @@ int VideoCaptureGst::setState(int state)
             mState = state;
         break;
     case STATE_ERROR:
-        log_error("In Error State");
+        log_info("In Error State");
         // Free up resources, restart?
+        if (state == STATE_IDLE)
+            mState = state;
         break;
     default:
         break;
@@ -415,6 +420,7 @@ int VideoCaptureGst::createV4l2Pipeline()
     log_info("%s", __func__);
 
     GError *error = nullptr;
+    GstStateChangeReturn result;
 
     std::string pipeline_str = getGstV4l2PipelineName();
     if (pipeline_str.empty()) {
@@ -430,7 +436,21 @@ int VideoCaptureGst::createV4l2Pipeline()
             g_clear_error(&error);
         return 1;
     }
-    gst_element_set_state(mPipeline, GST_STATE_PLAYING);
+    result = gst_element_set_state(mPipeline, GST_STATE_PLAYING);
+    if (result == GST_STATE_CHANGE_FAILURE) {
+        log_error("Error setting PLAY state");
+        gst_object_unref(GST_OBJECT(mPipeline));
+        mPipeline = nullptr;
+        return 1;
+    }
+
+    result = gst_element_get_state(mPipeline, NULL, NULL, GST_CLOCK_TIME_NONE);
+    if (result != GST_STATE_CHANGE_SUCCESS) {
+        log_error("Error going to PLAY state");
+        gst_object_unref(GST_OBJECT(mPipeline));
+        mPipeline = nullptr;
+        return 1;
+    }
 
     GstBus *bus = gst_pipeline_get_bus(GST_PIPELINE(mPipeline));
     gst_bus_add_signal_watch(bus);
