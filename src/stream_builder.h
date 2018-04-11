@@ -20,7 +20,7 @@
 
 class StreamBuilder {
 public:
-    virtual std::vector<Stream *> build_streams(ConfFile &conf) = 0;
+    virtual std::vector<Stream *> build_streams(const ConfFile &conf) = 0;
     virtual ~StreamBuilder();
     static std::vector<StreamBuilder *> &get_builders();
 

@@ -24,7 +24,7 @@
 class GstreamerPipelineBuilder {
 public:
     virtual ~GstreamerPipelineBuilder() {}
-    void apply_configs(ConfFile &conf);
+    void apply_configs(const ConfFile &conf);
     std::string create_caps(std::map<std::string, std::string> &params);
     std::string create_muxer(std::map<std::string, std::string> &params);
     std::string create_converter(std::map<std::string, std::string> &params);

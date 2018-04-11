@@ -30,7 +30,7 @@
 
 static StreamBuilderV4l2 stream_builder;
 
-std::vector<Stream *> StreamBuilderV4l2::build_streams(ConfFile &conf)
+std::vector<Stream *> StreamBuilderV4l2::build_streams(const ConfFile &conf)
 {
     DIR *dir;
     struct dirent *f;

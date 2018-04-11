@@ -34,7 +34,7 @@
 
 class StreamManager {
 public:
-    StreamManager(ConfFile &conf);
+    StreamManager(const ConfFile &conf);
     ~StreamManager();
     void start();
     void stop();

@@ -35,7 +35,8 @@ typedef struct image_callback {
 
 class MavlinkServer {
 public:
-    MavlinkServer(ConfFile &conf, std::vector<std::unique_ptr<Stream>> &streams, RTSPServer &rtsp);
+    MavlinkServer(const ConfFile &conf, std::vector<std::unique_ptr<Stream>> &streams,
+                  RTSPServer &rtsp);
     ~MavlinkServer();
     void start();
     void stop();
