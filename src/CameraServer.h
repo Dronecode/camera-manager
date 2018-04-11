@@ -28,6 +28,8 @@
 #include "stream.h"
 
 #include "CameraComponent.h"
+#include "CameraParameters.h"
+#include "VideoCapture.h"
 #include "log.h"
 
 class CameraServer {
@@ -39,6 +41,8 @@ public:
     int getCameraCount() { return cameraCount; }
 
 private:
+    int getVidCapSettings(ConfFile &conf, VideoSettings &vidSetting);
+    std::string getVidCapLocation(ConfFile &conf);
     std::string getImgCapLocation(ConfFile &conf);
     std::string getGazeboCamTopic(ConfFile &conf);
     int detectCamera(ConfFile &conf);

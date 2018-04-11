@@ -163,7 +163,10 @@ BASE_FILES = \
         src/ImageCaptureGst.cpp \
         src/VideoStream.h \
         src/VideoStreamUdp.h \
-        src/VideoStreamUdp.cpp
+        src/VideoStreamUdp.cpp \
+        src/VideoCapture.h \
+        src/VideoCaptureGst.h \
+        src/VideoCaptureGst.cpp
 
 if ENABLE_REALSENSE
 BASE_FILES += \

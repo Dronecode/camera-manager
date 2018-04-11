@@ -218,6 +218,26 @@ public:
     static const int ID_PIXEL_FORMAT_RGB24 = 5;  // RGB3
     static const int ID_PIXEL_FORMAT_RGB32 = 6;  // RGB4
 
+    typedef enum VIDEO_FILE_FORMAT {
+        VIDEO_FILE_MIN,
+        VIDEO_FILE_MP4, /* Moving Pictures Expert Group 4 */
+        VIDEO_FILE_AVI, /* Audio Video Interleave */
+        VIDEO_FILE_WMV, /* Windows Media Video */
+        VIDEO_FILE_FLV, /* Flash Video Format */
+        VIDEO_FILE_MOV, /* Apple QuickTime Movie */
+        VIDEO_FILE_MAX = 99
+    } VIDEO_FILE_FORMAT;
+
+    typedef enum VIDEO_CODING_FORMAT {
+        VIDEO_CODING_MIN,
+        VIDEO_CODING_H263,  /* H.263 */
+        VIDEO_CODING_MPEG4, /* MPEG-4*/
+        VIDEO_CODING_AVC,   /* H.264/AVC */
+        VIDEO_CODING_MJPEG, /* Motion JPEG */
+        VIDEO_CODING_WMV,   /* Windows Media Video */
+        VIDEO_CODING_MAX = 99
+    } VIDEO_CODING_FORMAT;
+
     // TODO :: Make exhaustive list of parameters and its possible values
 private:
     void initParamIdType();
