@@ -26,19 +26,37 @@
 
 #include "log.h"
 
+#define DEFAULT_IMAGE_FILE_FORMAT CameraParameters::IMAGE_FILE_JPEG
+
 ImageCaptureGst::ImageCaptureGst(std::shared_ptr<CameraDevice> camDev)
     : mCamDev(camDev)
     , mState(STATE_IDLE)
-    , mWidth(640)
-    , mHeight(480)
-    , mImgFormat(CameraParameters::ID_IMAGE_FORMAT_JPEG)
-    , mPixelFormat(0)
-    , mImgPath("/tmp/")
+    , mWidth(0)
+    , mHeight(0)
+    , mFormat(DEFAULT_IMAGE_FILE_FORMAT)
+    , mPath("/tmp/")
     , mResultCB(nullptr)
 {
-    mCamDev->getSize(mWidth, mHeight);
+    log_info("%s Device:%s", __func__, mCamDev->getDeviceId().c_str());
 
-    mCamDev->getPixelFormat(mPixelFormat);
+    mCamDev->getSize(mCamWidth, mCamHeight);
+    mCamDev->getPixelFormat(mCamPixFormat);
+}
+
+ImageCaptureGst::ImageCaptureGst(std::shared_ptr<CameraDevice> camDev,
+                                 struct ImageSettings &imgSetting)
+    : mCamDev(camDev)
+    , mState(STATE_IDLE)
+    , mWidth(imgSetting.width)
+    , mHeight(imgSetting.height)
+    , mFormat(imgSetting.fileFormat)
+    , mPath("/tmp/")
+    , mResultCB(nullptr)
+{
+    log_info("%s Device:%s with settings", __func__, mCamDev->getDeviceId().c_str());
+
+    mCamDev->getSize(mCamWidth, mCamHeight);
+    mCamDev->getPixelFormat(mCamPixFormat);
 }
 
 ImageCaptureGst::~ImageCaptureGst()
@@ -98,9 +116,15 @@ int ImageCaptureGst::setResolution(int imgWidth, int imgHeight)
     return 0;
 }
 
-int ImageCaptureGst::setFormat(int imgFormat)
+int ImageCaptureGst::setFormat(CameraParameters::IMAGE_FILE_FORMAT imgFormat)
 {
-    mImgFormat = imgFormat;
+    if (imgFormat <= CameraParameters::IMAGE_FILE_MIN
+        || imgFormat >= CameraParameters::IMAGE_FILE_MAX) {
+        log_error("Invalid Pixel format");
+        return 1;
+    }
+
+    mFormat = imgFormat;
 
     return 0;
 }
@@ -109,7 +133,7 @@ int ImageCaptureGst::setLocation(const std::string imgPath)
 {
     // TODO::Check if the path is writeable/valid
     log_debug("%s:%s", __func__, imgPath.c_str());
-    mImgPath = imgPath;
+    mPath = imgPath;
 
     return 0;
 }
@@ -159,11 +183,11 @@ int ImageCaptureGst::click(int seq_num)
 std::string ImageCaptureGst::getGstImgEncName(int format)
 {
     switch (format) {
-    case CameraParameters::ID_IMAGE_FORMAT_JPEG:
+    case CameraParameters::IMAGE_FILE_JPEG:
         return "jpegenc";
         break;
-    case CameraParameters::ID_IMAGE_FORMAT_RAW:
-    case CameraParameters::ID_IMAGE_FORMAT_PNG:
+    case CameraParameters::IMAGE_FILE_PNG:
+    case CameraParameters::IMAGE_FILE_RAW:
     default:
         return {};
     }
@@ -183,11 +207,11 @@ std::string ImageCaptureGst::getGstPixFormat(int pixFormat)
 std::string ImageCaptureGst::getImgExt(int format)
 {
     switch (format) {
-    case CameraParameters::ID_IMAGE_FORMAT_JPEG:
+    case CameraParameters::IMAGE_FILE_JPEG:
         return "jpg";
-    case CameraParameters::ID_IMAGE_FORMAT_PNG:
+    case CameraParameters::IMAGE_FILE_PNG:
         return "png";
-    case CameraParameters::ID_IMAGE_FORMAT_RAW:
+    case CameraParameters::IMAGE_FILE_RAW:
     default:
         return "raw";
     }
@@ -199,18 +223,24 @@ std::string ImageCaptureGst::getGstPipelineNameV4l2(int seq_num)
     if (device.empty())
         return {};
 
-    std::string enc = getGstImgEncName(mImgFormat);
+    std::string enc = getGstImgEncName(mFormat);
     if (enc.empty())
         return {};
 
-    std::string ext = getImgExt(mImgFormat);
+    std::string ext = getImgExt(mFormat);
     if (ext.empty())
         return {};
 
+    std::stringstream filter;
+    filter << "video/x-raw, ";
+    if (mWidth > 0 && mHeight > 0) {
+        filter << " width=" << std::to_string(mWidth) << ", height=" << std::to_string(mHeight);
+    }
+
     std::stringstream ss;
     ss << "v4l2src device=" << device + " num-buffers=1"
-       << " ! " << enc << " ! "
-       << "filesink location=" << mImgPath + "img_" << std::to_string(seq_num) << "." + ext;
+       << " ! " << filter.str() << " ! " << enc << " ! "
+       << "filesink location=" << mPath + "img_" << std::to_string(seq_num) << "." + ext;
     log_debug("Gstreamer pipeline: %s", ss.str().c_str());
     return ss.str();
 }
@@ -309,15 +339,15 @@ int ImageCaptureGst::createAppsrcPipeline(int seq_num)
     GstElement *pipeline, *appsrc, *enc, *imagesink;
     GstMessage *msg;
 
-    std::string encname = getGstImgEncName(mImgFormat);
+    std::string encname = getGstImgEncName(mFormat);
     if (encname.empty())
         return {};
 
-    std::string fmt = getGstPixFormat(mPixelFormat);
+    std::string fmt = getGstPixFormat(mCamPixFormat);
     if (fmt.empty())
         return {};
 
-    std::string ext = getImgExt(mImgFormat);
+    std::string ext = getImgExt(mFormat);
     if (ext.empty())
         return {};
 
@@ -326,10 +356,10 @@ int ImageCaptureGst::createAppsrcPipeline(int seq_num)
     appsrc = gst_element_factory_make("appsrc", "source");
     enc = gst_element_factory_make(encname.c_str(), "enc");
     imagesink = gst_element_factory_make("filesink", "imagesink");
-    std::string filepath = mImgPath + "img_" + std::to_string(seq_num) + "." + ext;
+    std::string filepath = mPath + "img_" + std::to_string(seq_num) + "." + ext;
     g_object_set(G_OBJECT(imagesink), "location", filepath.c_str(), NULL);
 
-    log_info("Pipeline Format:RGB, width:%d, Height:%d", mWidth, mHeight);
+    log_info("Pipeline Format:%d, width:%d, Height:%d", mCamPixFormat, mWidth, mHeight);
     log_info("Pipeline File:%s", filepath.c_str());
 
     /* setup */

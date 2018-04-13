@@ -41,9 +41,10 @@ public:
     int getCameraCount() const { return cameraCount; }
 
 private:
+    int getImgCapSettings(const ConfFile &conf, ImageSettings &imgSetting) const;
+    std::string getImgCapLocation(const ConfFile &conf) const;
     int getVidCapSettings(const ConfFile &conf, VideoSettings &vidSetting) const;
     std::string getVidCapLocation(const ConfFile &conf) const;
-    std::string getImgCapLocation(const ConfFile &conf) const;
     std::string getGazeboCamTopic(const ConfFile &conf) const;
     int detectCamera(const ConfFile &conf);
 #ifdef ENABLE_GAZEBO

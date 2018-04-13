@@ -57,7 +57,7 @@ struct StorageInfo {
 };
 
 class CameraDevice;
-class ImageCapture;
+
 class CameraComponent {
 public:
     CameraComponent(std::string);
@@ -77,7 +77,8 @@ public:
     virtual int startImageCapture(int interval, int count, capture_callback_t cb);
     virtual int stopImageCapture();
     void cbImageCaptured(int result, int seq_num);
-    virtual int setImageLocation(std::string imgPath);
+    int setImageCaptureLocation(std::string imgPath);
+    int setImageCaptureSettings(ImageSettings &imgSetting);
     int setVideoCaptureLocation(std::string vidPath);
     int setVideoCaptureSettings(VideoSettings &vidSetting);
     virtual int startVideoCapture(int status_freq);
@@ -95,6 +96,7 @@ private:
     std::shared_ptr<ImageCapture> mImgCap; /* Image Capture Object */
     std::function<void(int result, int seq_num)> mImgCapCB;
     std::string mImgPath;
+    std::shared_ptr<ImageSettings> mImgSetting; /* Image Setting Structure */
     std::shared_ptr<VideoCapture> mVidCap; /* Video Capture Object */
     std::string mVidPath;
     std::shared_ptr<VideoSettings> mVidSetting; /* Video Setting Structure */
@@ -103,8 +105,6 @@ private:
     void initStorageInfo(struct StorageInfo &storeInfo);
     int setVideoFrameFormat(uint32_t param_value);
     int setVideoSize(uint32_t param_value);
-    int setImageFormat(uint32_t param_value);
-    int setImazeSize(uint32_t param_value);
     std::shared_ptr<CameraDevice> create_camera_device(std::string camdev_name);
     std::string toString(const char *buf, size_t buf_size);
 };

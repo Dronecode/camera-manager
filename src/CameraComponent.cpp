@@ -204,6 +204,23 @@ int CameraComponent::getCameraMode()
     return mCamDev->getMode();
 }
 
+int CameraComponent::setImageCaptureLocation(std::string imgPath)
+{
+    mImgPath = imgPath;
+    return 0;
+}
+
+int CameraComponent::setImageCaptureSettings(ImageSettings &imgSetting)
+{
+    if (mImgSetting)
+        mImgSetting.reset();
+
+    mImgSetting = std::make_shared<ImageSettings>();
+    *mImgSetting = imgSetting;
+
+    return 0;
+}
+
 int CameraComponent::startImageCapture(int interval, int count, capture_callback_t cb)
 {
     mImgCapCB = cb;
@@ -214,7 +231,13 @@ int CameraComponent::startImageCapture(int interval, int count, capture_callback
     if (mImgCap)
         mImgCap.reset();
 
-    mImgCap = std::make_shared<ImageCaptureGst>(mCamDev);
+    // check if settings are available
+    if (mImgSetting)
+        mImgCap = std::make_shared<ImageCaptureGst>(mCamDev, *mImgSetting);
+    else
+        mImgCap = std::make_shared<ImageCaptureGst>(mCamDev);
+
+    // mImgCap = std::make_shared<ImageCaptureGst>(mCamDev);
     if (!mImgPath.empty())
         mImgCap->setLocation(mImgPath);
     mImgCap->start(interval, count, std::bind(&CameraComponent::cbImageCaptured, this,
@@ -229,6 +252,14 @@ int CameraComponent::stopImageCapture()
 
     mImgCap.reset();
     return 0;
+}
+
+void CameraComponent::cbImageCaptured(int result, int seq_num)
+{
+    log_debug("%s result:%d sequenc:%d", __func__, result, seq_num);
+    // TODO :: Get the file path of the image and host it via http
+    if (mImgCapCB)
+        mImgCapCB(result, seq_num);
 }
 
 int CameraComponent::setVideoCaptureLocation(std::string vidPath)
@@ -314,30 +345,6 @@ uint8_t CameraComponent::getStatusVideoCapture()
 
     log_debug("%s Status:%d", __func__, ret);
     return ret;
-}
-
-void CameraComponent::cbImageCaptured(int result, int seq_num)
-{
-    log_debug("%s result:%d sequenc:%d", __func__, result, seq_num);
-    // TODO :: Get the file path of the image and host it via http
-    if (mImgCapCB)
-        mImgCapCB(result, seq_num);
-}
-
-int CameraComponent::setImageLocation(std::string imgPath)
-{
-    mImgPath = imgPath;
-    return 0;
-}
-
-int CameraComponent::setImazeSize(uint32_t param_value)
-{
-    return 0;
-}
-
-int CameraComponent::setImageFormat(uint32_t param_value)
-{
-    return 0;
 }
 
 int CameraComponent::setVideoSize(uint32_t param_value)

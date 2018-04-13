@@ -21,7 +21,13 @@
 #include <string>
 #include <thread>
 
-#include "CameraDevice.h"
+#include "CameraParameters.h"
+
+struct ImageSettings {
+    int width;
+    int height;
+    CameraParameters::IMAGE_FILE_FORMAT fileFormat;
+};
 
 class ImageCapture {
 public:
@@ -34,6 +40,6 @@ public:
     virtual int stop() = 0;
     virtual int getState() = 0;
     virtual int setResolution(int imgWidth, int imgHeight) = 0;
-    virtual int setFormat(int imgFormat) = 0;
+    virtual int setFormat(CameraParameters::IMAGE_FILE_FORMAT imgFormat) = 0;
     virtual int setLocation(const std::string imgPath) = 0;
 };
