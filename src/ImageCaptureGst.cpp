@@ -27,6 +27,7 @@
 #include "log.h"
 
 #define DEFAULT_IMAGE_FILE_FORMAT CameraParameters::IMAGE_FILE_JPEG
+#define DEFAULT_FILE_PATH "/tmp/"
 
 ImageCaptureGst::ImageCaptureGst(std::shared_ptr<CameraDevice> camDev)
     : mCamDev(camDev)
@@ -35,7 +36,7 @@ ImageCaptureGst::ImageCaptureGst(std::shared_ptr<CameraDevice> camDev)
     , mHeight(0)
     , mFormat(DEFAULT_IMAGE_FILE_FORMAT)
     , mInterval(0)
-    , mPath("/tmp/")
+    , mPath(DEFAULT_FILE_PATH)
     , mResultCB(nullptr)
 {
     log_info("%s Device:%s", __func__, mCamDev->getDeviceId().c_str());
@@ -52,7 +53,7 @@ ImageCaptureGst::ImageCaptureGst(std::shared_ptr<CameraDevice> camDev,
     , mHeight(imgSetting.height)
     , mFormat(imgSetting.fileFormat)
     , mInterval(0)
-    , mPath("/tmp/")
+    , mPath(DEFAULT_FILE_PATH)
     , mResultCB(nullptr)
 {
     log_info("%s Device:%s with settings", __func__, mCamDev->getDeviceId().c_str());
