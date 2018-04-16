@@ -248,6 +248,7 @@ std::string CameraServer::getImgCapLocation(const ConfFile &conf) const
     std::string ret;
     if (!conf.extract_options("imgcap", key, &imgPath)) {
         ret = std::string(imgPath);
+        log_info("Image Capture location : %s", imgPath);
         free(imgPath);
     } else {
         log_error("Image Capture location not found");
@@ -304,6 +305,7 @@ std::string CameraServer::getVidCapLocation(const ConfFile &conf) const
     std::string ret;
     if (!conf.extract_options("vidcap", key, &vidPath)) {
         ret = std::string(vidPath);
+        log_info("Video Capture location : %s", vidPath);
         free(vidPath);
     } else {
         log_warning("Video Capture location not found, use default");

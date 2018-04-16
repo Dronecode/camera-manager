@@ -234,6 +234,12 @@ void ImageCaptureGst::captureThread(int num)
         if (mResultCB)
             mResultCB(ret, seq_num);
 
+        if (ret) {
+            log_error("Error in Image Capture");
+            setState(STATE_ERROR);
+            continue;
+        }
+
         // Check if the capture is periodic or count(w/wo interval) based
         if (count <= 0) {
             if (mInterval > 0)
@@ -357,6 +363,7 @@ int ImageCaptureGst::createV4l2Pipeline(int seq_num)
     switch (GST_MESSAGE_TYPE(msg)) {
     case GST_MESSAGE_EOS: {
         log_debug("EOS\n");
+        log_info("Image Captured Successfully");
         ret = 0;
         break;
     }
@@ -387,7 +394,6 @@ int ImageCaptureGst::createV4l2Pipeline(int seq_num)
     gst_object_unref(pipeline);
     gst_object_unref(bus);
 
-    log_debug("Image Captured Successfully");
     return ret;
 }
 
