@@ -29,6 +29,8 @@
 #define DEFAULT_IMAGE_FILE_FORMAT CameraParameters::IMAGE_FILE_JPEG
 #define DEFAULT_FILE_PATH "/tmp/"
 
+int ImageCaptureGst::imgCount = 0;
+
 ImageCaptureGst::ImageCaptureGst(std::shared_ptr<CameraDevice> camDev)
     : mCamDev(camDev)
     , mState(STATE_IDLE)
@@ -116,7 +118,7 @@ int ImageCaptureGst::start(int interval, int count, std::function<void(int resul
 
     if (count == 1) {
         // There will be no stop call
-        ret = click(1);
+        ret = click();
         setState(STATE_INIT);
         if (mResultCB)
             mResultCB(ret, 1);
@@ -241,10 +243,11 @@ void ImageCaptureGst::captureThread(int num)
     int count = num;
     int seq_num = 0;
     while (mState == STATE_RUN) {
-        ret = click(seq_num++);
+        ret = click();
         if (getState() != STATE_RUN)
             continue;
 
+        seq_num++;
         if (mResultCB)
             mResultCB(ret, seq_num);
 
@@ -273,15 +276,15 @@ void ImageCaptureGst::captureThread(int num)
     }
 }
 
-int ImageCaptureGst::click(int seq_num)
+int ImageCaptureGst::click()
 {
     log_debug("%s", __func__);
 
     int ret = 0;
     if (mCamDev->isGstV4l2Src())
-        ret = createV4l2Pipeline(seq_num);
+        ret = createV4l2Pipeline();
     else
-        ret = createAppsrcPipeline(seq_num);
+        ret = createAppsrcPipeline();
     return ret;
 }
 
@@ -322,7 +325,7 @@ std::string ImageCaptureGst::getImgExt(int format)
     }
 }
 
-std::string ImageCaptureGst::getGstPipelineNameV4l2(int seq_num)
+std::string ImageCaptureGst::getGstPipelineNameV4l2()
 {
     std::string device = mCamDev->getDeviceId();
     if (device.empty())
@@ -345,12 +348,12 @@ std::string ImageCaptureGst::getGstPipelineNameV4l2(int seq_num)
     std::stringstream ss;
     ss << "v4l2src device=" << device + " num-buffers=1"
        << " ! " << filter.str() << " ! " << enc << " ! "
-       << "filesink location=" << mPath + "img_" << std::to_string(seq_num) << "." + ext;
+       << "filesink location=" << mPath + "img_" << std::to_string(++imgCount) << "." + ext;
     log_debug("Gstreamer pipeline: %s", ss.str().c_str());
     return ss.str();
 }
 
-int ImageCaptureGst::createV4l2Pipeline(int seq_num)
+int ImageCaptureGst::createV4l2Pipeline()
 {
     log_info("%s", __func__);
 
@@ -359,7 +362,7 @@ int ImageCaptureGst::createV4l2Pipeline(int seq_num)
     GstElement *pipeline;
     GstMessage *msg;
     GstBus *bus;
-    std::string pipeline_str = getGstPipelineNameV4l2(seq_num);
+    std::string pipeline_str = getGstPipelineNameV4l2();
     if (pipeline_str.empty()) {
         log_error("Pipeline String error");
         return 1;
@@ -437,7 +440,7 @@ static void cbNeedData(GstElement *appsrc, guint unused_size, ImageCaptureGst *o
     // gst_app_src_end_of_stream (appsrc);
 }
 
-int ImageCaptureGst::createAppsrcPipeline(int seq_num)
+int ImageCaptureGst::createAppsrcPipeline()
 {
     log_info("%s", __func__);
 
@@ -462,7 +465,7 @@ int ImageCaptureGst::createAppsrcPipeline(int seq_num)
     appsrc = gst_element_factory_make("appsrc", "source");
     enc = gst_element_factory_make(encname.c_str(), "enc");
     imagesink = gst_element_factory_make("filesink", "imagesink");
-    std::string filepath = mPath + "img_" + std::to_string(seq_num) + "." + ext;
+    std::string filepath = mPath + "img_" + std::to_string(++imgCount) + "." + ext;
     g_object_set(G_OBJECT(imagesink), "location", filepath.c_str(), NULL);
 
     log_info("Pipeline Format:%d, width:%d, Height:%d", mCamPixFormat, mWidth, mHeight);
