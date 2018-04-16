@@ -373,7 +373,8 @@ int ImageCaptureGst::createV4l2Pipeline(int seq_num)
     }
     gst_element_set_state(pipeline, GST_STATE_PLAYING);
     bus = gst_element_get_bus(pipeline);
-    msg = gst_bus_poll(bus, (GstMessageType)(GST_MESSAGE_EOS | GST_MESSAGE_ERROR), -1);
+    msg = gst_bus_timed_pop_filtered(bus, GST_CLOCK_TIME_NONE,
+                                     (GstMessageType)(GST_MESSAGE_ERROR | GST_MESSAGE_EOS));
     switch (GST_MESSAGE_TYPE(msg)) {
     case GST_MESSAGE_EOS: {
         log_debug("EOS\n");
@@ -403,10 +404,11 @@ int ImageCaptureGst::createV4l2Pipeline(int seq_num)
         break;
     }
 
-    gst_message_unref(msg);
+    if (msg != NULL)
+        gst_message_unref(msg);
+    gst_object_unref(bus);
     gst_element_set_state(pipeline, GST_STATE_NULL);
     gst_object_unref(pipeline);
-    gst_object_unref(bus);
 
     return ret;
 }
@@ -486,7 +488,8 @@ int ImageCaptureGst::createAppsrcPipeline(int seq_num)
     /* add watch for messages */
     GstBus *bus = gst_pipeline_get_bus(GST_PIPELINE(pipeline));
     // gst_bus_add_watch (bus, (GstBusFunc) bus_message, NULL);
-    msg = gst_bus_poll(bus, (GstMessageType)(GST_MESSAGE_EOS | GST_MESSAGE_ERROR), -1);
+    msg = gst_bus_timed_pop_filtered(bus, GST_CLOCK_TIME_NONE,
+                                     (GstMessageType)(GST_MESSAGE_ERROR | GST_MESSAGE_EOS));
     switch (GST_MESSAGE_TYPE(msg)) {
     case GST_MESSAGE_EOS: {
         log_error("EOS\n");
@@ -516,6 +519,9 @@ int ImageCaptureGst::createAppsrcPipeline(int seq_num)
     }
 
     /* clean up */
+    if (msg != NULL)
+        gst_message_unref(msg);
+    gst_object_unref(bus);
     gst_element_set_state(pipeline, GST_STATE_NULL);
     gst_object_unref(GST_OBJECT(pipeline));
 
