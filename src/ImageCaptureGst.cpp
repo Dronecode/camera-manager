@@ -95,6 +95,7 @@ int ImageCaptureGst::uninit()
 
 int ImageCaptureGst::start(int interval, int count, std::function<void(int result, int seq_num)> cb)
 {
+    int ret = 0;
     log_info("%s::%s interval:%d count:%d", typeid(this).name(), __func__, interval, count);
     // Invalid Arguments
     // Either the capture is count based or interval based or count with interval
@@ -112,8 +113,17 @@ int ImageCaptureGst::start(int interval, int count, std::function<void(int resul
     mResultCB = cb;
     mInterval = interval;
     setState(STATE_RUN);
-    // create a thread to capture images
-    mThread = std::thread(&ImageCaptureGst::captureThread, this, count);
+
+    if (count == 1) {
+        // There will be no stop call
+        ret = click(1);
+        setState(STATE_INIT);
+        if (mResultCB)
+            mResultCB(ret, 1);
+    } else {
+        // create a thread to capture images
+        mThread = std::thread(&ImageCaptureGst::captureThread, this, count);
+    }
 
     return 0;
 }
@@ -232,6 +242,9 @@ void ImageCaptureGst::captureThread(int num)
     int seq_num = 0;
     while (mState == STATE_RUN) {
         ret = click(seq_num++);
+        if (getState() != STATE_RUN)
+            continue;
+
         if (mResultCB)
             mResultCB(ret, seq_num);
 

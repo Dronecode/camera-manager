@@ -256,7 +256,7 @@ void CameraComponent::getImageCaptureStatus(uint8_t &status, int &interval)
         break;
     }
 
-    log_debug("%s Status:%d", __func__, status);
+    log_debug("%s Status:%d Interval:%d", __func__, status, interval);
     return;
 }
 
@@ -280,7 +280,6 @@ int CameraComponent::startImageCapture(int interval, int count, capture_callback
     else
         mImgCap = std::make_shared<ImageCaptureGst>(mCamDev);
 
-    // mImgCap = std::make_shared<ImageCaptureGst>(mCamDev);
     if (!mImgPath.empty())
         mImgCap->setLocation(mImgPath);
 
