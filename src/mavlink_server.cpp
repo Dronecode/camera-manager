@@ -335,13 +335,21 @@ void MavlinkServer::_handle_request_camera_capture_status(const struct sockaddr_
 
     mavlink_message_t msg;
     bool success = false;
+    uint32_t time_boot_ms = 0;
+    uint8_t image_status = 0;
+    uint8_t video_status = 0;
+    int image_interval = 0;
+    uint32_t recording_time_ms = 0;
+    int available_capacity = 50; // in MiB
     CameraComponent *tgtComp = getCameraComponent(cmd.target_component);
     if (tgtComp) {
         // TODO:: Fill with appropriate status after query from component
+        tgtComp->getImageCaptureStatus(image_status, image_interval);
+        video_status = tgtComp->getVideoCaptureStatus();
         mavlink_msg_camera_capture_status_pack(
-            _system_id, cmd.target_component, &msg, 0, 0 /*image_status*/,
-            tgtComp->getStatusVideoCapture() /*video_status*/, 0 /*image_interval*/,
-            0 /*recording_time_ms*/, 50 /*available_capacity*/);
+            _system_id, cmd.target_component, &msg, time_boot_ms, image_status, video_status,
+            static_cast<float>(image_interval), recording_time_ms,
+            static_cast<float>(available_capacity));
         if (!_send_mavlink_message(&addr, msg)) {
             log_error("Sending camera setting failed for camera %d.", cmd.target_component);
             return;
@@ -640,8 +648,9 @@ void MavlinkServer::_handle_mavlink_message(const struct sockaddr_in &addr, mavl
             this->_handle_image_start_capture(addr, cmd);
             break;
         case MAV_CMD_IMAGE_STOP_CAPTURE:
-        case MAV_CMD_REQUEST_CAMERA_IMAGE_CAPTURE:
-        case MAV_CMD_DO_TRIGGER_CONTROL:
+            log_debug("MAV_CMD_IMAGE_STOP_CAPTURE");
+            this->_handle_image_stop_capture(addr, cmd);
+            break;
         case MAV_CMD_VIDEO_START_CAPTURE:
             log_debug("MAV_CMD_VIDEO_START_CAPTURE");
             this->_handle_video_start_capture(addr, cmd);
@@ -650,6 +659,8 @@ void MavlinkServer::_handle_mavlink_message(const struct sockaddr_in &addr, mavl
             log_debug("MAV_CMD_VIDEO_STOP_CAPTURE");
             this->_handle_video_stop_capture(addr, cmd);
             break;
+        case MAV_CMD_REQUEST_CAMERA_IMAGE_CAPTURE:
+        case MAV_CMD_DO_TRIGGER_CONTROL:
         case MAV_CMD_VIDEO_START_STREAMING:
         case MAV_CMD_VIDEO_STOP_STREAMING:
         default:

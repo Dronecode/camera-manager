@@ -26,9 +26,14 @@ public:
     ImageCaptureGst(std::shared_ptr<CameraDevice> camDev);
     ImageCaptureGst(std::shared_ptr<CameraDevice> camDev, struct ImageSettings &imgSetting);
     ~ImageCaptureGst();
+
+    int init();
+    int uninit();
     int start(int interval, int count, std::function<void(int result, int seq_num)> cb);
     int stop();
     int getState();
+    int setInterval(int interval);
+    int getInterval();
     int setResolution(int imgWidth, int imgHeight);
     int setFormat(CameraParameters::IMAGE_FILE_FORMAT imgFormat);
     int setLocation(const std::string imgPath);
@@ -37,7 +42,7 @@ public:
 private:
     int setState(int state);
     int click(int seq_num);
-    void captureThread(int num, int interval);
+    void captureThread(int num);
     int createV4l2Pipeline(int seq_num);
     std::string getGstImgEncName(int format);
     std::string getGstPixFormat(int pixFormat);
@@ -49,6 +54,7 @@ private:
     uint32_t mWidth;                             /* Image Width*/
     uint32_t mHeight;                            /* Image Height*/
     CameraParameters::IMAGE_FILE_FORMAT mFormat; /* Image File Format*/
+    uint32_t mInterval;                          /* Image Capture interval */
     std::string mPath;                           /* Image File Destination Path*/
     uint32_t mCamWidth;                          /* Camera Frame Width*/
     uint32_t mCamHeight;                         /* Camera Frame Height*/

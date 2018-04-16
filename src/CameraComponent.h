@@ -74,16 +74,17 @@ public:
     virtual int setCameraMode(uint32_t mode);
     virtual int getCameraMode();
     typedef std::function<void(int result, int seq_num)> capture_callback_t;
+    int setImageCaptureLocation(std::string imgPath);
+    int setImageCaptureSettings(ImageSettings &imgSetting);
+    void getImageCaptureStatus(uint8_t &status, int &interval);
     virtual int startImageCapture(int interval, int count, capture_callback_t cb);
     virtual int stopImageCapture();
     void cbImageCaptured(int result, int seq_num);
-    int setImageCaptureLocation(std::string imgPath);
-    int setImageCaptureSettings(ImageSettings &imgSetting);
     int setVideoCaptureLocation(std::string vidPath);
     int setVideoCaptureSettings(VideoSettings &vidSetting);
     virtual int startVideoCapture(int status_freq);
     virtual int stopVideoCapture();
-    virtual uint8_t getStatusVideoCapture();
+    virtual uint8_t getVideoCaptureStatus();
     int resetCameraSettings(void);
 
 private:

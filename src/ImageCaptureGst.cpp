@@ -34,6 +34,7 @@ ImageCaptureGst::ImageCaptureGst(std::shared_ptr<CameraDevice> camDev)
     , mWidth(0)
     , mHeight(0)
     , mFormat(DEFAULT_IMAGE_FILE_FORMAT)
+    , mInterval(0)
     , mPath("/tmp/")
     , mResultCB(nullptr)
 {
@@ -50,6 +51,7 @@ ImageCaptureGst::ImageCaptureGst(std::shared_ptr<CameraDevice> camDev,
     , mWidth(imgSetting.width)
     , mHeight(imgSetting.height)
     , mFormat(imgSetting.fileFormat)
+    , mInterval(0)
     , mPath("/tmp/")
     , mResultCB(nullptr)
 {
@@ -64,9 +66,35 @@ ImageCaptureGst::~ImageCaptureGst()
     stop();
 }
 
+int ImageCaptureGst::init()
+{
+    log_info("%s::%s", typeid(this).name(), __func__);
+
+    if (getState() != STATE_IDLE) {
+        log_error("Invalid State : %d", getState());
+        return -1;
+    }
+
+    setState(STATE_INIT);
+    return 0;
+}
+
+int ImageCaptureGst::uninit()
+{
+    log_info("%s::%s", typeid(this).name(), __func__);
+
+    if (getState() != STATE_INIT && getState() != STATE_ERROR) {
+        log_error("Invalid State : %d", getState());
+        return -1;
+    }
+
+    setState(STATE_IDLE);
+    return 0;
+}
+
 int ImageCaptureGst::start(int interval, int count, std::function<void(int result, int seq_num)> cb)
 {
-    log_debug("%s interval:%d count:%d", __func__, interval, count);
+    log_info("%s::%s interval:%d count:%d", typeid(this).name(), __func__, interval, count);
     // Invalid Arguments
     // Either the capture is count based or interval based or count with interval
     if (count <= 0 && interval <= 0) {
@@ -75,20 +103,25 @@ int ImageCaptureGst::start(int interval, int count, std::function<void(int resul
     }
 
     // check & set state
-    if (mState != STATE_IDLE)
-        return 1;
+    if (getState() != STATE_INIT) {
+        log_error("Invalid State : %d", getState());
+        return -1;
+    }
 
     mResultCB = cb;
-    setState(STATE_IN_PROGRESS);
+    mInterval = interval;
+    setState(STATE_RUN);
     // create a thread to capture images
-    mThread = std::thread(&ImageCaptureGst::captureThread, this, count, interval);
+    mThread = std::thread(&ImageCaptureGst::captureThread, this, count);
 
     return 0;
 }
 
 int ImageCaptureGst::stop()
 {
-    setState(STATE_IDLE);
+    log_info("%s::%s", typeid(this).name(), __func__);
+
+    setState(STATE_INIT);
 
     if (mThread.joinable())
         mThread.join();
@@ -98,9 +131,46 @@ int ImageCaptureGst::stop()
 
 int ImageCaptureGst::setState(int state)
 {
-    mState = state;
+    int ret = 0;
+    log_debug("%s : %d", __func__, state);
 
-    return 0;
+    if (mState == state)
+        return 0;
+
+    if (state == STATE_ERROR) {
+        mState = state;
+        return 0;
+    }
+
+    switch (mState) {
+    case STATE_IDLE:
+        if (state == STATE_INIT)
+            mState = state;
+        break;
+    case STATE_INIT:
+        if (state == STATE_IDLE || state == STATE_RUN)
+            mState = state;
+        break;
+    case STATE_RUN:
+        if (state == STATE_INIT)
+            mState = state;
+        break;
+    case STATE_ERROR:
+        log_info("In Error State");
+        // Free up resources, restart?
+        if (state == STATE_IDLE)
+            mState = state;
+        break;
+    default:
+        break;
+    }
+
+    if (mState != state) {
+        ret = -1;
+        log_error("InValid State Transition");
+    }
+
+    return ret;
 }
 
 int ImageCaptureGst::getState()
@@ -114,6 +184,21 @@ int ImageCaptureGst::setResolution(int imgWidth, int imgHeight)
     mHeight = imgHeight;
 
     return 0;
+}
+
+int ImageCaptureGst::setInterval(int interval)
+{
+    if (interval < 0)
+        return -1;
+
+    mInterval = interval;
+
+    return 0;
+}
+
+int ImageCaptureGst::getInterval()
+{
+    return mInterval;
 }
 
 int ImageCaptureGst::setFormat(CameraParameters::IMAGE_FILE_FORMAT imgFormat)
@@ -138,31 +223,31 @@ int ImageCaptureGst::setLocation(const std::string imgPath)
     return 0;
 }
 
-void ImageCaptureGst::captureThread(int num, int interval)
+void ImageCaptureGst::captureThread(int num)
 {
-    log_debug("captureThread num:%d int:%d", num, interval);
+    log_debug("captureThread num:%d int:%d", num, mInterval);
     int ret = -1;
     int count = num;
     int seq_num = 0;
-    while (mState == STATE_IN_PROGRESS) {
-        log_debug("Current Count : %d", count);
+    while (mState == STATE_RUN) {
         ret = click(seq_num++);
         if (mResultCB)
             mResultCB(ret, seq_num);
 
-        // Check if the capture is periodic or count based
+        // Check if the capture is periodic or count(w/wo interval) based
         if (count <= 0) {
-            if (interval > 0)
-                sleep(interval);
+            if (mInterval > 0)
+                sleep(mInterval);
             else
                 break;
         } else {
+            log_debug("Current Count : %d", count);
             count--;
             if (count == 0)
-                setState(STATE_IDLE);
+                setState(STATE_INIT);
             else {
-                if (interval > 0)
-                    sleep(interval);
+                if (mInterval > 0)
+                    sleep(mInterval);
             }
         }
     }
@@ -259,7 +344,6 @@ int ImageCaptureGst::createV4l2Pipeline(int seq_num)
         log_error("Pipeline String error");
         return 1;
     }
-    log_debug("pipeline = %s", pipeline_str.c_str());
     pipeline = gst_parse_launch(pipeline_str.c_str(), &error);
     if (!pipeline) {
         log_error("Error creating pipeline");

@@ -118,6 +118,12 @@ CameraComponent::~CameraComponent()
         mVidCap.reset();
     }
 
+    if (mImgCap) {
+        mImgCap->stop();
+        mImgCap->uninit();
+        mImgCap.reset();
+    }
+
     // stop the camera device
     mCamDev->stop();
 
@@ -221,8 +227,45 @@ int CameraComponent::setImageCaptureSettings(ImageSettings &imgSetting)
     return 0;
 }
 
+/* 0: idle, 1: capture in progress, 2: interval set but idle, 3: interval set and capture in
+ * progress */
+void CameraComponent::getImageCaptureStatus(uint8_t &status, int &interval)
+{
+    if (!mImgCap) {
+        status = 0;
+        interval = 0;
+        return;
+    }
+
+    // get interval
+    interval = mImgCap->getInterval();
+    switch (mImgCap->getState()) {
+    case ImageCapture::STATE_ERROR:
+    case ImageCapture::STATE_IDLE:
+    case ImageCapture::STATE_INIT:
+        status = 0;
+        break;
+    case ImageCapture::STATE_RUN:
+        if (interval > 0)
+            status = 3; // or 2?
+        else
+            status = 1;
+        break;
+    default:
+        status = 0;
+        break;
+    }
+
+    log_debug("%s Status:%d", __func__, status);
+    return;
+}
+
 int CameraComponent::startImageCapture(int interval, int count, capture_callback_t cb)
 {
+    int ret = 0;
+
+    // TODO :: Check if video capture or video streaming is running
+
     mImgCapCB = cb;
 
     // Delete imgCap instance if already exists
@@ -240,17 +283,30 @@ int CameraComponent::startImageCapture(int interval, int count, capture_callback
     // mImgCap = std::make_shared<ImageCaptureGst>(mCamDev);
     if (!mImgPath.empty())
         mImgCap->setLocation(mImgPath);
-    mImgCap->start(interval, count, std::bind(&CameraComponent::cbImageCaptured, this,
-                                              std::placeholders::_1, std::placeholders::_2));
-    return 0;
+
+    ret = mImgCap->init();
+    if (!ret) {
+        ret = mImgCap->start(interval, count,
+                             std::bind(&CameraComponent::cbImageCaptured, this,
+                                       std::placeholders::_1, std::placeholders::_2));
+        if (ret) {
+            mImgCap->uninit();
+            mImgCap.reset();
+        }
+    }
+
+    return ret;
 }
 
 int CameraComponent::stopImageCapture()
 {
-    if (mImgCap)
-        mImgCap->stop();
+    if (!mImgCap)
+        return 0;
 
+    mImgCap->stop();
+    mImgCap->uninit();
     mImgCap.reset();
+
     return 0;
 }
 
@@ -285,6 +341,8 @@ int CameraComponent::startVideoCapture(int status_freq)
 
     if (mVidCap)
         mVidCap.reset();
+
+    // TODO :: Check if video capture or video streaming is running
 
     // check if settings are available
     if (mVidSetting)
@@ -322,7 +380,7 @@ int CameraComponent::stopVideoCapture()
 }
 
 /* 0: idle, 1: capture in progress */
-uint8_t CameraComponent::getStatusVideoCapture()
+uint8_t CameraComponent::getVideoCaptureStatus()
 {
     uint8_t ret = 0;
 
