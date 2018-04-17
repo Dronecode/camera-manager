@@ -407,8 +407,7 @@ int ImageCaptureGst::createV4l2Pipeline()
         break;
     }
 
-    if (msg != NULL)
-        gst_message_unref(msg);
+    gst_message_unref(msg);
     gst_object_unref(bus);
     gst_element_set_state(pipeline, GST_STATE_NULL);
     gst_object_unref(pipeline);
@@ -449,22 +448,24 @@ int ImageCaptureGst::createAppsrcPipeline()
     GstMessage *msg;
 
     std::string encname = getGstImgEncName(mFormat);
-    if (encname.empty())
-        return {};
-
     std::string fmt = getGstPixFormat(mCamPixFormat);
-    if (fmt.empty())
-        return {};
-
     std::string ext = getImgExt(mFormat);
-    if (ext.empty())
-        return {};
+    if (encname.empty() || fmt.empty() || ext.empty()) {
+        log_error("Error in fetching gst info");
+        return 1;
+    }
 
     /* setup pipeline */
     pipeline = gst_pipeline_new("pipeline");
     appsrc = gst_element_factory_make("appsrc", "source");
     enc = gst_element_factory_make(encname.c_str(), "enc");
     imagesink = gst_element_factory_make("filesink", "imagesink");
+
+    if (!pipeline || !appsrc || !enc || !imagesink) {
+        log_error("Gst element could not be created. Exiting");
+        return 1;
+    }
+
     std::string filepath = mPath + "img_" + std::to_string(++imgCount) + "." + ext;
     g_object_set(G_OBJECT(imagesink), "location", filepath.c_str(), NULL);
 
@@ -474,12 +475,33 @@ int ImageCaptureGst::createAppsrcPipeline()
     /* setup */
     g_object_set(G_OBJECT(appsrc), "caps",
                  gst_caps_new_simple("video/x-raw", "format", G_TYPE_STRING, fmt.c_str(), "width",
-                                     G_TYPE_INT, mWidth, "height", G_TYPE_INT, mHeight, "framerate",
-                                     GST_TYPE_FRACTION, 0, 1, NULL),
+                                     G_TYPE_INT, mCamWidth, "height", G_TYPE_INT, mCamHeight,
+                                     "framerate", GST_TYPE_FRACTION, 0, 1, NULL),
                  NULL);
-    gst_bin_add_many(GST_BIN(pipeline), appsrc, enc, imagesink, NULL);
-    gst_element_link_many(appsrc, enc, imagesink, NULL);
 
+    // Resize
+    if (mWidth > 0 && mHeight > 0) {
+        // Add videoscale to resize
+        // TODO :: Rescaling has issues and outputs corrupted data, need to fix
+        GstElement *videoscale = gst_element_factory_make("videoscale", "videoscale");
+        GstElement *filter = gst_element_factory_make("capsfilter", "resize");
+        if (!videoscale || !filter) {
+            log_error("Gst element could not be created. Exiting.\n");
+            // free resources
+            return 1;
+        }
+
+        g_object_set(filter, "caps", gst_caps_new_simple("video/x-raw", "format", G_TYPE_STRING,
+                                                         fmt.c_str(), "width", G_TYPE_INT, mWidth,
+                                                         "height", G_TYPE_INT, mHeight, NULL),
+                     NULL);
+
+        gst_bin_add_many(GST_BIN(pipeline), appsrc, videoscale, filter, enc, imagesink, NULL);
+        gst_element_link_many(appsrc, videoscale, filter, enc, imagesink, NULL);
+    } else {
+        gst_bin_add_many(GST_BIN(pipeline), appsrc, enc, imagesink, NULL);
+        gst_element_link_many(appsrc, enc, imagesink, NULL);
+    }
     /* setup appsrc */
     g_object_set(G_OBJECT(appsrc), "stream-type", 0, // GST_APP_STREAM_TYPE_STREAM
                  "format", GST_FORMAT_TIME, "is-live", TRUE, NULL);
@@ -490,12 +512,11 @@ int ImageCaptureGst::createAppsrcPipeline()
 
     /* add watch for messages */
     GstBus *bus = gst_pipeline_get_bus(GST_PIPELINE(pipeline));
-    // gst_bus_add_watch (bus, (GstBusFunc) bus_message, NULL);
     msg = gst_bus_timed_pop_filtered(bus, GST_CLOCK_TIME_NONE,
                                      (GstMessageType)(GST_MESSAGE_ERROR | GST_MESSAGE_EOS));
     switch (GST_MESSAGE_TYPE(msg)) {
     case GST_MESSAGE_EOS: {
-        log_error("EOS\n");
+        log_info("EOS\n");
         ret = 0;
         break;
     }
@@ -522,8 +543,7 @@ int ImageCaptureGst::createAppsrcPipeline()
     }
 
     /* clean up */
-    if (msg != NULL)
-        gst_message_unref(msg);
+    gst_message_unref(msg);
     gst_object_unref(bus);
     gst_element_set_state(pipeline, GST_STATE_NULL);
     gst_object_unref(GST_OBJECT(pipeline));
