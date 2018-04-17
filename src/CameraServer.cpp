@@ -29,11 +29,12 @@
 
 #define DEFAULT_SERVICE_PORT 8554
 
-#ifdef ENABLE_MAVLINK
 CameraServer::CameraServer(const ConfFile &conf)
-    : mavlink_server(conf, streams, rtsp_server)
+    : cameraCount(0)
     , rtsp_server(streams, DEFAULT_SERVICE_PORT)
-    , cameraCount(0)
+#ifdef ENABLE_MAVLINK
+    , mavlink_server(conf, streams, rtsp_server)
+#endif
 {
     bool isImgCapSetting = false;
     bool isVidCapSetting = false;
@@ -64,9 +65,10 @@ CameraServer::CameraServer(const ConfFile &conf)
     std::vector<CameraComponent *>::iterator it;
     for (it = cameraList.begin(); it != cameraList.end(); it++) {
         if (*it) {
+#ifdef ENABLE_MAVLINK
             if (mavlink_server.addCameraComponent(*it) == -1)
                 log_error("Error in adding Camera Component");
-
+#endif
             if (isImgCapSetting)
                 (*it)->setImageCaptureSettings(imgSetting);
 
@@ -81,30 +83,6 @@ CameraServer::CameraServer(const ConfFile &conf)
         }
     }
 }
-#else
-CameraServer::CameraServer(const ConfFile &conf)
-    : rtsp_server(streams, DEFAULT_SERVICE_PORT)
-    , cameraCount(0)
-{
-    cameraCount = detectCamera(conf);
-
-    // Read image capture file location
-    std::string imgPath = getImgCapLocation(conf);
-
-    std::vector<CameraComponent *>::iterator it;
-    for (it = cameraList.begin(); it != cameraList.end(); it++) {
-        if (*it) {
-         #ifdef ENABLE_MAVLINK
-            if (mavlink_server.addCameraComponent(*it) == -1)
-                log_error("Error in adding Camera Component");
-        #endif
-
-            if (!imgPath.empty())
-                (*it)->setImageLocation(imgPath);
-        }
-    }
-}
-#endif
 
 CameraServer::~CameraServer()
 {

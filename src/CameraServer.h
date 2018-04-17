@@ -51,11 +51,11 @@ private:
     int detect_devices_gazebo(const ConfFile &conf, std::vector<CameraComponent *> &camList) const;
 #endif
     int detect_devices_v4l2(const ConfFile &conf, std::vector<CameraComponent *> &cameraList) const;
+    int cameraCount;
+    RTSPServer rtsp_server;
 #ifdef ENABLE_MAVLINK
     MavlinkServer mavlink_server;
 #endif
-    RTSPServer rtsp_server;
-    int cameraCount;
     std::vector<CameraComponent *> cameraList;
     std::vector<std::unique_ptr<Stream>> streams; // Remove it
 };
