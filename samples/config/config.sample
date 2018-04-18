@@ -71,3 +71,34 @@
 # Keys:
 #   camtopic
 #      Gazebo topic where camera images are published.
+#
+#
+# Section [imgcap]:
+#
+# Keys:
+#   width
+#       Width of the image to be captured in pixels.
+#       Default: Full width of camera frame for sensor type (i.e 1080P - 1920, 720P - 1280, etc)
+#       Possible Values: Dependent on camera sensor
+#
+#   height
+#       Height of the image to be captured in pixels.
+#       Default: Full width of camera frame for sensor type (i.e 1080P - 1080, 720P - 720, etc)
+#       Possible Values: Dependent on camera sensor
+#
+#   format
+#       Image format
+#       Default: 2 (JPEG)
+#       Possible Values:
+#            1 - Not Supported  (IMAGE_FILE_RAW)
+#            2 - JPEG Format    (IMAGE_FILE_JPEG)
+#            3 - Not Supported  (IMAGE_FILE_EXIF)
+#            4 - Not Supported  (IMAGE_FILE_TIFF)
+#            5 - Not Supported  (IMAGE_FILE_GIF)
+#            6 - Not Supported  (IMAGE_FILE_PNG)
+#            7 - Not Supported  (IMAGE_FILE_BMP)
+#
+#   location
+#       Location of the image file to write
+#       Default: /tmp/
+#       Possible Values: The path should be accessible and writeable

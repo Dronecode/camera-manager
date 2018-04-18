@@ -21,19 +21,34 @@
 #include <string>
 #include <thread>
 
-#include "CameraDevice.h"
+#include "CameraParameters.h"
+
+struct ImageSettings {
+    int width;
+    int height;
+    CameraParameters::IMAGE_FILE_FORMAT fileFormat;
+};
 
 class ImageCapture {
 public:
     ImageCapture() {}
     ~ImageCapture() {}
 
-    enum State { STATE_ERROR = -1, STATE_IDLE = 0, STATE_IN_PROGRESS = 1 };
+    enum State {
+        STATE_ERROR = -1,
+        STATE_IDLE = 0,
+        STATE_INIT = 1,
+        STATE_RUN = 2,
+    };
 
+    virtual int init() = 0;
+    virtual int uninit() = 0;
     virtual int start(int num, int interval, std::function<void(int result, int seq_num)> cb) = 0;
     virtual int stop() = 0;
     virtual int getState() = 0;
+    virtual int setInterval(int interval) = 0;
+    virtual int getInterval() = 0;
     virtual int setResolution(int imgWidth, int imgHeight) = 0;
-    virtual int setFormat(int imgFormat) = 0;
+    virtual int setFormat(CameraParameters::IMAGE_FILE_FORMAT imgFormat) = 0;
     virtual int setLocation(const std::string imgPath) = 0;
 };

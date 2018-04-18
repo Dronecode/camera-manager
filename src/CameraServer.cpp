@@ -29,15 +29,25 @@
 
 #define DEFAULT_SERVICE_PORT 8554
 
-#ifdef ENABLE_MAVLINK
 CameraServer::CameraServer(const ConfFile &conf)
-    : mavlink_server(conf, streams, rtsp_server)
+    : cameraCount(0)
     , rtsp_server(streams, DEFAULT_SERVICE_PORT)
-    , cameraCount(0)
+#ifdef ENABLE_MAVLINK
+    , mavlink_server(conf, streams, rtsp_server)
+#endif
 {
+    bool isImgCapSetting = false;
     bool isVidCapSetting = false;
 
     cameraCount = detectCamera(conf);
+
+    // Read image capture settings
+    ImageSettings imgSetting;
+    if (!getImgCapSettings(conf, imgSetting)) {
+        // Send the setting to camera comp
+        isImgCapSetting = true;
+    } else
+        log_info("Image Capture Settings not found, use default");
 
     // Read image capture file location
     std::string imgPath = getImgCapLocation(conf);
@@ -55,44 +65,24 @@ CameraServer::CameraServer(const ConfFile &conf)
     std::vector<CameraComponent *>::iterator it;
     for (it = cameraList.begin(); it != cameraList.end(); it++) {
         if (*it) {
+#ifdef ENABLE_MAVLINK
             if (mavlink_server.addCameraComponent(*it) == -1)
                 log_error("Error in adding Camera Component");
+#endif
+            if (isImgCapSetting)
+                (*it)->setImageCaptureSettings(imgSetting);
+
+            if (!imgPath.empty())
+                (*it)->setImageCaptureLocation(imgPath);
 
             if (isVidCapSetting)
                 (*it)->setVideoCaptureSettings(vidSetting);
 
             if (!vidPath.empty())
                 (*it)->setVideoCaptureLocation(vidPath);
-
-            if (!imgPath.empty())
-                (*it)->setImageLocation(imgPath);
         }
     }
 }
-#else
-CameraServer::CameraServer(const ConfFile &conf)
-    : rtsp_server(streams, DEFAULT_SERVICE_PORT)
-    , cameraCount(0)
-{
-    cameraCount = detectCamera(conf);
-
-    // Read image capture file location
-    std::string imgPath = getImgCapLocation(conf);
-
-    std::vector<CameraComponent *>::iterator it;
-    for (it = cameraList.begin(); it != cameraList.end(); it++) {
-        if (*it) {
-         #ifdef ENABLE_MAVLINK
-            if (mavlink_server.addCameraComponent(*it) == -1)
-                log_error("Error in adding Camera Component");
-        #endif
-
-            if (!imgPath.empty())
-                (*it)->setImageLocation(imgPath);
-        }
-    }
-}
-#endif
 
 CameraServer::~CameraServer()
 {
@@ -199,6 +189,35 @@ int CameraServer::detect_devices_v4l2(const ConfFile &conf,
     return count;
 }
 
+int CameraServer::getImgCapSettings(const ConfFile &conf, ImageSettings &imgSetting) const
+{
+    int ret = 0;
+
+    struct options {
+        int width;
+        int height;
+        int format;
+    } opt = {};
+
+    // All the settings must be available else default value for all will be used
+    static const ConfFile::OptionsTable option_table[] = {
+        {"width", true, ConfFile::parse_i, OPTIONS_TABLE_STRUCT_FIELD(options, width)},
+        {"height", true, ConfFile::parse_i, OPTIONS_TABLE_STRUCT_FIELD(options, height)},
+        {"format", true, ConfFile::parse_i, OPTIONS_TABLE_STRUCT_FIELD(options, format)},
+    };
+    ret = conf.extract_options("imgcap", option_table, ARRAY_SIZE(option_table), (void *)&opt);
+    if (ret)
+        return ret;
+
+    imgSetting.width = opt.width;
+    imgSetting.height = opt.height;
+    imgSetting.fileFormat = static_cast<CameraParameters::IMAGE_FILE_FORMAT>(opt.format);
+    log_info("Image Capture Width=%d Height=%d format=%d", imgSetting.width, imgSetting.height,
+             imgSetting.fileFormat);
+
+    return ret;
+}
+
 std::string CameraServer::getImgCapLocation(const ConfFile &conf) const
 {
     // Location must start and end with "/"
@@ -207,6 +226,7 @@ std::string CameraServer::getImgCapLocation(const ConfFile &conf) const
     std::string ret;
     if (!conf.extract_options("imgcap", key, &imgPath)) {
         ret = std::string(imgPath);
+        log_info("Image Capture location : %s", imgPath);
         free(imgPath);
     } else {
         log_error("Image Capture location not found");
@@ -263,6 +283,7 @@ std::string CameraServer::getVidCapLocation(const ConfFile &conf) const
     std::string ret;
     if (!conf.extract_options("vidcap", key, &vidPath)) {
         ret = std::string(vidPath);
+        log_info("Video Capture location : %s", vidPath);
         free(vidPath);
     } else {
         log_warning("Video Capture location not found, use default");

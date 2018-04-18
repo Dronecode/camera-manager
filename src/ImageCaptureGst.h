@@ -18,37 +18,48 @@
 #pragma once
 #include <string>
 
+#include "CameraDevice.h"
 #include "ImageCapture.h"
 
 class ImageCaptureGst final : public ImageCapture {
 public:
     ImageCaptureGst(std::shared_ptr<CameraDevice> camDev);
+    ImageCaptureGst(std::shared_ptr<CameraDevice> camDev, struct ImageSettings &imgSetting);
     ~ImageCaptureGst();
+
+    int init();
+    int uninit();
     int start(int interval, int count, std::function<void(int result, int seq_num)> cb);
     int stop();
     int getState();
+    int setInterval(int interval);
+    int getInterval();
     int setResolution(int imgWidth, int imgHeight);
-    int setFormat(int imgFormat);
+    int setFormat(CameraParameters::IMAGE_FILE_FORMAT imgFormat);
     int setLocation(const std::string imgPath);
     std::shared_ptr<CameraDevice> mCamDev;
 
 private:
+    static int imgCount;
     int setState(int state);
-    int click(int seq_num);
-    void captureThread(int num, int interval);
-    int createV4l2Pipeline(int seq_num);
+    int click();
+    void captureThread(int num);
+    int createV4l2Pipeline();
     std::string getGstImgEncName(int format);
     std::string getGstPixFormat(int pixFormat);
     std::string getImgExt(int format);
-    std::string getGstPipelineNameV4l2(int seq_num);
-    int createAppsrcPipeline(int seq_num);
+    std::string getGstPipelineNameV4l2();
+    int createAppsrcPipeline();
     std::string mDevice;
     std::atomic<int> mState;
-    uint32_t mWidth;
-    uint32_t mHeight;
-    uint32_t mImgFormat;
-    uint32_t mPixelFormat;
-    std::string mImgPath;
+    uint32_t mWidth;                             /* Image Width*/
+    uint32_t mHeight;                            /* Image Height*/
+    CameraParameters::IMAGE_FILE_FORMAT mFormat; /* Image File Format*/
+    uint32_t mInterval;                          /* Image Capture interval */
+    std::string mPath;                           /* Image File Destination Path*/
+    uint32_t mCamWidth;                          /* Camera Frame Width*/
+    uint32_t mCamHeight;                         /* Camera Frame Height*/
+    uint32_t mCamPixFormat;                      /* Camera Frame Pixel Format*/
     std::function<void(int result, int seq_num)> mResultCB;
     std::thread mThread;
 };

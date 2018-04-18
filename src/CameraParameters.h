@@ -218,6 +218,18 @@ public:
     static const int ID_PIXEL_FORMAT_RGB24 = 5;  // RGB3
     static const int ID_PIXEL_FORMAT_RGB32 = 6;  // RGB4
 
+    typedef enum IMAGE_FILE_FORMAT {
+        IMAGE_FILE_MIN,
+        IMAGE_FILE_RAW,  /* Raw Format */
+        IMAGE_FILE_JPEG, /* JPEG Format */
+        IMAGE_FILE_EXIF, /* EXIF Format */
+        IMAGE_FILE_TIFF, /* TIFF Format */
+        IMAGE_FILE_GIF,  /* GIF Format */
+        IMAGE_FILE_PNG,  /* PNG Format */
+        IMAGE_FILE_BMP,  /* BMP Format */
+        IMAGE_FILE_MAX = 99
+    } IMAGE_FILE_FORMAT;
+
     typedef enum VIDEO_FILE_FORMAT {
         VIDEO_FILE_MIN,
         VIDEO_FILE_MP4, /* Moving Pictures Expert Group 4 */
