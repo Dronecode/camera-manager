@@ -7,7 +7,7 @@
 .deps/
 .libs/
 .dirstamp
-Makefile
+/Makefile
 Makefile.in
 
 /aclocal.m4
