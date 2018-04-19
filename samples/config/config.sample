@@ -60,11 +60,6 @@
 #  <camera-device-id>
 #      URI for the Camera Definition File of the camera device <camera-device-id>
 #       
-# Section [imgcap]
-#    
-# Keys:
-#   location
-#      The local path with write permission where captured images will be saved. For e.g : /tmp/
 #
 # Section [gazebo]:
 #
@@ -83,7 +78,7 @@
 #
 #   height
 #       Height of the image to be captured in pixels.
-#       Default: Full width of camera frame for sensor type (i.e 1080P - 1080, 720P - 720, etc)
+#       Default: Full height of camera frame for sensor type (i.e 1080P - 1080, 720P - 720, etc)
 #       Possible Values: Dependent on camera sensor
 #
 #   format
@@ -102,7 +97,8 @@
 #       Location of the image file to write
 #       Default: /tmp/
 #       Possible Values: The path should be accessible and writeable
-
+#
+#
 # Section [vidcap]:
 #
 # Keys:
