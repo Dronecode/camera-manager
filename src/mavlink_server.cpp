@@ -43,7 +43,7 @@ MavlinkServer::MavlinkServer(const ConfFile &conf, std::vector<std::unique_ptr<S
     , _broadcast_addr{}
     , _is_sys_id_found(false)
     , _system_id(1)
-    , _comp_id(MAV_COMP_ID_CAMERA2)
+    , _comp_id(MAV_COMP_ID_CAMERA)
     , _rtsp_server_addr(nullptr)
     , _rtsp(rtsp)
 {
@@ -57,7 +57,6 @@ MavlinkServer::MavlinkServer(const ConfFile &conf, std::vector<std::unique_ptr<S
     static const ConfFile::OptionsTable option_table[] = {
         {"port", false, ConfFile::parse_ul, OPTIONS_TABLE_STRUCT_FIELD(options, port)},
         {"system_id", false, ConfFile::parse_i, OPTIONS_TABLE_STRUCT_FIELD(options, sysid)},
-        {"component_id", false, ConfFile::parse_i, OPTIONS_TABLE_STRUCT_FIELD(options, compid)},
         {"rtsp_server_addr", false, ConfFile::parse_str_dup, OPTIONS_TABLE_STRUCT_FIELD(options, rtsp_server_addr)},
         {"broadcast_addr", false, ConfFile::parse_str_buf, OPTIONS_TABLE_STRUCT_FIELD(options, broadcast)},
     };
@@ -80,15 +79,6 @@ MavlinkServer::MavlinkServer(const ConfFile &conf, std::vector<std::unique_ptr<S
             _system_id = 1;
             _is_sys_id_found = false;
         }
-    }
-
-    if (opt.compid) {
-        if (opt.compid <= 1 || opt.compid >= 255)
-            log_error("Invalid Component ID for MAVLink communication (%d). Using default "
-                      "MAV_COMP_ID_CAMERA2 (%d)",
-                      opt.compid, MAV_COMP_ID_CAMERA2);
-        else
-            _comp_id = opt.compid;
     }
 
     if (opt.broadcast[0])
@@ -789,14 +779,21 @@ int MavlinkServer::addCameraComponent(CameraComponent *camComp)
 {
     log_debug("%s", __func__);
     int ret = -1;
-    int id = MAV_COMP_ID_CAMERA2;
-    while (id < MAV_COMP_ID_CAMERA6 + 1) {
-        if (compIdToObj.find(id) == compIdToObj.end()) {
-            compIdToObj.insert(std::make_pair(id, camComp));
-            ret = id;
+    int compid;
+#ifdef ENABLE_GAZEBO
+    // PX4-SITL Gazebo is running a camera component with id MAV_COMP_ID_CAMERA
+    compid = MAV_COMP_ID_CAMERA2;
+#else
+    compid = MAV_COMP_ID_CAMERA;
+#endif
+
+    while (compid < MAV_COMP_ID_CAMERA6 + 1) {
+        if (compIdToObj.find(compid) == compIdToObj.end()) {
+            compIdToObj.insert(std::make_pair(compid, camComp));
+            ret = compid;
             break;
         }
-        id++;
+        compid++;
     }
 
     return ret;
