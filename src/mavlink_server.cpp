@@ -41,7 +41,8 @@ MavlinkServer::MavlinkServer(const ConfFile &conf, std::vector<std::unique_ptr<S
     , _is_running(false)
     , _timeout_handler(0)
     , _broadcast_addr{}
-    , _system_id(-1)
+    , _is_sys_id_found(false)
+    , _system_id(1)
     , _comp_id(MAV_COMP_ID_CAMERA2)
     , _rtsp_server_addr(nullptr)
     , _rtsp(rtsp)
@@ -68,11 +69,17 @@ MavlinkServer::MavlinkServer(const ConfFile &conf, std::vector<std::unique_ptr<S
         _broadcast_addr.sin_port = htons(DEFAULT_MAVLINK_PORT);
 
     if (opt.sysid) {
-        if (opt.sysid < 1 || opt.sysid >= 255)
-            log_error("Invalid System ID for MAVLink communication (%d).Waiting for heartbeat from \
-             Vehicle",opt.sysid);
-        else
+        if (opt.sysid > 0 && opt.sysid < 255) {
+            log_info("Use System ID %d, ignore heartbeat from Vehicle", opt.sysid);
             _system_id = opt.sysid;
+            _is_sys_id_found = true;
+
+        } else {
+            log_error("Invalid System ID for MAVLink communication (%d)", opt.sysid);
+            log_info("Use System ID 1, till heartbeat received from Vehicle");
+            _system_id = 1;
+            _is_sys_id_found = false;
+        }
     }
 
     if (opt.compid) {
@@ -573,9 +580,12 @@ void MavlinkServer::_handle_heartbeat(const struct sockaddr_in &addr, mavlink_me
     mavlink_heartbeat_t heartbeat;
     mavlink_msg_heartbeat_decode(msg, &heartbeat);
 
-    if (heartbeat.autopilot == 12)
-        _system_id = msg->sysid;
-
+    if (heartbeat.autopilot == 12) {
+        if (msg->sysid > 0 && msg->sysid < 255) {
+            _system_id = msg->sysid;
+            _is_sys_id_found = true;
+        }
+    }
 }
 
 void MavlinkServer::_handle_mavlink_message(const struct sockaddr_in &addr, mavlink_message_t *msg)
@@ -649,7 +659,8 @@ void MavlinkServer::_handle_mavlink_message(const struct sockaddr_in &addr, mavl
     } else {
         switch (msg->msgid) {
         case MAVLINK_MSG_ID_HEARTBEAT:
-            this->_handle_heartbeat(addr, msg);
+            if (!_is_sys_id_found)
+                this->_handle_heartbeat(addr, msg);
             break;
         case MAVLINK_MSG_ID_SET_VIDEO_STREAM_SETTINGS:
             this->_handle_camera_set_video_stream_settings(addr, msg);
