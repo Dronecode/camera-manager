@@ -102,3 +102,51 @@
 #       Location of the image file to write
 #       Default: /tmp/
 #       Possible Values: The path should be accessible and writeable
+
+# Section [vidcap]:
+#
+# Keys:
+#   width
+#       Width of the video to be captured in pixels.
+#       Default: Full width of camera frame for sensor type (i.e 1080P - 1920, 720P - 1280, etc)
+#       Possible Values: Dependent on camera sensor
+#
+#   height
+#       Height of the video to be captured in pixels.
+#       Default: Full height of camera frame for sensor type (i.e 1080P - 1080, 720P - 720, etc)
+#       Possible Values: Dependent on camera sensor
+#
+#   framerate
+#       Camera framerate for video capture
+#       Default: Default framerate of camera sensor (eg - 25)
+#       Possible Values: Dependent on camera sensor
+#
+#   bitrate
+#       Bitrate of the encoded video data in kbps
+#       Default: 512
+#       Possible Values: [1,2048000]
+#
+#   encoder
+#       Video encoding format
+#       Default: 3 (AVC)
+#       Possible Values:
+#           1 - Not Supported (VIDEO_CODING_H263)
+#           2 - Not Supported (VIDEO_CODING_MPEG4)
+#           3 - H.264         (VIDEO_CODING_AVC)
+#           4 - Not Supported (VIDEO_CODING_MJPEG)
+#           5 - Not Supported (VIDEO_CODING_WMV)
+#
+#   format
+#       Video file format
+#       Default: 1 (MP4)
+#       Possible Values:
+#            1 - Moving Pictures Expert Group 4  (VIDEO_FILE_MP4)
+#            2 - Not Supported                   (VIDEO_FILE_AVI)
+#            3 - Not Supported                   (VIDEO_FILE_WMV)
+#            4 - Not Supported                   (VIDEO_FILE_FLV)
+#            5 - Not Supported                   (VIDEO_FILE_MOV)
+#
+#   location
+#       Location of the video file to write
+#       Default: /tmp/
+#       Possible Values: The path that is accessible and writeable
