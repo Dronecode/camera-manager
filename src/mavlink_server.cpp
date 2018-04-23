@@ -32,6 +32,7 @@ using namespace std::placeholders;
 #define DEFAULT_MAVLINK_BROADCAST_ADDR "255.255.255.255"
 #define DEFAULT_RTSP_SERVER_ADDR "0.0.0.0"
 #define MAX_MAVLINK_MESSAGE_SIZE 1024
+#define DEFAULT_SYSTEM_ID 1
 
 static const float epsilon = std::numeric_limits<float>::epsilon();
 
@@ -42,7 +43,7 @@ MavlinkServer::MavlinkServer(const ConfFile &conf, std::vector<std::unique_ptr<S
     , _timeout_handler(0)
     , _broadcast_addr{}
     , _is_sys_id_found(false)
-    , _system_id(1)
+    , _system_id(DEFAULT_SYSTEM_ID)
     , _comp_id(MAV_COMP_ID_CAMERA)
     , _rtsp_server_addr(nullptr)
     , _rtsp(rtsp)
@@ -75,10 +76,11 @@ MavlinkServer::MavlinkServer(const ConfFile &conf, std::vector<std::unique_ptr<S
 
         } else {
             log_error("Invalid System ID for MAVLink communication (%d)", opt.sysid);
-            log_info("Use System ID 1, till heartbeat received from Vehicle");
-            _system_id = 1;
-            _is_sys_id_found = false;
+            log_info("Use System ID %d, till heartbeat received from Vehicle", DEFAULT_SYSTEM_ID);
+            _system_id = DEFAULT_SYSTEM_ID;
         }
+    } else {
+        log_info("Use System ID %d, till heartbeat received from Vehicle", DEFAULT_SYSTEM_ID);
     }
 
     if (opt.broadcast[0])
@@ -570,8 +572,9 @@ void MavlinkServer::_handle_heartbeat(const struct sockaddr_in &addr, mavlink_me
     mavlink_heartbeat_t heartbeat;
     mavlink_msg_heartbeat_decode(msg, &heartbeat);
 
-    if (heartbeat.autopilot == 12) {
+    if (heartbeat.autopilot == MAV_AUTOPILOT_PX4) {
         if (msg->sysid > 0 && msg->sysid < 255) {
+            log_info("Heartbeat received, System ID = %d", msg->sysid);
             _system_id = msg->sysid;
             _is_sys_id_found = true;
         }
@@ -787,7 +790,7 @@ int MavlinkServer::addCameraComponent(CameraComponent *camComp)
     compid = MAV_COMP_ID_CAMERA;
 #endif
 
-    while (compid < MAV_COMP_ID_CAMERA6 + 1) {
+    while (compid <= MAV_COMP_ID_CAMERA6) {
         if (compIdToObj.find(compid) == compIdToObj.end()) {
             compIdToObj.insert(std::make_pair(compid, camComp));
             ret = compid;

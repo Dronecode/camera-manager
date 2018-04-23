@@ -46,8 +46,9 @@ CameraServer::CameraServer(const ConfFile &conf)
     if (!getImgCapSettings(conf, imgSetting)) {
         // Send the setting to camera comp
         isImgCapSetting = true;
-    } else
+    } else {
         log_info("Image Capture Settings not found, use default");
+    }
 
     // Read image capture file location
     std::string imgPath = getImgCapLocation(conf);
@@ -57,8 +58,9 @@ CameraServer::CameraServer(const ConfFile &conf)
     if (!getVidCapSettings(conf, vidSetting)) {
         // Send the setting to camera comp
         isVidCapSetting = true;
-    } else
+    } else {
         log_info("Video Capture Settings not found, use default");
+    }
 
     std::string vidPath = getVidCapLocation(conf);
 
@@ -66,8 +68,10 @@ CameraServer::CameraServer(const ConfFile &conf)
     for (it = cameraList.begin(); it != cameraList.end(); it++) {
         if (*it) {
 #ifdef ENABLE_MAVLINK
-            if (mavlink_server.addCameraComponent(*it) == -1)
+            log_error("Adding Camera Component");
+            if (mavlink_server.addCameraComponent(*it) == -1) {
                 log_error("Error in adding Camera Component");
+            }
 #endif
             if (isImgCapSetting)
                 (*it)->setImageCaptureSettings(imgSetting);
