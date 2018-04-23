@@ -50,6 +50,7 @@ private:
     unsigned int _timeout_handler;
     UDPSocket _udp;
     struct sockaddr_in _broadcast_addr = {};
+    bool _is_sys_id_found;
     int _system_id;
     int _comp_id;
     char *_rtsp_server_addr;

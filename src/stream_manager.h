@@ -26,9 +26,6 @@
 #include <avahi-common/watch.h>
 #endif
 #include "conf_file.h"
-#ifdef ENABLE_MAVLINK
-#include "mavlink_server.h"
-#endif
 #include "rtsp_server.h"
 #include "stream.h"
 
@@ -47,7 +44,4 @@ private:
     AvahiPublisher avahi_publisher;
 #endif
     RTSPServer rtsp_server;
-#ifdef ENABLE_MAVLINK
-    MavlinkServer mavlink_server;
-#endif
 };

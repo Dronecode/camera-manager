@@ -33,9 +33,6 @@ StreamManager::StreamManager(const ConfFile &conf)
     , avahi_publisher(streams, DEFAULT_SERVICE_PORT, DEFAULT_SERVICE_TYPE)
 #endif
     , rtsp_server(streams, DEFAULT_SERVICE_PORT)
-#ifdef ENABLE_MAVLINK
-    , mavlink_server(conf, streams, rtsp_server)
-#endif
 {
     GstreamerPipelineBuilder::get_instance().apply_configs(conf);
     for (StreamBuilder *builder : StreamBuilder::get_builders())
