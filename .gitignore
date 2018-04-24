@@ -31,6 +31,7 @@ cscope.out
 tags
 
 /dcm
-camera-sample-client
-camera-sample-custom
-camera-sample-mavlink-client
+/test/test-camera-parameters
+/test/test-custom-stream
+/test/test-mavlink-protocol
+/test/test-rtsp-udp-stream-discovery
