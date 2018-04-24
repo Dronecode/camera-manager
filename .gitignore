@@ -13,7 +13,7 @@ Makefile.in
 /aclocal.m4
 /autom4te.cache
 /build-aux/
-/csd.service
+/dronecode-camera-manager.service
 /config.h
 /config.h.in
 /config.log
@@ -30,7 +30,8 @@ Makefile.in
 cscope.out
 tags
 
-/csd
-camera-sample-client
-camera-sample-custom
-camera-sample-mavlink-client
+/dcm
+/test/test-camera-parameters
+/test/test-custom-stream
+/test/test-mavlink-protocol
+/test/test-rtsp-udp-stream-discovery

@@ -1,5 +1,5 @@
 /*
- * This file is part of the Camera Streaming Daemon project
+ * This file is part of the Dronecode Camera Manager
  *
  * Copyright (C) 2017  Intel Corporation. All rights reserved.
  *

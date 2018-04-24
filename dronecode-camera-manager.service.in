@@ -1,10 +1,10 @@
 [Unit]
-Description=Camera Streaming Daemon
+Description=Dronecode Camera Manager
 After=multi-user.target
 
 [Service]
 Type=simple
-ExecStart=@bindir@/csd
+ExecStart=@bindir@/dcm
 Restart=on-failure
 
 [Install]

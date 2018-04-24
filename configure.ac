@@ -1,8 +1,8 @@
 AC_PREREQ(2.64)
-AC_INIT([camera-streaming-daemon],
+AC_INIT([dronecode-camera-manager],
     [1],
     [],
-    [camera-streaming-daemon],
+    [dronecode-camera-manager],
     [])
 
 PKG_CHECK_MODULES(GLIB, [glib-2.0])
@@ -169,7 +169,7 @@ AC_SUBST(SYSTEMD_SYSTEMUNITDIR, [${path_systemunitdir}])
 AC_OUTPUT
 AC_MSG_RESULT([
     $PACKAGE $VERSION
-    ================
+    ==========================
 
     prefix:              ${prefix}
     sysconfdir:          ${sysconfdir}
