@@ -30,8 +30,8 @@
 #include "util.h"
 #include "CameraServer.h"
 
-#define DEFAULT_CONFFILE "/etc/csd/main.conf"
-#define DEFAULT_CONF_DIR "/etc/csd/config.d"
+#define DEFAULT_CONFFILE "/etc/dcm/main.conf"
+#define DEFAULT_CONF_DIR "/etc/dcm/config.d"
 
 struct options {
     const char *filename;
@@ -44,7 +44,7 @@ static void help(FILE *fp)
         fp,
         "%s [OPTIONS...]\n\n"
         "  -c --conf-file                   .conf file with configurations for "
-        "camera-streaming-daemon.\n"
+        "dronecode-camera-manager.\n"
         "  -d --conf-dir <dir>              Directory where to look for .conf files overriding\n"
         "                                   default conf file.\n"
         "  -g --debug-log-level <level>     Set debug log level. Levels are\n"
@@ -58,7 +58,7 @@ static const char *get_default_file_name()
 {
     char *s;
 
-    s = getenv("CSD_CONF_FILE");
+    s = getenv("DCM_CONF_FILE");
     if (s)
         return s;
 
@@ -69,7 +69,7 @@ static const char *get_default_conf_dir()
 {
     char *s;
 
-    s = getenv("CSD_CONF_DIR");
+    s = getenv("DCM_CONF_DIR");
     if (s)
         return s;
 
@@ -247,7 +247,7 @@ int main(int argc, char *argv[])
     stream.start();
 
     delete conf;
-    log_debug("Starting Camera Streaming Daemon");
+    log_debug("Starting Dronecode Camera Manager");
 
     mainloop.loop();
 
