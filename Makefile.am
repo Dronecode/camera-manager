@@ -21,7 +21,7 @@ clean-local:
 
 #if SYSTEMD
 systemdsystemunitdir = @SYSTEMD_SYSTEMUNITDIR@
-systemdsystemunit_DATA = csd.service
+systemdsystemunit_DATA = dronecode-camera-manager.service
 #endif
 
 
@@ -200,7 +200,7 @@ dcm_SOURCES = \
 
 dcm_LDADD = $(GLIB_LIBS) $(GST_LIBS) $(GZB_LIBS)
 
-CLEANFILES += csd.service
+CLEANFILES += dronecode-camera-manager.service
 
 #Samples
 EXTRA_PROGRAMS = test/test-custom-stream
