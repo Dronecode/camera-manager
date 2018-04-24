@@ -184,7 +184,7 @@ BASE_FILES += \
 	src/stream_aero_bottom.h
 endif
 
-bin_PROGRAMS += csd
+bin_PROGRAMS += dcm
 
 SED_PROCESS = $(AM_V_GEN) $(MKDIR_P) $(dir $@) && \
 	$(SED) -e 's,@bindir\@,$(bindir),g' \
@@ -194,18 +194,18 @@ SED_PROCESS = $(AM_V_GEN) $(MKDIR_P) $(dir $@) && \
 	$(SED_PROCESS)
 
 
-csd_SOURCES = \
+dcm_SOURCES = \
 	${BASE_FILES} \
 	src/main.cpp
 
-csd_LDADD = $(GLIB_LIBS) $(GST_LIBS) $(GZB_LIBS)
+dcm_LDADD = $(GLIB_LIBS) $(GST_LIBS) $(GZB_LIBS)
 
 CLEANFILES += csd.service
 
 #Samples
 EXTRA_PROGRAMS = test/test-custom-stream
 
-test_test_custom_stream_LDADD = ${csd_LDADD}
+test_test_custom_stream_LDADD = ${dcm_LDADD}
 
 test_test_custom_stream_SOURCES = \
 	$(BASE_FILES) \
@@ -223,7 +223,7 @@ BASE_FILES += \
 
 AM_CXXFLAGS += ${AVAHI_CFLAGS}
 AM_CXXFLAGS += ${AVAHI_CFLAGS}
-csd_LDADD += $(AVAHI_LIBS)
+dcm_LDADD += $(AVAHI_LIBS)
 
 test_test_rtsp_udp_stream_discovery_SOURCES = \
 	test/test_rtsp_udp_stream_discovery.cpp \

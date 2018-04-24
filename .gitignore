@@ -30,7 +30,7 @@ Makefile.in
 cscope.out
 tags
 
-/csd
+/dcm
 camera-sample-client
 camera-sample-custom
 camera-sample-mavlink-client
