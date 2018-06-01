@@ -40,6 +40,8 @@
 
 using namespace std;
 
+void discovercam(void *cntx);
+
 class Drone {
 public:
     enum Mode { NONE = -1, IMAGE, VIDEO, SURVEY };
@@ -93,8 +95,9 @@ std::vector<int> Drone::getCameraIdList() const
              id_list != streams.end(); ++id_list) {
             camera_id_list.push_back(id_list->id);
         }
-        return camera_id_list;
     }
+
+    return camera_id_list;
 }
 
 std::string Drone::getCameraName(int camera_id) const
@@ -170,6 +173,8 @@ int Drone::getMode(int camera_id)
             return i.mode;
         }
     }
+
+    return -1;
 }
 
 void Drone::imageCapture(int camera_id, int count, int interval)
@@ -271,7 +276,7 @@ void Drone::messageReceivedCB()
     }
 }
 // Thread to handle mavlink messages
-void *discovercam(void *cntx)
+void discovercam(void *cntx)
 {
     GlibMainloop mainloop;
 
