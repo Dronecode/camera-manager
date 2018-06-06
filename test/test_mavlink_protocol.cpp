@@ -1,5 +1,5 @@
 /*
- * This file is part of the Camera Streaming Daemon project
+ * This file is part of the Dronecode Camera Manager
  *
  * Copyright (C) 2017  Intel Corporation. All rights reserved.
  *
@@ -18,7 +18,7 @@
 
 /**
 
-@brief  This is  a test application to test mavlink messages in the Camera Streaming Daemon.
+@brief  This is  a test application to test mavlink imessages in the Dronecode Camera Manager.
 
 */
 
@@ -195,7 +195,7 @@ void Drone::handleHeartbeatCB(mavlink_message_t &msg)
             }
     }
 
-    log_info("Camera Daemon found: sysid: %d comp_id: %d", msg.sysid, msg.compid);
+    log_info("Camera Component found: sysid: %d comp_id: %d", msg.sysid, msg.compid);
     sysid = msg.sysid;
 
     mavlink_message_t out_msg;
@@ -290,7 +290,7 @@ int main(int argc, char *argv[])
     int camera_id;
     Log::open();
     Log::set_max_level(Log::Level::INFO);
-    log_debug("Camera Streaming MAVLink Client");
+    log_debug("Camera Manager MAVLink Client");
 
     class Drone *ctx;
     std::thread t_id;
