@@ -241,8 +241,7 @@ void Drone::handleAckCB(mavlink_message_t &msg)
 
 void Drone::handleMavlinkMessageCB(mavlink_message_t &msg)
 {
-
-    if (msg.compid < MAV_COMP_ID_CAMERA2) {
+    if (msg.compid < MAV_COMP_ID_CAMERA || msg.compid > MAV_COMP_ID_CAMERA6) {
         return;
     }
 
@@ -348,15 +347,15 @@ int main(int argc, char *argv[])
             log_info("Enter the number of images to be taken");
             int count;
             scanf("%d", &count);
-            log_info("Enter the intervel in which images to be taken");
-            int intervel;
-            scanf("%d", &intervel);
-            ctx->imageCapture(camera_id, count, intervel);
-            sleep(intervel + 1);
+            log_info("Enter the interval in which images to be taken");
+            int interval;
+            scanf("%d", &interval);
+            ctx->imageCapture(camera_id, count, interval);
+            sleep(interval + 1);
             break;
         }
         case 4:
-            log_info("Exiting appication");
+            log_info("Exiting application");
             break;
         default:
             log_info("Invalid Selection");
