@@ -60,9 +60,10 @@ class CameraDevice;
 
 class CameraComponent {
 public:
-    CameraComponent(std::string);
-    CameraComponent(std::string, std::string);
+    CameraComponent(std::shared_ptr<CameraDevice> device);
     virtual ~CameraComponent();
+    int start();
+    int stop();
     const CameraInfo &getCameraInfo() const;
     const StorageInfo &getStorageInfo() const;
     const std::map<std::string, std::string> &getParamList() const;
@@ -106,6 +107,5 @@ private:
     void initStorageInfo(struct StorageInfo &storeInfo);
     int setVideoFrameFormat(uint32_t param_value);
     int setVideoSize(uint32_t param_value);
-    std::shared_ptr<CameraDevice> create_camera_device(std::string camdev_name);
     std::string toString(const char *buf, size_t buf_size);
 };

@@ -18,7 +18,6 @@
 #include <cstring>
 
 #include "CameraComponent.h"
-#include "CameraDeviceV4l2.h"
 #include "ImageCaptureGst.h"
 #include "VideoCaptureGst.h"
 #ifdef ENABLE_MAVLINK
@@ -31,86 +30,20 @@
 #include "VideoStreamUdp.h"
 #endif
 
-CameraComponent::CameraComponent(std::string camdev_name)
-    : mCamDevName(camdev_name)
-    , mCamInfo{}
-    , mStoreInfo{}
-    , mImgPath("")
-    , mVidPath("")
+CameraComponent::CameraComponent(std::shared_ptr<CameraDevice> device)
+    : mCamDev(device)
 {
-    log_debug("%s path:%s", __func__, camdev_name.c_str());
-    // Create a camera device based on device path
-    mCamDev = create_camera_device(camdev_name);
-    if (!mCamDev)
-        return; // TODO :: Raise exception
-
-    // Get info from the camera device
-    mCamDev->getInfo(mCamInfo);
-    // append uri-null info to the structure
-
-    // Get list of Parameters supported & its default value
-    mCamDev->init(mCamParam);
-
-    // start the camera device
-    mCamDev->start();
-
-    initStorageInfo(mStoreInfo);
-
-#ifdef ENABLE_GAZEBO
-    mVidStream = std::make_shared<VideoStreamUdp>(mCamDev);
-    mVidStream->init();
-    mVidStream->start();
-#endif
-}
-
-CameraComponent::CameraComponent(std::string camdev_name, std::string camdef_uri)
-    : mCamDevName(camdev_name)
-    , mCamInfo{}
-    , mStoreInfo{}
-    , mCamDefURI(camdef_uri)
-    , mImgPath("")
-{
-    log_debug("%s path:%s with Camera Definition", __func__, camdev_name.c_str());
-    // Create a camera device based on device path
-    mCamDev = create_camera_device(camdev_name);
-    if (!mCamDev)
-        return; // TODO :: Raise exception
+    mCamDevName = mCamDev->getDeviceId();
 
     // Get info from the camera device
     mCamDev->getInfo(mCamInfo);
 
-    if (sizeof(mCamInfo.cam_definition_uri) > mCamDefURI.size()) {
-        strcpy((char *)mCamInfo.cam_definition_uri, mCamDefURI.c_str());
-    } else {
-        log_error("URI length bigger than permitted");
-        // TODO::Continue with no parameter support
-    }
-
-    // Get list of Parameters supported & its default value
-    mCamDev->init(mCamParam);
-
-    // start the camera device
-    mCamDev->start();
-
     initStorageInfo(mStoreInfo);
-
-#ifdef ENABLE_GAZEBO
-    mVidStream = std::make_shared<VideoStreamUdp>(mCamDev);
-    mVidStream->init();
-    mVidStream->start();
-#endif
 }
 
 CameraComponent::~CameraComponent()
 {
     log_debug("%s", __func__);
-
-#ifdef ENABLE_GAZEBO
-    if (mVidStream) {
-        mVidStream->stop();
-        mVidStream->uninit();
-    }
-#endif
 
     if (mVidCap) {
         mVidCap->stop();
@@ -129,6 +62,68 @@ CameraComponent::~CameraComponent()
 
     // Uninit the camera device
     mCamDev->uninit();
+
+    mCamDev.reset();
+}
+
+int CameraComponent::start()
+{
+    int ret = 0;
+
+    mCamDefURI = mCamDev->getCameraDefinitionUri();
+    if (sizeof(mCamInfo.cam_definition_uri) > mCamDefURI.size()) {
+        strcpy((char *)mCamInfo.cam_definition_uri, mCamDefURI.c_str());
+    } else {
+        log_error("URI length bigger than permitted");
+    }
+
+    // Get list of Parameters supported & its default value
+    ret = mCamDev->init(mCamParam);
+    if (ret)
+        return ret;
+
+    // start the camera device
+    ret = mCamDev->start();
+    if (ret)
+        return ret;
+
+#ifdef ENABLE_GAZEBO
+    mVidStream = std::make_shared<VideoStreamUdp>(mCamDev);
+    mVidStream->init();
+    mVidStream->start();
+#endif
+
+    return 0;
+}
+
+int CameraComponent::stop()
+{
+    if (mVidCap) {
+        mVidCap->stop();
+        mVidCap->uninit();
+        mVidCap.reset();
+    }
+
+    if (mImgCap) {
+        mImgCap->stop();
+        mImgCap->uninit();
+        mImgCap.reset();
+    }
+
+    // stop the camera device
+    mCamDev->stop();
+
+    // Uninit the camera device
+    mCamDev->uninit();
+
+#ifdef ENABLE_GAZEBO
+    if (mVidStream) {
+        mVidStream->stop();
+        mVidStream->uninit();
+    }
+#endif
+
+    return 0;
 }
 
 const CameraInfo &CameraComponent::getCameraInfo() const
@@ -412,26 +407,6 @@ int CameraComponent::setVideoSize(uint32_t param_value)
 int CameraComponent::setVideoFrameFormat(uint32_t param_value)
 {
     return 0;
-}
-
-// TODO:: Move this operation to a factory class
-std::shared_ptr<CameraDevice> CameraComponent::create_camera_device(std::string camdev_name)
-{
-    if (camdev_name.find("/dev/video") != std::string::npos) {
-        log_debug("V4L2 device : %s", camdev_name.c_str());
-        return std::make_shared<CameraDeviceV4l2>(camdev_name);
-    } else if (camdev_name.find("camera/image") != std::string::npos) {
-        log_debug("Gazebo device : %s", camdev_name.c_str());
-#ifdef ENABLE_GAZEBO
-        return std::make_shared<CameraDeviceGazebo>(camdev_name);
-#else
-        log_error("Gazebo device not supported");
-        return nullptr;
-#endif
-    } else {
-        log_error("Camera device not found");
-        return nullptr;
-    }
 }
 
 /* Input string can be either null-terminated or not */

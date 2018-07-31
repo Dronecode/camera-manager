@@ -56,6 +56,8 @@ public:
     virtual int setParam(CameraParameters &camParam, std::string param, const char *param_value,
                          size_t value_size, int param_type)
         = 0;
+    virtual int setCameraDefinitionUri(std::string uri) { return -ENOTSUP; }
+    virtual std::string getCameraDefinitionUri() { return {}; }
     virtual int setSize(uint32_t width, uint32_t height) { return -ENOTSUP; }
     virtual int getSize(uint32_t &width, uint32_t &height) { return -ENOTSUP; }
     virtual int setPixelFormat(uint32_t format) { return -ENOTSUP; }

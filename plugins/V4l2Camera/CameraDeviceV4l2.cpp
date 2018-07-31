@@ -100,7 +100,7 @@ int CameraDeviceV4l2::initInfo()
 {
     int ret = 0;
     struct v4l2_capability vCap;
-    int camFd = v4l2_open(mDeviceId.c_str());
+    int camFd = v4l2_open(mDeviceId);
     if (camFd < 0) {
         log_error("Error in opening camera device");
         return -1;
@@ -210,7 +210,7 @@ int CameraDeviceV4l2::declareV4l2Params(CameraParameters &camParam)
 {
     int ret = 0;
     int value;
-    int camFd = v4l2_open(mDeviceId.c_str());
+    int camFd = v4l2_open(mDeviceId);
 
     const unsigned next_fl = V4L2_CTRL_FLAG_NEXT_CTRL | V4L2_CTRL_FLAG_NEXT_COMPOUND;
     struct v4l2_queryctrl qctrl = {0};
@@ -244,7 +244,7 @@ int CameraDeviceV4l2::resetV4l2Params(CameraParameters &camParam)
     int32_t value = 0;
     std::string param;
 
-    int camFd = v4l2_open(mDeviceId.c_str());
+    int camFd = v4l2_open(mDeviceId);
 
     const unsigned next_fl = V4L2_CTRL_FLAG_NEXT_CTRL | V4L2_CTRL_FLAG_NEXT_COMPOUND;
     struct v4l2_queryctrl qctrl = {0};
@@ -532,7 +532,7 @@ int CameraDeviceV4l2::getV4l2ControlId(int paramId)
 
 int CameraDeviceV4l2::setV4l2Control(int ctrl_id, int value)
 {
-    int fd = v4l2_open(mDeviceId.c_str());
+    int fd = v4l2_open(mDeviceId);
     int ret = v4l2_set_control(fd, ctrl_id, value);
     if (ret)
         log_error("Error in setting control : %d Error:%d", ctrl_id, errno);

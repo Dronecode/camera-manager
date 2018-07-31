@@ -53,12 +53,24 @@ int v4l2_list_devices(std::vector<std::string> &devList)
         if (std::strncmp(V4L2_VIDEO_PREFIX, ep->d_name, sizeof(V4L2_VIDEO_PREFIX) - 1) == 0) {
             log_debug("Found V4L2 camera device %s", ep->d_name);
             // add device path to list
-            devList.push_back(std::string(V4L2_DEVICE_PATH) + ep->d_name);
+            devList.push_back(ep->d_name);
         }
     }
 
     closedir(dp);
     return 0;
+}
+
+int v4l2_open(std::string deviceID)
+{
+    std::string devicePath = V4L2_DEVICE_PATH + deviceID;
+    int fd = -1;
+    fd = open(devicePath.c_str(), O_RDWR, 0);
+    if (fd < 0) {
+        log_error("Cannot open device '%s': %d: ", devicePath.c_str(), errno);
+    }
+
+    return fd;
 }
 
 int v4l2_open(const char *devicepath)

@@ -28,6 +28,7 @@
 
 #define DEFAULT_IMAGE_FILE_FORMAT CameraParameters::IMAGE_FILE_JPEG
 #define DEFAULT_FILE_PATH "/tmp/"
+#define V4L2_DEVICE_PREFIX "/dev/"
 
 int ImageCaptureGst::imgCount = 0;
 
@@ -330,6 +331,8 @@ std::string ImageCaptureGst::getGstPipelineNameV4l2()
     std::string device = mCamDev->getDeviceId();
     if (device.empty())
         return {};
+
+    device.insert(0, V4L2_DEVICE_PREFIX);
 
     std::string enc = getGstImgEncName(mFormat);
     if (enc.empty())

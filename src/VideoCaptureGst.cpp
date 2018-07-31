@@ -28,6 +28,7 @@
 #define DEFAULT_ENCODER CameraParameters::VIDEO_CODING_AVC
 #define DEFAULT_FILE_FORMAT CameraParameters::VIDEO_FILE_MP4
 #define DEFAULT_FILE_PATH "/tmp/"
+#define V4L2_DEVICE_PREFIX "/dev/"
 
 int VideoCaptureGst::vidCount = 0;
 
@@ -345,6 +346,8 @@ std::string VideoCaptureGst::getGstV4l2PipelineName()
     std::string device = mCamDev->getDeviceId();
     if (device.empty())
         return {};
+
+    device.insert(0, V4L2_DEVICE_PREFIX);
 
     std::string encoder = getGstEncName(mEnc);
     std::string parser = getGstParserName(mEnc);

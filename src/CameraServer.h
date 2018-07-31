@@ -32,30 +32,28 @@
 #include "VideoCapture.h"
 #include "log.h"
 
+#include "PluginManager.h"
+
 class CameraServer {
 public:
     CameraServer(const ConfFile &conf);
     ~CameraServer();
     void start();
     void stop();
-    int getCameraCount() const { return cameraCount; }
 
 private:
-    int getImgCapSettings(const ConfFile &conf, ImageSettings &imgSetting) const;
-    std::string getImgCapLocation(const ConfFile &conf) const;
-    int getVidCapSettings(const ConfFile &conf, VideoSettings &vidSetting) const;
-    std::string getVidCapLocation(const ConfFile &conf) const;
-    std::string getGazeboCamTopic(const ConfFile &conf) const;
-    int detectCamera(const ConfFile &conf);
-#ifdef ENABLE_GAZEBO
-    int detect_devices_gazebo(const ConfFile &conf, std::vector<CameraComponent *> &camList) const;
-#endif
-    int detect_devices_v4l2(const ConfFile &conf, std::vector<CameraComponent *> &cameraList) const;
-    int cameraCount;
+    std::set<std::string> readBlacklistDevices(const ConfFile &conf) const;
+    std::string readURI(const ConfFile &conf, std::string deviceID);
+    bool readImgCapSettings(const ConfFile &conf, ImageSettings &imgSetting) const;
+    std::string readImgCapLocation(const ConfFile &conf) const;
+    bool readVidCapSettings(const ConfFile &conf, VideoSettings &vidSetting) const;
+    std::string readVidCapLocation(const ConfFile &conf) const;
+    std::string readGazeboCamTopic(const ConfFile &conf) const;
     RTSPServer rtsp_server;
 #ifdef ENABLE_MAVLINK
     MavlinkServer mavlink_server;
 #endif
-    std::vector<CameraComponent *> cameraList;
+    PluginManager PM;
+    std::vector<CameraComponent *> compList;
     std::vector<std::unique_ptr<Stream>> streams; // Remove it
 };
