@@ -17,7 +17,9 @@
  */
 #pragma once
 
+#include <atomic>
 #include <gst/gst.h>
+#include <memory>
 
 #include "CameraDevice.h"
 #include "VideoStream.h"

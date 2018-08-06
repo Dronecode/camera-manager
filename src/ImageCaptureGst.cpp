@@ -302,10 +302,10 @@ std::string ImageCaptureGst::getGstImgEncName(int format)
     }
 }
 
-std::string ImageCaptureGst::getGstPixFormat(int pixFormat)
+std::string ImageCaptureGst::getGstPixFormat(CameraParameters::PixelFormat pixFormat)
 {
     switch (pixFormat) {
-    case CameraParameters::ID_PIXEL_FORMAT_RGB24:
+    case CameraParameters::PixelFormat::PIXEL_FORMAT_RGB24:
         return "RGB";
         break;
     default:

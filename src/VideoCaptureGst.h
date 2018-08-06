@@ -18,6 +18,7 @@
 #pragma once
 #include <atomic>
 #include <functional>
+#include <gst/gst.h>
 #include <string>
 #include <thread>
 

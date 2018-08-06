@@ -68,24 +68,17 @@ CameraComponent::~CameraComponent()
 
 int CameraComponent::start()
 {
-    int ret = 0;
-
-    mCamDefURI = mCamDev->getCameraDefinitionUri();
-    if (sizeof(mCamInfo.cam_definition_uri) > mCamDefURI.size()) {
-        strcpy((char *)mCamInfo.cam_definition_uri, mCamDefURI.c_str());
-    } else {
-        log_error("URI length bigger than permitted");
-    }
+    CameraDevice::Status ret;
 
     // Get list of Parameters supported & its default value
     ret = mCamDev->init(mCamParam);
-    if (ret)
-        return ret;
+    if (ret != CameraDevice::Status::SUCCESS)
+        return -1;
 
     // start the camera device
     ret = mCamDev->start();
-    if (ret)
-        return ret;
+    if (ret != CameraDevice::Status::SUCCESS)
+        return -1;
 
 #ifdef ENABLE_GAZEBO
     mVidStream = std::make_shared<VideoStreamUdp>(mCamDev);
@@ -180,29 +173,35 @@ int CameraComponent::getParam(const char *param_id, size_t id_size, char *param_
 int CameraComponent::setParam(const char *param_name, size_t id_size, const char *param_value,
                               size_t value_size, int param_type)
 {
-    int ret = 1;
+    CameraDevice::Status ret;
     std::string param = toString(param_name, id_size);
     ret = mCamDev->setParam(mCamParam, param, param_value, value_size, param_type);
-    return ret;
+    if (ret == CameraDevice::Status::SUCCESS)
+        return 0;
+    else
+        return -1;
 }
 
-int CameraComponent::setCameraMode(uint32_t mode)
+int CameraComponent::setCameraMode(CameraParameters::Mode mode)
 {
     mCamDev->setMode(mode);
     return 0;
 }
 
-int CameraComponent::resetCameraSettings()
+CameraParameters::Mode CameraComponent::getCameraMode()
 {
-    int ret = mCamDev->resetParams(mCamParam);
-    if (ret != 0)
-        log_debug("Error in reset of camera parameters. Could not open the device.");
-    return ret;
+    CameraParameters::Mode mode;
+    mCamDev->getMode(mode);
+
+    return mode;
 }
 
-int CameraComponent::getCameraMode()
+int CameraComponent::resetCameraSettings()
 {
-    return mCamDev->getMode();
+    CameraDevice::Status ret = mCamDev->resetParams(mCamParam);
+    if (ret != CameraDevice::Status::SUCCESS)
+        log_debug("Error in reset of camera parameters. Could not open the device.");
+    return -1;
 }
 
 int CameraComponent::setImageCaptureLocation(std::string imgPath)

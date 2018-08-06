@@ -26,7 +26,8 @@ CameraDeviceV4l2::CameraDeviceV4l2(std::string device)
     : mDeviceId(device)
     , mCardName("v4l2-card")
     , mDriverName("v4l2-drv")
-    , mMode(-1)
+    , mCamDefURI{}
+    , mMode(CameraParameters::Mode::MODE_STILL)
 {
     log_info("%s Node: %s", __func__, mDeviceId.c_str());
     int ret = initInfo();
@@ -38,27 +39,63 @@ CameraDeviceV4l2::~CameraDeviceV4l2()
 {
 }
 
-int CameraDeviceV4l2::init(CameraParameters &camParam)
+std::string CameraDeviceV4l2::getDeviceId() const
+{
+    return mDeviceId;
+}
+
+CameraDevice::Status CameraDeviceV4l2::getInfo(struct CameraInfo &camInfo) const
+{
+    strncpy((char *)camInfo.vendorName, mCardName.c_str(), sizeof(camInfo.vendorName));
+    camInfo.vendorName[sizeof(camInfo.vendorName) - 1] = 0;
+    strncpy((char *)camInfo.modelName, mDriverName.c_str(), sizeof(camInfo.modelName));
+    camInfo.modelName[sizeof(camInfo.modelName) - 1] = 0;
+    camInfo.firmware_version = mVersion;
+    camInfo.focal_length = 0;
+    camInfo.sensor_size_h = 0;
+    camInfo.sensor_size_v = 0;
+    camInfo.resolution_h = 0;
+    camInfo.resolution_v = 0;
+    camInfo.lens_id = 0;
+    camInfo.flags = ~0u; // TODO :: Replace with flags
+    camInfo.cam_definition_version = 1;
+    if (!mCamDefURI.empty()) {
+        if (sizeof(camInfo.cam_definition_uri) > mCamDefURI.size()) {
+            strcpy((char *)camInfo.cam_definition_uri, mCamDefURI.c_str());
+        } else {
+            log_error("URI length bigger than permitted");
+        }
+    }
+
+    return CameraDevice::Status::SUCCESS;
+}
+
+bool CameraDeviceV4l2::isGstV4l2Src() const
+{
+    return true;
+}
+
+CameraDevice::Status CameraDeviceV4l2::init(CameraParameters &camParam)
 {
     // TODO::Query supported parameters
     // TODO::Set default parameters set
     initParams(camParam);
-    return 0;
+    return CameraDevice::Status::SUCCESS;
 }
 
-int CameraDeviceV4l2::uninit()
+CameraDevice::Status CameraDeviceV4l2::uninit()
 {
-    return 0;
+    return CameraDevice::Status::SUCCESS;
 }
 
-int CameraDeviceV4l2::start()
+CameraDevice::Status CameraDeviceV4l2::start()
 {
-    return 0;
+    return CameraDevice::Status::SUCCESS;
 }
 
-int CameraDeviceV4l2::stop()
+CameraDevice::Status CameraDeviceV4l2::stop()
 {
-    return 0;
+    return CameraDevice::Status::SUCCESS;
 }
 
 std::vector<uint8_t> CameraDeviceV4l2::read()
@@ -66,8 +103,9 @@ std::vector<uint8_t> CameraDeviceV4l2::read()
     return std::vector<uint8_t>();
 }
 
-int CameraDeviceV4l2::setParam(CameraParameters &camParam, std::string param,
-                               const char *param_value, size_t value_size, int param_type)
+CameraDevice::Status CameraDeviceV4l2::setParam(CameraParameters &camParam, std::string param,
+                                                const char *param_value, size_t value_size,
+                                                int param_type)
 
 {
     int ret = 0;
@@ -88,12 +126,46 @@ int CameraDeviceV4l2::setParam(CameraParameters &camParam, std::string param,
     if (!ret)
         camParam.setParameter(param, u.param_int32);
 
-    return ret;
+    if (ret)
+        return CameraDevice::Status::ERROR_UNKNOWN;
+    else
+        return CameraDevice::Status::SUCCESS;
 }
 
-std::string CameraDeviceV4l2::getDeviceId()
+CameraDevice::Status CameraDeviceV4l2::resetParams(CameraParameters &camParam)
 {
-    return mDeviceId;
+    log_info("%s", __func__);
+
+    int ret = 0;
+
+    ret = resetV4l2Params(camParam);
+
+    if (ret)
+        return CameraDevice::Status::ERROR_UNKNOWN;
+    else
+        return CameraDevice::Status::SUCCESS;
+}
+
+CameraDevice::Status CameraDeviceV4l2::setSize(const uint32_t width, const uint32_t height)
+{
+    return CameraDevice::Status::SUCCESS;
+}
+
+CameraDevice::Status CameraDeviceV4l2::setPixelFormat(const CameraParameters::PixelFormat format)
+{
+    return CameraDevice::Status::SUCCESS;
+}
+
+CameraDevice::Status CameraDeviceV4l2::setMode(const CameraParameters::Mode mode)
+{
+    mMode = mode;
+    return CameraDevice::Status::SUCCESS;
+}
+
+CameraDevice::Status CameraDeviceV4l2::getMode(CameraParameters::Mode &mode) const
+{
+    mode = mMode;
+    return CameraDevice::Status::SUCCESS;
 }
 
 int CameraDeviceV4l2::initInfo()
@@ -126,47 +198,15 @@ int CameraDeviceV4l2::initInfo()
     return ret;
 }
 
-int CameraDeviceV4l2::getInfo(struct CameraInfo &camInfo)
+CameraDevice::Status CameraDeviceV4l2::setCameraDefinitionUri(const std::string uri)
 {
-    strncpy((char *)camInfo.vendorName, mCardName.c_str(), sizeof(camInfo.vendorName));
-    camInfo.vendorName[sizeof(camInfo.vendorName) - 1] = 0;
-    strncpy((char *)camInfo.modelName, mDriverName.c_str(), sizeof(camInfo.modelName));
-    camInfo.modelName[sizeof(camInfo.modelName) - 1] = 0;
-    camInfo.firmware_version = mVersion;
-    camInfo.focal_length = 0;
-    camInfo.sensor_size_h = 0;
-    camInfo.sensor_size_v = 0;
-    camInfo.resolution_h = 0;
-    camInfo.resolution_v = 0;
-    camInfo.lens_id = 0;
-    camInfo.flags = ~0u; // TODO :: Replace with flags
-    camInfo.cam_definition_version = 1;
-    return 0;
+    mCamDefURI = uri;
+    return CameraDevice::Status::SUCCESS;
 }
 
-bool CameraDeviceV4l2::isGstV4l2Src()
+std::string CameraDeviceV4l2::getCameraDefinitionUri() const
 {
-    return true;
-}
-
-int CameraDeviceV4l2::setSize(uint32_t width, uint32_t height)
-{
-    return 0;
-}
-
-int CameraDeviceV4l2::setPixelFormat(uint32_t format)
-{
-    return 0;
-}
-
-int CameraDeviceV4l2::setMode(uint32_t mode)
-{
-    return 0;
-}
-
-int CameraDeviceV4l2::getMode()
-{
-    return mMode;
+    return mCamDefURI;
 }
 
 int CameraDeviceV4l2::initParams(CameraParameters &camParam)
@@ -182,17 +222,6 @@ int CameraDeviceV4l2::initParams(CameraParameters &camParam)
     return ret;
 }
 
-int CameraDeviceV4l2::resetParams(CameraParameters &camParam)
-{
-    log_info("%s", __func__);
-
-    int ret = 0;
-
-    ret = resetV4l2Params(camParam);
-
-    return ret;
-}
-
 int CameraDeviceV4l2::declareParams(CameraParameters &camParam)
 {
     int ret = 0;
@@ -201,7 +230,7 @@ int CameraDeviceV4l2::declareParams(CameraParameters &camParam)
                                 CameraParameters::PARAM_ID_CAMERA_MODE,
                                 CameraParameters::PARAM_TYPE_UINT32);
     camParam.setParameter(CameraParameters::CAMERA_MODE,
-                          (uint32_t)CameraParameters::ID_CAMERA_MODE_VIDEO);
+                          (uint32_t)CameraParameters::Mode::MODE_VIDEO);
 
     return ret;
 }

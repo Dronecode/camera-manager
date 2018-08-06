@@ -46,7 +46,7 @@ private:
     void captureThread(int num);
     int createV4l2Pipeline();
     std::string getGstImgEncName(int format);
-    std::string getGstPixFormat(int pixFormat);
+    std::string getGstPixFormat(CameraParameters::PixelFormat pixFormat);
     std::string getImgExt(int format);
     std::string getGstPipelineNameV4l2();
     int createAppsrcPipeline();
@@ -59,7 +59,7 @@ private:
     std::string mPath;                           /* Image File Destination Path*/
     uint32_t mCamWidth;                          /* Camera Frame Width*/
     uint32_t mCamHeight;                         /* Camera Frame Height*/
-    uint32_t mCamPixFormat;                      /* Camera Frame Pixel Format*/
+    CameraParameters::PixelFormat mCamPixFormat; /* Camera Frame Pixel Format*/
     std::function<void(int result, int seq_num)> mResultCB;
     std::thread mThread;
 };

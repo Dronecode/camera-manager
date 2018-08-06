@@ -223,7 +223,7 @@ void MavlinkServer::_handle_set_camera_mode(const struct sockaddr_in &addr,
 
     CameraComponent *tgtComp = getCameraComponent(cmd.target_component);
     if (tgtComp) {
-        if(!tgtComp->setCameraMode((uint32_t)cmd.param2))
+        if (!tgtComp->setCameraMode(translateCameraMode((uint32_t)cmd.param2)))
             success = true;
     }
 
@@ -830,4 +830,26 @@ CameraComponent *MavlinkServer::getCameraComponent(int compID)
         return it->second;
     else
         return NULL;
+}
+
+CameraParameters::Mode MavlinkServer::translateCameraMode(uint32_t mode)
+{
+    CameraParameters::Mode ret = CameraParameters::Mode::MODE_STILL;
+
+    switch (mode) {
+    case CAMERA_MODE_IMAGE:
+        ret = CameraParameters::Mode::MODE_STILL;
+        break;
+    case CAMERA_MODE_VIDEO:
+        ret = CameraParameters::Mode::MODE_VIDEO;
+        break;
+    // case CAMERA_MODE_IMAGE_SURVEY:
+    // ret = CameraParameters::Mode::MODE_IMG_SURVEY;
+    // break;
+    default:
+        log_error("Unknown camera mode :%d", mode);
+        break;
+    }
+
+    return ret;
 }

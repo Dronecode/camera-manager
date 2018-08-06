@@ -88,4 +88,6 @@ private:
     void _send_ack(const struct sockaddr_in &addr, int cmd, int comp_id, bool success);
     const Stream::FrameSize *_find_best_frame_size(Stream &s, uint32_t w, uint32_t v);
     friend bool _heartbeat_cb(void *data);
+
+    CameraParameters::Mode translateCameraMode(uint32_t mode);
 };

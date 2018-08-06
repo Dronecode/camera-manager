@@ -26,28 +26,31 @@ class CameraDeviceV4l2 final : public CameraDevice {
 public:
     CameraDeviceV4l2(std::string device);
     ~CameraDeviceV4l2();
-    int init(CameraParameters &camParam);
-    int uninit();
-    int start();
-    int stop();
+    std::string getDeviceId() const;
+    Status getInfo(CameraInfo &camInfo) const;
+    bool isGstV4l2Src() const;
+    Status init(CameraParameters &camParam);
+    Status uninit();
+    Status start();
+    Status stop();
     std::vector<uint8_t> read();
-    int setParam(CameraParameters &camParam, std::string param, const char *param_value,
-                 size_t value_size, int param_type);
-    std::string getDeviceId();
-    int getInfo(struct CameraInfo &camInfo);
-    bool isGstV4l2Src();
-    int setSize(uint32_t width, uint32_t height);
-    int setPixelFormat(uint32_t format);
-    int setMode(uint32_t mode);
-    int getMode();
-    int resetParams(CameraParameters &camParam);
+    Status setParam(CameraParameters &camParam, const std::string param, const char *param_value,
+                    const size_t value_size, const int param_type);
+    Status resetParams(CameraParameters &camParam);
+    Status setSize(const uint32_t width, const uint32_t height);
+    Status setPixelFormat(const CameraParameters::PixelFormat format);
+    Status setMode(const CameraParameters::Mode mode);
+    Status getMode(CameraParameters::Mode &mode) const;
+    Status setCameraDefinitionUri(const std::string uri);
+    std::string getCameraDefinitionUri() const;
 
 private:
     std::string mDeviceId;
     std::string mCardName;
     std::string mDriverName;
+    std::string mCamDefURI;
     uint32_t mVersion;
-    int mMode;
+    CameraParameters::Mode mMode;
     int initInfo();
     int initParams(CameraParameters &camParam);
     int declareParams(CameraParameters &camParam);
