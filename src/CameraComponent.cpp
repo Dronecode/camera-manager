@@ -25,10 +25,6 @@
 #endif
 #include "util.h"
 #include <algorithm>
-#ifdef ENABLE_GAZEBO
-#include "CameraDeviceGazebo.h"
-#include "VideoStreamUdp.h"
-#endif
 
 CameraComponent::CameraComponent(std::shared_ptr<CameraDevice> device)
     : mCamDev(device)
@@ -80,12 +76,6 @@ int CameraComponent::start()
     if (ret != CameraDevice::Status::SUCCESS)
         return -1;
 
-#ifdef ENABLE_GAZEBO
-    mVidStream = std::make_shared<VideoStreamUdp>(mCamDev);
-    mVidStream->init();
-    mVidStream->start();
-#endif
-
     return 0;
 }
 
@@ -108,13 +98,6 @@ int CameraComponent::stop()
 
     // Uninit the camera device
     mCamDev->uninit();
-
-#ifdef ENABLE_GAZEBO
-    if (mVidStream) {
-        mVidStream->stop();
-        mVidStream->uninit();
-    }
-#endif
 
     return 0;
 }

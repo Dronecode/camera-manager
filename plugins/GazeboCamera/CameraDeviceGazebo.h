@@ -27,22 +27,22 @@ class CameraDeviceGazebo final : public CameraDevice {
 public:
     CameraDeviceGazebo(std::string device);
     ~CameraDeviceGazebo();
-    std::string getDeviceId();
-    int getInfo(struct CameraInfo &camInfo);
-    bool isGstV4l2Src();
-    int init(CameraParameters &camParam);
-    int uninit();
-    int start();
-    int stop();
+    std::string getDeviceId() const;
+    Status getInfo(CameraInfo &camInfo) const;
+    bool isGstV4l2Src() const;
+    Status init(CameraParameters &camParam);
+    Status uninit();
+    Status start();
+    Status stop();
     std::vector<uint8_t> read();
-    int resetParams(CameraParameters &camParam);
-    int setParam(CameraParameters &camParam, std::string param, const char *param_value,
-                 size_t value_size, int param_type);
-    int getSize(uint32_t &width, uint32_t &height);
-    int getPixelFormat(uint32_t &format);
-    int setMode(uint32_t mode);
-    int getMode();
-    std::string getOverlayText();
+    Status setParam(CameraParameters &camParam, const std::string param, const char *param_value,
+                    const size_t value_size, const int param_type);
+    Status resetParams(CameraParameters &camParam);
+    Status getSize(uint32_t &width, uint32_t &height) const;
+    Status getPixelFormat(CameraParameters::PixelFormat &format) const;
+    Status setMode(const CameraParameters::Mode mode);
+    Status getMode(CameraParameters::Mode &mode) const;
+    std::string getOverlayText() const;
 
 private:
     // Declare parameter name & ID
@@ -61,11 +61,11 @@ private:
     void cbOnImages(ConstImagesStampedPtr &_msg);
     int getImage(const gazebo::msgs::Image &_msg);
     std::string mDeviceId;
-    std::atomic<int> mState;
-    int mMode;
+    std::atomic<CameraDevice::State> mState;
     uint32_t mWidth;
     uint32_t mHeight;
-    uint32_t mPixelFormat;
+    CameraParameters::Mode mMode;
+    CameraParameters::PixelFormat mPixelFormat;
     std::string mTopicName;
     gazebo::transport::NodePtr mNode;
     gazebo::transport::SubscriberPtr mSub;

@@ -37,10 +37,11 @@ const int CameraDeviceGazebo::ID_PARAMETER_CUSTOM_ENUM = 106;
 
 CameraDeviceGazebo::CameraDeviceGazebo(std::string device)
     : mDeviceId(device)
-    , mMode(-1)
+    , mState(State::STATE_IDLE)
     , mWidth(640)
     , mHeight(360)
-    , mPixelFormat(CameraParameters::ID_PIXEL_FORMAT_RGB24)
+    , mMode(CameraParameters::Mode::MODE_VIDEO)
+    , mPixelFormat(CameraParameters::PixelFormat::PIXEL_FORMAT_RGB24)
     , mOvText(device)
 {
     log_info("%s path:%s", __func__, mDeviceId.c_str());
@@ -52,12 +53,13 @@ CameraDeviceGazebo::~CameraDeviceGazebo()
     uninit();
 }
 
-std::string CameraDeviceGazebo::getDeviceId()
+std::string CameraDeviceGazebo::getDeviceId() const
+
 {
     return mDeviceId;
 }
 
-int CameraDeviceGazebo::getInfo(struct CameraInfo &camInfo)
+CameraDevice::Status CameraDeviceGazebo::getInfo(CameraInfo &camInfo) const
 {
     strcpy((char *)camInfo.vendorName, "Gazebo");
     strcpy((char *)camInfo.modelName, "SITL-Camera");
@@ -70,18 +72,17 @@ int CameraDeviceGazebo::getInfo(struct CameraInfo &camInfo)
     camInfo.lens_id = 0;
     camInfo.flags = ~0u;
     camInfo.cam_definition_version = 1;
-    return 0;
+    return CameraDevice::Status::SUCCESS;
 }
 
-bool CameraDeviceGazebo::isGstV4l2Src()
+bool CameraDeviceGazebo::isGstV4l2Src() const
 {
     return false;
 }
 
-int CameraDeviceGazebo::init(CameraParameters &camParam)
+CameraDevice::Status CameraDeviceGazebo::init(CameraParameters &camParam)
 {
-    camParam.setParameter(CameraParameters::CAMERA_MODE,
-                          (uint32_t)CameraParameters::ID_CAMERA_MODE_VIDEO);
+    camParam.setParameter(CameraParameters::CAMERA_MODE, (uint32_t)mMode);
     camParam.setParameterIdType(PARAMETER_CUSTOM_UINT8, ID_PARAMETER_CUSTOM_UINT8,
                                 CameraParameters::PARAM_TYPE_UINT8);
     camParam.setParameter(PARAMETER_CUSTOM_UINT8, (uint8_t)50);
@@ -98,15 +99,15 @@ int CameraDeviceGazebo::init(CameraParameters &camParam)
                                 CameraParameters::PARAM_TYPE_UINT32);
     camParam.setParameter(PARAMETER_CUSTOM_ENUM, (uint32_t)0);
 
-    return 0;
+    return CameraDevice::Status::SUCCESS;
 }
 
-int CameraDeviceGazebo::uninit()
+CameraDevice::Status CameraDeviceGazebo::uninit()
 {
-    return 0;
+    return CameraDevice::Status::SUCCESS;
 }
 
-int CameraDeviceGazebo::start()
+CameraDevice::Status CameraDeviceGazebo::start()
 {
     // Load Gazebo
     gazebo::client::setup();
@@ -120,60 +121,61 @@ int CameraDeviceGazebo::start()
 
     // Listen to Gazebo <device> topic
     mSub = mNode->Subscribe(mDeviceId, &CameraDeviceGazebo::cbOnImages, this);
-    mState = STATE_RUN;
-    return 0;
+    mState = State::STATE_RUN;
+    return CameraDevice::Status::SUCCESS;
 }
 
-int CameraDeviceGazebo::stop()
+CameraDevice::Status CameraDeviceGazebo::stop()
 {
     std::lock_guard<std::mutex> locker(mLock);
-    mState = STATE_INIT;
+    mState = State::STATE_INIT;
     // Make sure to shut everything down.
     gazebo::client::shutdown();
-    return 0;
+    return CameraDevice::Status::SUCCESS;
 }
 
 std::vector<uint8_t> CameraDeviceGazebo::read()
 {
     std::lock_guard<std::mutex> locker(mLock);
-    if (mState != STATE_RUN)
+    if (mState != State::STATE_RUN)
         return {};
     return mFrameBuffer;
 }
 
-int CameraDeviceGazebo::getSize(uint32_t &width, uint32_t &height)
+CameraDevice::Status CameraDeviceGazebo::getSize(uint32_t &width, uint32_t &height) const
 {
     width = mWidth;
     height = mHeight;
 
-    return 0;
+    return CameraDevice::Status::SUCCESS;
 }
 
-int CameraDeviceGazebo::getPixelFormat(uint32_t &format)
+CameraDevice::Status CameraDeviceGazebo::getPixelFormat(CameraParameters::PixelFormat &format) const
 {
     format = mPixelFormat;
 
-    return 0;
+    return CameraDevice::Status::SUCCESS;
 }
 
-int CameraDeviceGazebo::setMode(uint32_t mode)
+CameraDevice::Status CameraDeviceGazebo::setMode(const CameraParameters::Mode mode)
 {
     mMode = mode;
-    return 0;
+    return CameraDevice::Status::SUCCESS;
 }
 
-int CameraDeviceGazebo::getMode()
+CameraDevice::Status CameraDeviceGazebo::getMode(CameraParameters::Mode &mode) const
 {
-    return mMode;
+    mode = mMode;
+    return CameraDevice::Status::SUCCESS;
 }
 
-int CameraDeviceGazebo::resetParams(CameraParameters &camParam)
+CameraDevice::Status CameraDeviceGazebo::resetParams(CameraParameters &camParam)
 {
-    int ret = 0;
+    CameraDevice::Status ret = CameraDevice::Status::SUCCESS;
 
     // TODO :: The default params need to be stored in DS during init
     camParam.setParameter(CameraParameters::CAMERA_MODE,
-                          (uint32_t)CameraParameters::ID_CAMERA_MODE_VIDEO);
+                          (uint32_t)CameraParameters::Mode::MODE_VIDEO);
     camParam.setParameter(PARAMETER_CUSTOM_UINT8, (uint8_t)50);
     camParam.setParameter(PARAMETER_CUSTOM_UINT32, (uint32_t)50);
     camParam.setParameter(PARAMETER_CUSTOM_INT32, (int32_t)-10);
@@ -183,9 +185,9 @@ int CameraDeviceGazebo::resetParams(CameraParameters &camParam)
     return ret;
 }
 
-int CameraDeviceGazebo::setParam(CameraParameters &camParam, std::string param,
-                                 const char *param_value, size_t value_size, int param_type)
-
+CameraDevice::Status CameraDeviceGazebo::setParam(CameraParameters &camParam,
+                                                  const std::string param, const char *param_value,
+                                                  const size_t value_size, const int param_type)
 {
     int ret = 0;
     std::string ovValue;
@@ -226,7 +228,10 @@ int CameraDeviceGazebo::setParam(CameraParameters &camParam, std::string param,
     if (!ret)
         setOverlayText(param + " = " + ovValue);
 
-    return ret;
+    if (!ret)
+        return CameraDevice::Status::SUCCESS;
+    else
+        return CameraDevice::Status::NOT_SUPPORTED;
 }
 
 int CameraDeviceGazebo::setOverlayText(std::string text)
@@ -237,7 +242,7 @@ int CameraDeviceGazebo::setOverlayText(std::string text)
     return 0;
 }
 
-std::string CameraDeviceGazebo::getOverlayText()
+std::string CameraDeviceGazebo::getOverlayText() const
 {
     return mOvText;
 }
@@ -273,7 +278,7 @@ int CameraDeviceGazebo::getImage(const gazebo::msgs::Image &_msg)
     }
     case gazebo::common::Image::RGB_INT8:
     case gazebo::common::Image::RGBA_INT8: {
-        mPixelFormat = CameraParameters::ID_PIXEL_FORMAT_RGB24;
+        mPixelFormat = CameraParameters::PixelFormat::PIXEL_FORMAT_RGB24;
         break;
     }
     default: {

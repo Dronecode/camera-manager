@@ -304,8 +304,10 @@ AM_CXXFLAGS += \
         ${GZB_CFLAGS}
 
 BASE_FILES += \
-	src/CameraDeviceGazebo.h \
-	src/CameraDeviceGazebo.cpp
+	plugins/GazeboCamera/PluginGazebo.h \
+	plugins/GazeboCamera/PluginGazebo.cpp \
+	plugins/GazeboCamera/CameraDeviceGazebo.h \
+	plugins/GazeboCamera/CameraDeviceGazebo.cpp
 endif
 
 .PHONY: test
