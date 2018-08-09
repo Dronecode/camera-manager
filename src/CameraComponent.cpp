@@ -20,6 +20,7 @@
 #include "CameraComponent.h"
 #include "ImageCaptureGst.h"
 #include "VideoCaptureGst.h"
+#include "VideoStreamUdp.h"
 #ifdef ENABLE_MAVLINK
 #include "mavlink_server.h"
 #endif
@@ -51,6 +52,12 @@ CameraComponent::~CameraComponent()
         mImgCap->stop();
         mImgCap->uninit();
         mImgCap.reset();
+    }
+
+    if (mVidStream) {
+        mVidStream->stop();
+        mVidStream->uninit();
+        mVidStream.reset();
     }
 
     // stop the camera device
@@ -389,6 +396,85 @@ int CameraComponent::setVideoSize(uint32_t param_value)
 int CameraComponent::setVideoFrameFormat(uint32_t param_value)
 {
     return 0;
+}
+
+int CameraComponent::startVideoStream(const bool isUdp)
+{
+    int ret = 0;
+
+    // TODO :: Check if image/video capture is running
+    // If yes, video streaming may work by adding a tee element
+    // in the gstreamer pipeline. Currently conncurent use cases
+    // not supported
+
+    // Close previous instance of video streaming if exist
+    if (mVidStream)
+        mVidStream.reset();
+
+    if (isUdp)
+        mVidStream = std::make_shared<VideoStreamUdp>(mCamDev);
+    else {
+        log_error("RTSP Streaming start/stop not supported");
+        return -1;
+    }
+
+    ret = mVidStream->init();
+    if (!ret) {
+        ret = mVidStream->start();
+        if (ret) {
+            mVidStream->uninit();
+            mVidStream.reset();
+        }
+    }
+
+    return ret;
+}
+
+int CameraComponent::stopVideoStream()
+{
+    int ret = 0;
+
+    if (!mVidStream)
+        return 0;
+
+    ret = mVidStream->stop();
+    if (ret) {
+        log_error("Error in Video Stream stop");
+    }
+
+    ret = mVidStream->uninit();
+    if (ret) {
+        log_error("Error in Video Stream uninit");
+    }
+
+    mVidStream.reset();
+
+    return 0;
+}
+
+uint8_t CameraComponent::getVideoStreamStatus() const
+{
+    uint8_t ret = 0;
+
+    if (!mVidStream)
+        return 0;
+
+    switch (mVidStream->getState()) {
+    case VideoStream::STATE_ERROR:
+    case VideoStream::STATE_IDLE:
+    case VideoStream::STATE_INIT:
+        ret = 0;
+        break;
+    case VideoStream::STATE_RUN:
+        ret = 1;
+        break;
+    default:
+        ret = 0;
+        break;
+    }
+
+    log_debug("%s Status:%d", __func__, ret);
+    return ret;
 }
 
 /* Input string can be either null-terminated or not */

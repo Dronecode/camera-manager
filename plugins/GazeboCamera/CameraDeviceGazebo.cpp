@@ -72,6 +72,13 @@ CameraDevice::Status CameraDeviceGazebo::getInfo(CameraInfo &camInfo) const
     camInfo.lens_id = 0;
     camInfo.flags = ~0u;
     camInfo.cam_definition_version = 1;
+    if (!mCamDefUri.empty()) {
+        if (sizeof(camInfo.cam_definition_uri) > mCamDefUri.size()) {
+            strcpy((char *)camInfo.cam_definition_uri, mCamDefUri.c_str());
+        } else {
+            log_error("URI length bigger than permitted");
+        }
+    }
     return CameraDevice::Status::SUCCESS;
 }
 
@@ -167,6 +174,20 @@ CameraDevice::Status CameraDeviceGazebo::getMode(CameraParameters::Mode &mode) c
 {
     mode = mMode;
     return CameraDevice::Status::SUCCESS;
+}
+
+CameraDevice::Status CameraDeviceGazebo::setCameraDefinitionUri(const std::string uri)
+{
+    if (uri.empty())
+        return Status::INVALID_ARGUMENT;
+
+    mCamDefUri = uri;
+    return Status::SUCCESS;
+}
+
+std::string CameraDeviceGazebo::getCameraDefinitionUri() const
+{
+    return mCamDefUri;
 }
 
 CameraDevice::Status CameraDeviceGazebo::resetParams(CameraParameters &camParam)

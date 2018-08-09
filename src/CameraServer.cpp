@@ -26,6 +26,10 @@
 #include "mavlink_server.h"
 #endif
 
+#ifdef ENABLE_GAZEBO
+#define GAZEBO_STRING "gazebo"
+#endif
+
 #define DEFAULT_SERVICE_PORT 8554
 
 CameraServer::CameraServer(const ConfFile &conf)
@@ -34,6 +38,7 @@ CameraServer::CameraServer(const ConfFile &conf)
     , mavlink_server(conf, streams, rtsp_server)
 #endif
 {
+    std::string confDeviceId;
     // Read image capture settings/destination
     ImageSettings imgSetting;
     bool isImgCapSetting = readImgCapSettings(conf, imgSetting);
@@ -66,8 +71,18 @@ CameraServer::CameraServer(const ConfFile &conf)
             continue;
         }
 
+        confDeviceId = deviceID;
+
+#ifdef ENABLE_GAZEBO
+        // The ID of gazebo device used in conf file is "gazebo" instead
+        // of the topic name being used as deviceID in CameraDevice
+        if (deviceID.find(GAZEBO_STRING) != std::string::npos) {
+            confDeviceId = GAZEBO_STRING;
+        }
+#endif
+
         // Set the URI read from conf file
-        device->setCameraDefinitionUri(readURI(conf, deviceID));
+        device->setCameraDefinitionUri(readURI(conf, confDeviceId));
 
         // create camera component with camera device
         CameraComponent *comp = new CameraComponent(device);
@@ -95,6 +110,13 @@ CameraServer::CameraServer(const ConfFile &conf)
 
         // Add component to the list
         compList.push_back(comp);
+
+#ifdef ENABLE_GAZEBO
+        // If the camera device is gazebo, start UDP streaming
+        if (deviceID.find(GAZEBO_STRING) != std::string::npos) {
+            comp->startVideoStream(true);
+        }
+#endif
     }
 }
 

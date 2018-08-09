@@ -42,6 +42,8 @@ public:
     Status getPixelFormat(CameraParameters::PixelFormat &format) const;
     Status setMode(const CameraParameters::Mode mode);
     Status getMode(CameraParameters::Mode &mode) const;
+    Status setCameraDefinitionUri(const std::string uri);
+    std::string getCameraDefinitionUri() const;
     std::string getOverlayText() const;
 
 private:
@@ -66,6 +68,7 @@ private:
     uint32_t mHeight;
     CameraParameters::Mode mMode;
     CameraParameters::PixelFormat mPixelFormat;
+    std::string mCamDefUri;
     std::string mTopicName;
     gazebo::transport::NodePtr mNode;
     gazebo::transport::SubscriberPtr mSub;
