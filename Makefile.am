@@ -189,6 +189,15 @@ BASE_FILES += \
 	src/stream_aero_bottom.h
 endif
 
+if ENABLE_CUSTOM
+BASE_FILES += \
+        plugins/CustomCamera/PluginCustom.h \
+        plugins/CustomCamera/PluginCustom.cpp \
+        plugins/CustomCamera/CameraDeviceCustom.h \
+        plugins/CustomCamera/CameraDeviceCustom.cpp
+endif
+
+
 bin_PROGRAMS += dcm
 
 SED_PROCESS = $(AM_V_GEN) $(MKDIR_P) $(dir $@) && \
