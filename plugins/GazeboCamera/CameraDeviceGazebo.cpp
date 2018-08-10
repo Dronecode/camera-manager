@@ -214,8 +214,7 @@ CameraDevice::Status CameraDeviceGazebo::resetParams(CameraParameters &camParam)
     CameraDevice::Status ret = CameraDevice::Status::SUCCESS;
 
     // TODO :: The default params need to be stored in DS during init
-    camParam.setParameter(CameraParameters::CAMERA_MODE,
-                          (uint32_t)CameraParameters::Mode::MODE_VIDEO);
+    camParam.setParameter(CameraParameters::CAMERA_MODE, (uint32_t)mMode);
     camParam.setParameter(PARAMETER_CUSTOM_UINT8, (uint8_t)50);
     camParam.setParameter(PARAMETER_CUSTOM_UINT32, (uint32_t)50);
     camParam.setParameter(PARAMETER_CUSTOM_INT32, (int32_t)-10);

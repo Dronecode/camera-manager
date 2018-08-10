@@ -27,7 +27,7 @@ CameraDeviceV4l2::CameraDeviceV4l2(std::string device)
     , mCardName("v4l2-card")
     , mDriverName("v4l2-drv")
     , mCamDefURI{}
-    , mMode(CameraParameters::Mode::MODE_STILL)
+    , mMode(CameraParameters::Mode::MODE_VIDEO)
 {
     log_info("%s Node: %s", __func__, mDeviceId.c_str());
     int ret = initInfo();
@@ -224,8 +224,7 @@ int CameraDeviceV4l2::declareParams(CameraParameters &camParam)
     camParam.setParameterIdType(CameraParameters::CAMERA_MODE,
                                 CameraParameters::PARAM_ID_CAMERA_MODE,
                                 CameraParameters::PARAM_TYPE_UINT32);
-    camParam.setParameter(CameraParameters::CAMERA_MODE,
-                          (uint32_t)CameraParameters::Mode::MODE_VIDEO);
+    camParam.setParameter(CameraParameters::CAMERA_MODE, (uint32_t)mMode);
 
     return ret;
 }
