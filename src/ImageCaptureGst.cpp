@@ -423,13 +423,17 @@ static void cbNeedData(GstElement *appsrc, guint unused_size, ImageCaptureGst *o
     log_debug("%s", __func__);
 
     GstFlowReturn ret;
-    std::vector<uint8_t> frame = obj->mCamDev->read();
-    uint8_t *data = &frame[0];
-    gsize size = frame.size(); // width*height*3/2/1.5
+    CameraData data;
+    CameraDevice::Status status = obj->mCamDev->read(data);
+    if (status != CameraDevice::Status::SUCCESS) {
+        log_error("No data from camera device");
+        // TODO :: return error or feed blank frames?
+    }
+    gsize size = data.bufSize; // width*height*3/2/1.5
     gsize offset = 0;
     gsize maxsize = size;
-    GstBuffer *buffer
-        = gst_buffer_new_wrapped_full((GstMemoryFlags)0, data, maxsize, offset, size, NULL, NULL);
+    GstBuffer *buffer = gst_buffer_new_wrapped_full((GstMemoryFlags)0, data.buf, maxsize, offset,
+                                                    size, NULL, NULL);
     assert(buffer);
 
     g_signal_emit_by_name(appsrc, "push-buffer", buffer, &ret);

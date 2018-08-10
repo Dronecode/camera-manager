@@ -156,17 +156,14 @@ GstBuffer *VideoStreamUdp::readFrame()
 {
     GstBuffer *buffer;
     static GstClockTime timestamp = 0;
-    // TODO :: Remove the sleep once the read call is blocking
-    usleep(40000);
-    std::vector<uint8_t> frame = mCamDev->read();
-    // TODO:: check if frame is valid
-    uint8_t *data = &frame[0];
-    if (data) {
-        gsize size = frame.size(); // width*height*3/2/1.5
+    CameraData data;
+    CameraDevice::Status ret = mCamDev->read(data);
+    if (ret == CameraDevice::Status::SUCCESS) {
+        gsize size = data.bufSize;
         gsize offset = 0;
         gsize maxsize = size;
-        buffer = gst_buffer_new_wrapped_full((GstMemoryFlags)0, data, maxsize, offset, size, NULL,
-                                             NULL);
+        buffer = gst_buffer_new_wrapped_full((GstMemoryFlags)0, data.buf, maxsize, offset, size,
+                                             NULL, NULL);
     } else {
         log_error("Camera returned no frame");
         // TODO :: Change the multiplication factor based on pix format

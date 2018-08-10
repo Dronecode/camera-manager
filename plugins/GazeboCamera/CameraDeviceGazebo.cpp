@@ -21,6 +21,7 @@
 #include <gazebo/msgs/msgs.hh>
 
 #include <iostream>
+#include <sys/time.h>
 
 #include "CameraDeviceGazebo.h"
 
@@ -141,12 +142,30 @@ CameraDevice::Status CameraDeviceGazebo::stop()
     return CameraDevice::Status::SUCCESS;
 }
 
-std::vector<uint8_t> CameraDeviceGazebo::read()
+CameraDevice::Status CameraDeviceGazebo::read(CameraData &data)
 {
+    // TODO :: Remove the sleep once the read call is blocking
+    usleep(40000);
+
     std::lock_guard<std::mutex> locker(mLock);
     if (mState != State::STATE_RUN)
-        return {};
-    return mFrameBuffer;
+        return Status::INVALID_STATE;
+
+    if (mFrameBuffer.empty())
+        return Status::ERROR_UNKNOWN;
+
+    struct timeval timeofday;
+    gettimeofday(&timeofday, NULL);
+
+    data.sec = timeofday.tv_sec;
+    data.nsec = timeofday.tv_usec * 1000;
+    data.width = mWidth;
+    data.height = mHeight;
+    data.stride = mWidth; // TODO :: Dependent on pixformat
+    data.buf = &mFrameBuffer[0];
+    data.bufSize = mFrameBuffer.size();
+
+    return Status::SUCCESS;
 }
 
 CameraDevice::Status CameraDeviceGazebo::getSize(uint32_t &width, uint32_t &height) const

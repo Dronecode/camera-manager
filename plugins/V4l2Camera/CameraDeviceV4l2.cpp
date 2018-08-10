@@ -98,11 +98,6 @@ CameraDevice::Status CameraDeviceV4l2::stop()
     return CameraDevice::Status::SUCCESS;
 }
 
-std::vector<uint8_t> CameraDeviceV4l2::read()
-{
-    return std::vector<uint8_t>();
-}
-
 CameraDevice::Status CameraDeviceV4l2::setParam(CameraParameters &camParam, std::string param,
                                                 const char *param_value, size_t value_size,
                                                 int param_type)

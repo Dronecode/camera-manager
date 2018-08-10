@@ -173,8 +173,6 @@ public:
      */
     virtual Status stop() { return Status::NOT_SUPPORTED; }
 
-    virtual std::vector<uint8_t> read() { return {}; }
-
     /**
      *  Read camera images from camera device.
      *

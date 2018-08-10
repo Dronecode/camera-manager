@@ -33,7 +33,6 @@ public:
     Status uninit();
     Status start();
     Status stop();
-    std::vector<uint8_t> read();
     Status setParam(CameraParameters &camParam, const std::string param, const char *param_value,
                     const size_t value_size, const int param_type);
     Status resetParams(CameraParameters &camParam);
