@@ -25,66 +25,98 @@
 #ifdef ENABLE_MAVLINK
 #include "mavlink_server.h"
 #endif
-#include "v4l2_interface.h"
+
+#ifdef ENABLE_GAZEBO
+#define GAZEBO_STRING "gazebo"
+#endif
 
 #define DEFAULT_SERVICE_PORT 8554
 
 CameraServer::CameraServer(const ConfFile &conf)
-    : cameraCount(0)
-    , rtsp_server(streams, DEFAULT_SERVICE_PORT)
+    : rtsp_server(streams, DEFAULT_SERVICE_PORT)
 #ifdef ENABLE_MAVLINK
     , mavlink_server(conf, streams, rtsp_server)
 #endif
 {
-    bool isImgCapSetting = false;
-    bool isVidCapSetting = false;
-
-    cameraCount = detectCamera(conf);
-
-    // Read image capture settings
+    std::string confDeviceId;
+    // Read image capture settings/destination
     ImageSettings imgSetting;
-    if (!getImgCapSettings(conf, imgSetting)) {
-        // Send the setting to camera comp
-        isImgCapSetting = true;
-    } else {
-        log_info("Image Capture Settings not found, use default");
-    }
+    bool isImgCapSetting = readImgCapSettings(conf, imgSetting);
+    std::string imgPath = readImgCapLocation(conf);
 
-    // Read image capture file location
-    std::string imgPath = getImgCapLocation(conf);
-
-    // Read video capture settings
+    // Read video capture settings/destination
     VideoSettings vidSetting;
-    if (!getVidCapSettings(conf, vidSetting)) {
-        // Send the setting to camera comp
-        isVidCapSetting = true;
-    } else {
-        log_info("Video Capture Settings not found, use default");
-    }
+    bool isVidCapSetting = readVidCapSettings(conf, vidSetting);
+    std::string vidPath = readVidCapLocation(conf);
 
-    std::string vidPath = getVidCapLocation(conf);
+    // Read blacklisted camera devices
+    std::set<std::string> blackList = readBlacklistDevices(conf);
 
-    std::vector<CameraComponent *>::iterator it;
-    for (it = cameraList.begin(); it != cameraList.end(); it++) {
-        if (*it) {
-#ifdef ENABLE_MAVLINK
-            log_error("Adding Camera Component");
-            if (mavlink_server.addCameraComponent(*it) == -1) {
-                log_error("Error in adding Camera Component");
-            }
-#endif
-            if (isImgCapSetting)
-                (*it)->setImageCaptureSettings(imgSetting);
+    std::vector<std::string> deviceList = PM.listCameraDevices();
+    for (auto deviceID : deviceList) {
+        log_debug("Camera Device : %s", deviceID.c_str());
 
-            if (!imgPath.empty())
-                (*it)->setImageCaptureLocation(imgPath);
+        // TODO :: check if max camera count reached
 
-            if (isVidCapSetting)
-                (*it)->setVideoCaptureSettings(vidSetting);
-
-            if (!vidPath.empty())
-                (*it)->setVideoCaptureLocation(vidPath);
+        // check if blacklisted
+        if (blackList.find(deviceID) != blackList.end()) {
+            log_info("Device is black listed : %s", deviceID.c_str());
+            continue;
         }
+
+        // create camera device
+        std::shared_ptr<CameraDevice> device = PM.createCameraDevice(deviceID);
+        if (!device) {
+            log_error("Error in creating device : %s", deviceID.c_str());
+            continue;
+        }
+
+        confDeviceId = deviceID;
+
+#ifdef ENABLE_GAZEBO
+        // The ID of gazebo device used in conf file is "gazebo" instead
+        // of the topic name being used as deviceID in CameraDevice
+        if (deviceID.find(GAZEBO_STRING) != std::string::npos) {
+            confDeviceId = GAZEBO_STRING;
+        }
+#endif
+
+        // Set the URI read from conf file
+        device->setCameraDefinitionUri(readURI(conf, confDeviceId));
+
+        // create camera component with camera device
+        CameraComponent *comp = new CameraComponent(device);
+
+        // configure camera component with settings
+        if (isImgCapSetting)
+            comp->setImageCaptureSettings(imgSetting);
+
+        if (!imgPath.empty())
+            comp->setImageCaptureLocation(imgPath);
+
+        if (isVidCapSetting)
+            comp->setVideoCaptureSettings(vidSetting);
+
+        if (!vidPath.empty())
+            comp->setVideoCaptureLocation(vidPath);
+
+// add to mavlink server
+#ifdef ENABLE_MAVLINK
+        if (mavlink_server.addCameraComponent(comp) == -1) {
+            log_error("Error in adding Camera Component");
+            // TODO :: delete component and break
+        }
+#endif
+
+        // Add component to the list
+        compList.push_back(comp);
+
+#ifdef ENABLE_GAZEBO
+        // If the camera device is gazebo, start UDP streaming
+        if (deviceID.find(GAZEBO_STRING) != std::string::npos) {
+            comp->startVideoStream(true);
+        }
+#endif
     }
 }
 
@@ -93,11 +125,19 @@ CameraServer::~CameraServer()
     stop();
 
     // Free up all the resources  allocated
+    for (auto camComp : compList) {
+        delete camComp;
+    }
 }
 
 void CameraServer::start()
 {
-    log_error("CAMERA SERVER START");
+    log_info("CAMERA SERVER START");
+    for (auto camComp : compList) {
+        if (camComp->start())
+            log_error("Error in starting camera component");
+    }
+
 #ifdef ENABLE_MAVLINK
     mavlink_server.start();
 #endif
@@ -108,92 +148,35 @@ void CameraServer::stop()
 #ifdef ENABLE_MAVLINK
     mavlink_server.stop();
 #endif
-}
 
-// prepare the list of cameras in the system
-int CameraServer::detectCamera(const ConfFile &conf)
-{
-    int count = 0;
-
-#ifdef ENABLE_GAZEBO
-    // Check for SITL gazebo first, if not found search for other devices
-    // It is possible to have gazebo camera with real camera but not enabling
-    // this for now
-    count += detect_devices_gazebo(conf, cameraList);
-    if (count > 0)
-        return count;
-#endif
-
-    count += detect_devices_v4l2(conf, cameraList);
-
-    return count;
-}
-
-#ifdef ENABLE_GAZEBO
-int CameraServer::detect_devices_gazebo(const ConfFile &conf,
-                                        std::vector<CameraComponent *> &camList) const
-{
-    char *uri_addr = 0;
-    std::string camTopic = getGazeboCamTopic(conf);
-    if (camTopic.empty())
-        return 0;
-
-    log_debug("Found Gazebo camera :%s", camTopic.c_str());
-    // TODO::Check if the topic found is valid
-    if (!conf.extract_options("uri", "gazebo", &uri_addr)) {
-        std::string uriString(uri_addr);
-        camList.push_back(new CameraComponent(camTopic, uriString));
-        free(uri_addr);
-    } else {
-        log_warning("Camera Definition for gazebo camera not found");
-        camList.push_back(new CameraComponent(camTopic));
+    for (auto camComp : compList) {
+        camComp->stop();
     }
 
-    return 1;
 }
-#endif
 
-int CameraServer::detect_devices_v4l2(const ConfFile &conf,
-                                      std::vector<CameraComponent *> &camList) const
+std::set<std::string> CameraServer::readBlacklistDevices(const ConfFile &conf) const
 {
-    int count = 0;
-    char *uri_addr = 0;
-
-    // Get the list of devices in the system
-    std::vector<std::string> v4l2List;
-    v4l2_list_devices(v4l2List);
-    if (v4l2List.empty())
-        return 0;
-
-    // Get the blacklisted devices
     std::set<std::string> blacklist;
     static const ConfFile::OptionsTable option_table[] = {
         {"blacklist", false, ConfFile::parse_stl_set, 0, 0},
     };
     conf.extract_options("v4l2", option_table, 1, (void *)&blacklist);
-
-    // Create camera components for devices not blacklisted
-    std::string dev_name;
-    for (auto dev_path : v4l2List) {
-        log_debug("v4l2 device :: %s", dev_path.c_str());
-        dev_name = dev_path.substr(sizeof(V4L2_DEVICE_PATH) - 1);
-        if (blacklist.find(dev_name) != blacklist.end())
-            continue;
-        if (!conf.extract_options("uri", dev_name.c_str(), &uri_addr)) {
-            std::string uriString(uri_addr);
-            camList.push_back(new CameraComponent(dev_path, uriString));
-            free(uri_addr);
-        } else {
-            log_warning("Camera Definition for device:%s not found", dev_name.c_str());
-            camList.push_back(new CameraComponent(dev_path));
-        }
-        count++;
-    }
-
-    return count;
+    return blacklist;
 }
 
-int CameraServer::getImgCapSettings(const ConfFile &conf, ImageSettings &imgSetting) const
+std::string CameraServer::readURI(const ConfFile &conf, std::string deviceID)
+{
+    char *uriAddr = 0;
+    if (!conf.extract_options("uri", deviceID.c_str(), &uriAddr)) {
+        std::string uriString(uriAddr);
+        free(uriAddr);
+        return uriString;
+    } else
+        return {};
+}
+
+bool CameraServer::readImgCapSettings(const ConfFile &conf, ImageSettings &imgSetting) const
 {
     int ret = 0;
 
@@ -211,7 +194,7 @@ int CameraServer::getImgCapSettings(const ConfFile &conf, ImageSettings &imgSett
     };
     ret = conf.extract_options("imgcap", option_table, ARRAY_SIZE(option_table), (void *)&opt);
     if (ret)
-        return ret;
+        return false;
 
     imgSetting.width = opt.width;
     imgSetting.height = opt.height;
@@ -219,10 +202,10 @@ int CameraServer::getImgCapSettings(const ConfFile &conf, ImageSettings &imgSett
     log_info("Image Capture Width=%d Height=%d format=%d", imgSetting.width, imgSetting.height,
              imgSetting.fileFormat);
 
-    return ret;
+    return true;
 }
 
-std::string CameraServer::getImgCapLocation(const ConfFile &conf) const
+std::string CameraServer::readImgCapLocation(const ConfFile &conf) const
 {
     // Location must start and end with "/"
     char *imgPath = 0;
@@ -233,14 +216,14 @@ std::string CameraServer::getImgCapLocation(const ConfFile &conf) const
         log_info("Image Capture location : %s", imgPath);
         free(imgPath);
     } else {
-        log_error("Image Capture location not found");
+        log_warning("Image Capture location not found, use default");
         ret = {};
     }
 
     return ret;
 }
 
-int CameraServer::getVidCapSettings(const ConfFile &conf, VideoSettings &vidSetting) const
+bool CameraServer::readVidCapSettings(const ConfFile &conf, VideoSettings &vidSetting) const
 {
     int ret = 0;
 
@@ -264,7 +247,7 @@ int CameraServer::getVidCapSettings(const ConfFile &conf, VideoSettings &vidSett
     };
     ret = conf.extract_options("vidcap", option_table, ARRAY_SIZE(option_table), (void *)&opt);
     if (ret)
-        return ret;
+        return false;
 
     vidSetting.width = opt.width;
     vidSetting.height = opt.height;
@@ -276,10 +259,10 @@ int CameraServer::getVidCapSettings(const ConfFile &conf, VideoSettings &vidSett
              vidSetting.width, vidSetting.height, vidSetting.frameRate, vidSetting.bitRate,
              vidSetting.encoder, vidSetting.fileFormat);
 
-    return ret;
+    return true;
 }
 
-std::string CameraServer::getVidCapLocation(const ConfFile &conf) const
+std::string CameraServer::readVidCapLocation(const ConfFile &conf) const
 {
     // Location must start and end with "/"
     char *vidPath = 0;
@@ -297,7 +280,7 @@ std::string CameraServer::getVidCapLocation(const ConfFile &conf) const
     return ret;
 }
 
-std::string CameraServer::getGazeboCamTopic(const ConfFile &conf) const
+std::string CameraServer::readGazeboCamTopic(const ConfFile &conf) const
 {
     // Location must start and end with "/"
     char *topic = 0;

@@ -39,6 +39,16 @@ AC_ARG_ENABLE([aero], AS_HELP_STRING([--enable-aero], [Include streams specific 
    AM_CONDITIONAL([ENABLE_AERO], false)
  ])
 
+AC_ARG_ENABLE([custom], AS_HELP_STRING([--enable-custom], [Include custom camera device]),
+ [
+   enable_custom=yes
+   AM_CONDITIONAL([ENABLE_CUSTOM], true)
+ ],
+ [
+   enable_custom=no
+   AM_CONDITIONAL([ENABLE_CUSTOM], false)
+ ])
+
 AC_ARG_ENABLE([mavlink],
  AS_HELP_STRING([--enable-mavlink], [Enable MAVLink advertisement]),
  [
@@ -189,4 +199,5 @@ AC_MSG_RESULT([
     AVAHI support:       $enable_avahi
     Intel Aero support:  $enable_aero
     Gazebo support:      $enable_gazebo
+    Custom support:      $enable_custom
 ])

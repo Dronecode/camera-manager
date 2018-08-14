@@ -28,6 +28,7 @@
 
 #define DEFAULT_IMAGE_FILE_FORMAT CameraParameters::IMAGE_FILE_JPEG
 #define DEFAULT_FILE_PATH "/tmp/"
+#define V4L2_DEVICE_PREFIX "/dev/"
 
 int ImageCaptureGst::imgCount = 0;
 
@@ -301,10 +302,10 @@ std::string ImageCaptureGst::getGstImgEncName(int format)
     }
 }
 
-std::string ImageCaptureGst::getGstPixFormat(int pixFormat)
+std::string ImageCaptureGst::getGstPixFormat(CameraParameters::PixelFormat pixFormat)
 {
     switch (pixFormat) {
-    case CameraParameters::ID_PIXEL_FORMAT_RGB24:
+    case CameraParameters::PixelFormat::PIXEL_FORMAT_RGB24:
         return "RGB";
         break;
     default:
@@ -330,6 +331,8 @@ std::string ImageCaptureGst::getGstPipelineNameV4l2()
     std::string device = mCamDev->getDeviceId();
     if (device.empty())
         return {};
+
+    device.insert(0, V4L2_DEVICE_PREFIX);
 
     std::string enc = getGstImgEncName(mFormat);
     if (enc.empty())
@@ -420,13 +423,17 @@ static void cbNeedData(GstElement *appsrc, guint unused_size, ImageCaptureGst *o
     log_debug("%s", __func__);
 
     GstFlowReturn ret;
-    std::vector<uint8_t> frame = obj->mCamDev->read();
-    uint8_t *data = &frame[0];
-    gsize size = frame.size(); // width*height*3/2/1.5
+    CameraData data;
+    CameraDevice::Status status = obj->mCamDev->read(data);
+    if (status != CameraDevice::Status::SUCCESS) {
+        log_error("No data from camera device");
+        // TODO :: return error or feed blank frames?
+    }
+    gsize size = data.bufSize; // width*height*3/2/1.5
     gsize offset = 0;
     gsize maxsize = size;
-    GstBuffer *buffer
-        = gst_buffer_new_wrapped_full((GstMemoryFlags)0, data, maxsize, offset, size, NULL, NULL);
+    GstBuffer *buffer = gst_buffer_new_wrapped_full((GstMemoryFlags)0, data.buf, maxsize, offset,
+                                                    size, NULL, NULL);
     assert(buffer);
 
     g_signal_emit_by_name(appsrc, "push-buffer", buffer, &ret);

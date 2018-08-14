@@ -147,8 +147,6 @@ BASE_FILES = \
 	src/stream_manager.h \
 	src/util.c \
 	src/util.h \
-	src/v4l2_interface.cpp \
-	src/v4l2_interface.h\
         src/CameraParameters.cpp \
         src/CameraParameters.h \
         src/CameraComponent.cpp \
@@ -156,8 +154,6 @@ BASE_FILES = \
         src/CameraServer.cpp \
         src/CameraServer.h \
         src/CameraDevice.h \
-        src/CameraDeviceV4l2.cpp \
-        src/CameraDeviceV4l2.h \
         src/ImageCapture.h \
         src/ImageCaptureGst.h \
         src/ImageCaptureGst.cpp \
@@ -166,7 +162,16 @@ BASE_FILES = \
         src/VideoStreamUdp.cpp \
         src/VideoCapture.h \
         src/VideoCaptureGst.h \
-        src/VideoCaptureGst.cpp
+        src/VideoCaptureGst.cpp \
+        src/PluginManager.h \
+        src/PluginManager.cpp \
+        src/PluginBase.h \
+        plugins/V4l2Camera/v4l2_interface.cpp \
+        plugins/V4l2Camera/v4l2_interface.h\
+        plugins/V4l2Camera/PluginV4l2.h\
+        plugins/V4l2Camera/PluginV4l2.cpp \
+        plugins/V4l2Camera/CameraDeviceV4l2.cpp \
+        plugins/V4l2Camera/CameraDeviceV4l2.h
 
 if ENABLE_REALSENSE
 BASE_FILES += \
@@ -183,6 +188,15 @@ BASE_FILES += \
 	src/stream_aero_bottom.cpp \
 	src/stream_aero_bottom.h
 endif
+
+if ENABLE_CUSTOM
+BASE_FILES += \
+        plugins/CustomCamera/PluginCustom.h \
+        plugins/CustomCamera/PluginCustom.cpp \
+        plugins/CustomCamera/CameraDeviceCustom.h \
+        plugins/CustomCamera/CameraDeviceCustom.cpp
+endif
+
 
 bin_PROGRAMS += dcm
 
@@ -299,8 +313,10 @@ AM_CXXFLAGS += \
         ${GZB_CFLAGS}
 
 BASE_FILES += \
-	src/CameraDeviceGazebo.h \
-	src/CameraDeviceGazebo.cpp
+	plugins/GazeboCamera/PluginGazebo.h \
+	plugins/GazeboCamera/PluginGazebo.cpp \
+	plugins/GazeboCamera/CameraDeviceGazebo.h \
+	plugins/GazeboCamera/CameraDeviceGazebo.cpp
 endif
 
 .PHONY: test

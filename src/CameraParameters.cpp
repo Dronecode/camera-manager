@@ -51,19 +51,6 @@ const char CameraParameters::VIDEO_SNAPSHOT[] = "vid-snapshot";
 const char CameraParameters::IMAGE_VIDEOSHOT[] = "img-videoshot";
 
 /* ++Need to check if required, as we have defined values as enums++ */
-const char CameraParameters::CAMERA_MODE_STILL[] = "still";
-const char CameraParameters::CAMERA_MODE_VIDEO[] = "video";
-const char CameraParameters::CAMERA_MODE_IMAGE_SURVEY[] = "img-survey";
-
-const char CameraParameters::IMAGE_FORMAT_JPEG[] = "jpg";
-const char CameraParameters::IMAGE_FORMAT_PNG[] = "png";
-
-const char CameraParameters::PIXEL_FORMAT_YUV422SP[] = "yuv422sp";
-const char CameraParameters::PIXEL_FORMAT_YUV420SP[] = "yuv420sp";
-const char CameraParameters::PIXEL_FORMAT_YUV422I[] = "yuv422i";
-const char CameraParameters::PIXEL_FORMAT_YUV420P[] = "yuv420p";
-const char CameraParameters::PIXEL_FORMAT_RGB565[] = "rgb565";
-const char CameraParameters::PIXEL_FORMAT_RGBA8888[] = "rgba8888";
 
 // Values for white balance settings.
 const char CameraParameters::WHITE_BALANCE_AUTO[] = "auto";

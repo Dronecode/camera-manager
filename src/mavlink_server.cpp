@@ -163,9 +163,8 @@ void MavlinkServer::_handle_request_camera_settings(const struct sockaddr_in &ad
 
     CameraComponent *tgtComp = getCameraComponent(cmd.target_component);
     if (tgtComp) {
-        // TODO:: Fill with appropriate mode value
         mavlink_msg_camera_settings_pack(_system_id, cmd.target_component, &msg, 0,
-                                         CAMERA_MODE_IMAGE);
+                                         dcm2mavCameraMode(tgtComp->getCameraMode()));
 
         if (!_send_mavlink_message(&addr, msg)) {
             log_error("Sending camera setting failed for camera %d.", cmd.target_component);
@@ -223,7 +222,7 @@ void MavlinkServer::_handle_set_camera_mode(const struct sockaddr_in &addr,
 
     CameraComponent *tgtComp = getCameraComponent(cmd.target_component);
     if (tgtComp) {
-        if(!tgtComp->setCameraMode((uint32_t)cmd.param2))
+        if (!tgtComp->setCameraMode(mav2dcmCameraMode((uint32_t)cmd.param2)))
             success = true;
     }
 
@@ -830,4 +829,48 @@ CameraComponent *MavlinkServer::getCameraComponent(int compID)
         return it->second;
     else
         return NULL;
+}
+
+CameraParameters::Mode MavlinkServer::mav2dcmCameraMode(uint32_t mode)
+{
+    CameraParameters::Mode ret = CameraParameters::Mode::MODE_STILL;
+
+    switch (mode) {
+    case CAMERA_MODE_IMAGE:
+        ret = CameraParameters::Mode::MODE_STILL;
+        break;
+    case CAMERA_MODE_VIDEO:
+        ret = CameraParameters::Mode::MODE_VIDEO;
+        break;
+    // case CAMERA_MODE_IMAGE_SURVEY:
+    // ret = CameraParameters::Mode::MODE_IMG_SURVEY;
+    // break;
+    default:
+        log_error("Unknown camera mode :%d", mode);
+        break;
+    }
+
+    return ret;
+}
+
+uint32_t MavlinkServer::dcm2mavCameraMode(CameraParameters::Mode mode)
+{
+    uint32_t ret = CAMERA_MODE_VIDEO;
+
+    switch (mode) {
+    case CameraParameters::Mode::MODE_STILL:
+        ret = CAMERA_MODE_IMAGE;
+        break;
+    case CameraParameters::Mode::MODE_VIDEO:
+        ret = CAMERA_MODE_VIDEO;
+        break;
+    // case CameraParameters::Mode::MODE_IMG_SURVEY:
+    // ret = CAMERA_MODE_IMAGE_SURVEY;
+    // break;
+    default:
+        log_error("Unknown camera mode :%d", mode);
+        break;
+    }
+
+    return ret;
 }

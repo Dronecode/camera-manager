@@ -1,7 +1,7 @@
 /*
  * This file is part of the Dronecode Camera Manager
  *
- * Copyright (C) 2017  Intel Corporation. All rights reserved.
+ * Copyright (C) 2018  Intel Corporation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,19 +15,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#pragma once
+
 #include <string>
 #include <vector>
 
-#define V4L2_DEVICE_PATH "/dev/"
-#define V4L2_VIDEO_PREFIX "video"
+#include "CameraDevice.h"
+#include "PluginBase.h"
 
-int v4l2_ioctl(int fd, int request, void *arg);
-int v4l2_list_devices(std::vector<std::string> &devList);
-int v4l2_open(const char *devicepath);
-int v4l2_close(int fd);
-int v4l2_query_cap(int fd, struct v4l2_capability &vcap);
-int v4l2_query_control(int fd);
-int v4l2_query_framesizes(int fd);
-int v4l2_get_control(int fd, int ctrl_id);
-int v4l2_set_control(int fd, int ctrl_id, int value);
+class PluginCustom final : public PluginBase {
+public:
+    PluginCustom();
+    ~PluginCustom();
+
+    std::vector<std::string> getCameraDevices();
+    std::shared_ptr<CameraDevice> createCameraDevice(std::string);
+
+private:
+    std::vector<std::string> mCamList;
+    void discoverCameras(std::vector<std::string> &camList);
+};

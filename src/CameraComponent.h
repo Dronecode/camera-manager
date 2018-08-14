@@ -16,7 +16,6 @@
  * limitations under the License.
  */
 #pragma once
-#include <gst/gst.h>
 #include <map>
 #include <memory>
 #include <string>
@@ -29,21 +28,6 @@
 #include "VideoCapture.h"
 #include "VideoStream.h"
 #include "log.h"
-
-struct CameraInfo {
-    uint8_t vendorName[32];
-    uint8_t modelName[32];
-    uint32_t firmware_version;
-    float focal_length;
-    float sensor_size_h;
-    float sensor_size_v;
-    uint16_t resolution_h;
-    uint16_t resolution_v;
-    uint8_t lens_id;
-    uint32_t flags;
-    uint16_t cam_definition_version;
-    char cam_definition_uri[140];
-};
 
 struct StorageInfo {
     uint8_t storage_id;
@@ -60,9 +44,10 @@ class CameraDevice;
 
 class CameraComponent {
 public:
-    CameraComponent(std::string);
-    CameraComponent(std::string, std::string);
+    CameraComponent(std::shared_ptr<CameraDevice> device);
     virtual ~CameraComponent();
+    int start();
+    int stop();
     const CameraInfo &getCameraInfo() const;
     const StorageInfo &getStorageInfo() const;
     const std::map<std::string, std::string> &getParamList() const;
@@ -71,8 +56,8 @@ public:
                          size_t value_size);
     virtual int setParam(const char *param_id, size_t id_size, const char *param_value,
                          size_t value_size, int param_type);
-    virtual int setCameraMode(uint32_t mode);
-    virtual int getCameraMode();
+    virtual int setCameraMode(CameraParameters::Mode mode);
+    virtual CameraParameters::Mode getCameraMode();
     typedef std::function<void(int result, int seq_num)> capture_callback_t;
     int setImageCaptureLocation(std::string imgPath);
     int setImageCaptureSettings(ImageSettings &imgSetting);
@@ -85,6 +70,9 @@ public:
     virtual int startVideoCapture(int status_freq);
     virtual int stopVideoCapture();
     virtual uint8_t getVideoCaptureStatus();
+    int startVideoStream(const bool isUdp);
+    int stopVideoStream();
+    uint8_t getVideoStreamStatus() const;
     int resetCameraSettings(void);
 
 private:
@@ -92,7 +80,6 @@ private:
     CameraInfo mCamInfo;                   /* Camera Information Structure */
     StorageInfo mStoreInfo;                /* Storage Information Structure */
     CameraParameters mCamParam;            /* Camera Parameters Object */
-    std::string mCamDefURI;                /* Camera Definition URI */
     std::shared_ptr<CameraDevice> mCamDev; /* Camera Device Object */
     std::shared_ptr<ImageCapture> mImgCap; /* Image Capture Object */
     std::function<void(int result, int seq_num)> mImgCapCB;
@@ -106,6 +93,5 @@ private:
     void initStorageInfo(struct StorageInfo &storeInfo);
     int setVideoFrameFormat(uint32_t param_value);
     int setVideoSize(uint32_t param_value);
-    std::shared_ptr<CameraDevice> create_camera_device(std::string camdev_name);
     std::string toString(const char *buf, size_t buf_size);
 };

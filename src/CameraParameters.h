@@ -105,10 +105,6 @@ public:
     static const char VIDEO_SNAPSHOT[];
     static const char IMAGE_VIDEOSHOT[];
 
-    // Values for camera modes
-    static const char CAMERA_MODE_STILL[];
-    static const char CAMERA_MODE_VIDEO[];
-    static const char CAMERA_MODE_IMAGE_SURVEY[];
     // Values for white balance settings.
     static const char WHITE_BALANCE_AUTO[];
     static const char WHITE_BALANCE_INCANDESCENT[];
@@ -118,16 +114,6 @@ public:
     static const char WHITE_BALANCE_CLOUDY_DAYLIGHT[];
     static const char WHITE_BALANCE_TWILIGHT[];
     static const char WHITE_BALANCE_SHADE[];
-    // Values for Pixel color formats
-    static const char PIXEL_FORMAT_YUV422SP[];
-    static const char PIXEL_FORMAT_YUV420SP[];
-    static const char PIXEL_FORMAT_YUV422I[];
-    static const char PIXEL_FORMAT_YUV420P[];
-    static const char PIXEL_FORMAT_RGB565[];
-    static const char PIXEL_FORMAT_RGBA8888[];
-    // Values for Image formats
-    static const char IMAGE_FORMAT_JPEG[];
-    static const char IMAGE_FORMAT_PNG[];
 
     // ID for parameters
     static const int PARAM_ID_CAMERA_MODE = 1;
@@ -184,16 +170,6 @@ public:
     static const int ID_VIDEO_SIZE_320x180x30 = 19;
     static const int ID_VIDEO_SIZE_320x180x60 = 20;
 
-    // ID for camera modes
-    static const int ID_CAMERA_MODE_STILL = 0;
-    static const int ID_CAMERA_MODE_VIDEO = 1;
-    static const int ID_CAMERA_MODE_IMAGE_SURVEY = 2;
-
-    // ID for image formats
-    static const int ID_IMAGE_FORMAT_RAW = 0;
-    static const int ID_IMAGE_FORMAT_JPEG = 1;
-    static const int ID_IMAGE_FORMAT_PNG = 2;
-
     // ID for White Balance Modes
     static const int ID_WHITE_BALANCE_MANUAL = 0;
     static const int ID_WHITE_BALANCE_AUTO = 1;
@@ -209,14 +185,24 @@ public:
     static const int ID_EXPOSURE_MANUAL = 0;
     static const int ID_EXPOSURE_AUTO = 1;
 
-    // ID for pixel formats
-    static const int ID_PIXEL_FORMAT_YUV422SP = 0;
-    static const int ID_PIXEL_FORMAT_YUV420SP = 1;
-    static const int ID_PIXEL_FORMAT_YUV422I = 2;
-    static const int ID_PIXEL_FORMAT_YUV420P = 3;
-    static const int ID_PIXEL_FORMAT_RGB565 = 4; // RGBP
-    static const int ID_PIXEL_FORMAT_RGB24 = 5;  // RGB3
-    static const int ID_PIXEL_FORMAT_RGB32 = 6;  // RGB4
+    /**
+     *  Modes of camera device.
+     */
+    enum Mode { MODE_STILL = 0, MODE_VIDEO = 1, MODE_IMG_SURVEY = 2 };
+
+    /**
+     *  Pixel formats of the camera image.
+     */
+    enum PixelFormat {
+        PIXEL_FORMAT_MIN = 0,
+        PIXEL_FORMAT_GREY,    /* 8  bpp monochrome images */
+        PIXEL_FORMAT_YUV420,  /* 12 bpp YUV 4:2:0 */
+        PIXEL_FORMAT_YUV422P, /* 16 bpp YVU422 planar */
+        PIXEL_FORMAT_UYVY,    /* 16 bpp YUV 4:2:2 */
+        PIXEL_FORMAT_RGB24,   /* 24 bpp RGB 8:8:8 */
+        PIXEL_FORMAT_RGB32,   /* 32 bpp RGB 8:8:8:8 */
+        PIXEL_FORMAT_MAX = 99
+    };
 
     typedef enum IMAGE_FILE_FORMAT {
         IMAGE_FILE_MIN,

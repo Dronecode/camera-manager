@@ -18,100 +18,76 @@
 #include <cstring>
 
 #include "CameraComponent.h"
-#include "CameraDeviceV4l2.h"
 #include "ImageCaptureGst.h"
 #include "VideoCaptureGst.h"
+#include "VideoStreamUdp.h"
 #ifdef ENABLE_MAVLINK
 #include "mavlink_server.h"
 #endif
 #include "util.h"
 #include <algorithm>
-#ifdef ENABLE_GAZEBO
-#include "CameraDeviceGazebo.h"
-#include "VideoStreamUdp.h"
-#endif
 
-CameraComponent::CameraComponent(std::string camdev_name)
-    : mCamDevName(camdev_name)
-    , mCamInfo{}
-    , mStoreInfo{}
-    , mImgPath("")
-    , mVidPath("")
+CameraComponent::CameraComponent(std::shared_ptr<CameraDevice> device)
+    : mCamDev(device)
 {
-    log_debug("%s path:%s", __func__, camdev_name.c_str());
-    // Create a camera device based on device path
-    mCamDev = create_camera_device(camdev_name);
-    if (!mCamDev)
-        return; // TODO :: Raise exception
-
-    // Get info from the camera device
-    mCamDev->getInfo(mCamInfo);
-    // append uri-null info to the structure
-
-    // Get list of Parameters supported & its default value
-    mCamDev->init(mCamParam);
-
-    // start the camera device
-    mCamDev->start();
-
-    initStorageInfo(mStoreInfo);
-
-#ifdef ENABLE_GAZEBO
-    mVidStream = std::make_shared<VideoStreamUdp>(mCamDev);
-    mVidStream->init();
-    mVidStream->start();
-#endif
-}
-
-CameraComponent::CameraComponent(std::string camdev_name, std::string camdef_uri)
-    : mCamDevName(camdev_name)
-    , mCamInfo{}
-    , mStoreInfo{}
-    , mCamDefURI(camdef_uri)
-    , mImgPath("")
-{
-    log_debug("%s path:%s with Camera Definition", __func__, camdev_name.c_str());
-    // Create a camera device based on device path
-    mCamDev = create_camera_device(camdev_name);
-    if (!mCamDev)
-        return; // TODO :: Raise exception
+    mCamDevName = mCamDev->getDeviceId();
 
     // Get info from the camera device
     mCamDev->getInfo(mCamInfo);
 
-    if (sizeof(mCamInfo.cam_definition_uri) > mCamDefURI.size()) {
-        strcpy((char *)mCamInfo.cam_definition_uri, mCamDefURI.c_str());
-    } else {
-        log_error("URI length bigger than permitted");
-        // TODO::Continue with no parameter support
-    }
-
-    // Get list of Parameters supported & its default value
-    mCamDev->init(mCamParam);
-
-    // start the camera device
-    mCamDev->start();
-
     initStorageInfo(mStoreInfo);
-
-#ifdef ENABLE_GAZEBO
-    mVidStream = std::make_shared<VideoStreamUdp>(mCamDev);
-    mVidStream->init();
-    mVidStream->start();
-#endif
 }
 
 CameraComponent::~CameraComponent()
 {
     log_debug("%s", __func__);
 
-#ifdef ENABLE_GAZEBO
+    if (mVidCap) {
+        mVidCap->stop();
+        mVidCap->uninit();
+        mVidCap.reset();
+    }
+
+    if (mImgCap) {
+        mImgCap->stop();
+        mImgCap->uninit();
+        mImgCap.reset();
+    }
+
     if (mVidStream) {
         mVidStream->stop();
         mVidStream->uninit();
+        mVidStream.reset();
     }
-#endif
 
+    // stop the camera device
+    mCamDev->stop();
+
+    // Uninit the camera device
+    mCamDev->uninit();
+
+    mCamDev.reset();
+}
+
+int CameraComponent::start()
+{
+    CameraDevice::Status ret;
+
+    // Get list of Parameters supported & its default value
+    ret = mCamDev->init(mCamParam);
+    if (ret != CameraDevice::Status::SUCCESS)
+        return -1;
+
+    // start the camera device
+    ret = mCamDev->start();
+    if (ret != CameraDevice::Status::SUCCESS)
+        return -1;
+
+    return 0;
+}
+
+int CameraComponent::stop()
+{
     if (mVidCap) {
         mVidCap->stop();
         mVidCap->uninit();
@@ -129,6 +105,8 @@ CameraComponent::~CameraComponent()
 
     // Uninit the camera device
     mCamDev->uninit();
+
+    return 0;
 }
 
 const CameraInfo &CameraComponent::getCameraInfo() const
@@ -185,29 +163,35 @@ int CameraComponent::getParam(const char *param_id, size_t id_size, char *param_
 int CameraComponent::setParam(const char *param_name, size_t id_size, const char *param_value,
                               size_t value_size, int param_type)
 {
-    int ret = 1;
+    CameraDevice::Status ret;
     std::string param = toString(param_name, id_size);
     ret = mCamDev->setParam(mCamParam, param, param_value, value_size, param_type);
-    return ret;
+    if (ret == CameraDevice::Status::SUCCESS)
+        return 0;
+    else
+        return -1;
 }
 
-int CameraComponent::setCameraMode(uint32_t mode)
+int CameraComponent::setCameraMode(CameraParameters::Mode mode)
 {
     mCamDev->setMode(mode);
     return 0;
 }
 
-int CameraComponent::resetCameraSettings()
+CameraParameters::Mode CameraComponent::getCameraMode()
 {
-    int ret = mCamDev->resetParams(mCamParam);
-    if (ret != 0)
-        log_debug("Error in reset of camera parameters. Could not open the device.");
-    return ret;
+    CameraParameters::Mode mode;
+    mCamDev->getMode(mode);
+
+    return mode;
 }
 
-int CameraComponent::getCameraMode()
+int CameraComponent::resetCameraSettings()
 {
-    return mCamDev->getMode();
+    CameraDevice::Status ret = mCamDev->resetParams(mCamParam);
+    if (ret != CameraDevice::Status::SUCCESS)
+        log_debug("Error in reset of camera parameters. Could not open the device.");
+    return -1;
 }
 
 int CameraComponent::setImageCaptureLocation(std::string imgPath)
@@ -414,24 +398,83 @@ int CameraComponent::setVideoFrameFormat(uint32_t param_value)
     return 0;
 }
 
-// TODO:: Move this operation to a factory class
-std::shared_ptr<CameraDevice> CameraComponent::create_camera_device(std::string camdev_name)
+int CameraComponent::startVideoStream(const bool isUdp)
 {
-    if (camdev_name.find("/dev/video") != std::string::npos) {
-        log_debug("V4L2 device : %s", camdev_name.c_str());
-        return std::make_shared<CameraDeviceV4l2>(camdev_name);
-    } else if (camdev_name.find("camera/image") != std::string::npos) {
-        log_debug("Gazebo device : %s", camdev_name.c_str());
-#ifdef ENABLE_GAZEBO
-        return std::make_shared<CameraDeviceGazebo>(camdev_name);
-#else
-        log_error("Gazebo device not supported");
-        return nullptr;
-#endif
-    } else {
-        log_error("Camera device not found");
-        return nullptr;
+    int ret = 0;
+
+    // TODO :: Check if image/video capture is running
+    // If yes, video streaming may work by adding a tee element
+    // in the gstreamer pipeline. Currently conncurent use cases
+    // not supported
+
+    // Close previous instance of video streaming if exist
+    if (mVidStream)
+        mVidStream.reset();
+
+    if (isUdp)
+        mVidStream = std::make_shared<VideoStreamUdp>(mCamDev);
+    else {
+        log_error("RTSP Streaming start/stop not supported");
+        return -1;
     }
+
+    ret = mVidStream->init();
+    if (!ret) {
+        ret = mVidStream->start();
+        if (ret) {
+            mVidStream->uninit();
+            mVidStream.reset();
+        }
+    }
+
+    return ret;
+}
+
+int CameraComponent::stopVideoStream()
+{
+    int ret = 0;
+
+    if (!mVidStream)
+        return 0;
+
+    ret = mVidStream->stop();
+    if (ret) {
+        log_error("Error in Video Stream stop");
+    }
+
+    ret = mVidStream->uninit();
+    if (ret) {
+        log_error("Error in Video Stream uninit");
+    }
+
+    mVidStream.reset();
+
+    return 0;
+}
+
+uint8_t CameraComponent::getVideoStreamStatus() const
+{
+    uint8_t ret = 0;
+
+    if (!mVidStream)
+        return 0;
+
+    switch (mVidStream->getState()) {
+    case VideoStream::STATE_ERROR:
+    case VideoStream::STATE_IDLE:
+    case VideoStream::STATE_INIT:
+        ret = 0;
+        break;
+    case VideoStream::STATE_RUN:
+        ret = 1;
+        break;
+    default:
+        ret = 0;
+        break;
+    }
+
+    log_debug("%s Status:%d", __func__, ret);
+    return ret;
 }
 
 /* Input string can be either null-terminated or not */
