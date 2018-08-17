@@ -101,8 +101,10 @@ void MavlinkServer::_send_ack(const struct sockaddr_in &addr, int cmd, int comp_
 {
     mavlink_message_t msg;
 
-    mavlink_msg_command_ack_pack(_system_id, comp_id, &msg, cmd,
-                                 success ? MAV_RESULT_ACCEPTED : MAV_RESULT_FAILED, 255);
+    mavlink_msg_command_ack_pack(
+        _system_id /*system_id*/, comp_id /*component_id*/, &msg /*msg*/, cmd /*command*/,
+        success /*result*/ ? MAV_RESULT_ACCEPTED : MAV_RESULT_FAILED, 0 /*progress*/,
+        0 /*result_param2*/, 0 /*target_system*/, 255 /*target_component*/);
 
     if (!_send_mavlink_message(&addr, msg)) {
         log_error("Sending ack failed.");
