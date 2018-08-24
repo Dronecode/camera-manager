@@ -16,26 +16,21 @@
  * limitations under the License.
  */
 
+#include <cstddef>
 #include <set>
 
-#include "CameraComponent.h"
 #include "CameraServer.h"
 #include "log.h"
 #include "util.h"
-#ifdef ENABLE_MAVLINK
-#include "mavlink_server.h"
-#endif
 
 #ifdef ENABLE_GAZEBO
 #define GAZEBO_STRING "gazebo"
 #endif
 
-#define DEFAULT_SERVICE_PORT 8554
-
 CameraServer::CameraServer(const ConfFile &conf)
-    : rtsp_server(streams, DEFAULT_SERVICE_PORT)
+    :
 #ifdef ENABLE_MAVLINK
-    , mavlink_server(conf, streams, rtsp_server)
+    mavlink_server(conf)
 #endif
 {
     std::string confDeviceId;
@@ -111,12 +106,6 @@ CameraServer::CameraServer(const ConfFile &conf)
         // Add component to the list
         compList.push_back(comp);
 
-#ifdef ENABLE_GAZEBO
-        // If the camera device is gazebo, start UDP streaming
-        if (deviceID.find(GAZEBO_STRING) != std::string::npos) {
-            comp->startVideoStream(true);
-        }
-#endif
     }
 }
 
@@ -136,6 +125,8 @@ void CameraServer::start()
     for (auto camComp : compList) {
         if (camComp->start())
             log_error("Error in starting camera component");
+
+        camComp->startVideoStream(false);
     }
 
 #ifdef ENABLE_MAVLINK

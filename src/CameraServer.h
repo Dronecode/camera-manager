@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 #pragma once
-#include <map>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -24,14 +24,8 @@
 #ifdef ENABLE_MAVLINK
 #include "mavlink_server.h"
 #endif
-#include "rtsp_server.h"
-#include "stream.h"
 
 #include "CameraComponent.h"
-#include "CameraParameters.h"
-#include "VideoCapture.h"
-#include "log.h"
-
 #include "PluginManager.h"
 
 class CameraServer {
@@ -49,11 +43,9 @@ private:
     bool readVidCapSettings(const ConfFile &conf, VideoSettings &vidSetting) const;
     std::string readVidCapLocation(const ConfFile &conf) const;
     std::string readGazeboCamTopic(const ConfFile &conf) const;
-    RTSPServer rtsp_server;
 #ifdef ENABLE_MAVLINK
     MavlinkServer mavlink_server;
 #endif
     PluginManager PM;
     std::vector<CameraComponent *> compList;
-    std::vector<std::unique_ptr<Stream>> streams; // Remove it
 };

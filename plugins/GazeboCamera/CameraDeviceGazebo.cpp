@@ -327,7 +327,7 @@ int CameraDeviceGazebo::getImage(const gazebo::msgs::Image &_msg)
     }
 
     // copy image data to frame buffer
-    // log_debug("Image Size: %lu Format:%d", _msg.data().size(), pixFormat);
+    // log_debug("Image Size: %lu Format:%d", _msg.data().size(), _msg.pixel_format());
     const char *buffer = (const char *)_msg.data().c_str();
     uint buffer_size = _msg.data().size();
     mFrameBuffer = std::vector<uint8_t>(buffer, buffer + buffer_size);

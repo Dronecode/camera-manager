@@ -20,6 +20,7 @@
 #include "CameraComponent.h"
 #include "ImageCaptureGst.h"
 #include "VideoCaptureGst.h"
+#include "VideoStreamRtsp.h"
 #include "VideoStreamUdp.h"
 #ifdef ENABLE_MAVLINK
 #include "mavlink_server.h"
@@ -414,8 +415,7 @@ int CameraComponent::startVideoStream(const bool isUdp)
     if (isUdp)
         mVidStream = std::make_shared<VideoStreamUdp>(mCamDev);
     else {
-        log_error("RTSP Streaming start/stop not supported");
-        return -1;
+        mVidStream = std::make_shared<VideoStreamRtsp>(mCamDev);
     }
 
     ret = mVidStream->init();

@@ -17,16 +17,17 @@
  */
 
 #include <assert.h>
+#include <dirent.h>
 #include <getopt.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 
 #include "conf_file.h"
 #include "glib_mainloop.h"
 #include "log.h"
 #include "settings.h"
-#include "stream_manager.h"
 #include "util.h"
 #include "CameraServer.h"
 
@@ -242,9 +243,6 @@ int main(int argc, char *argv[])
 
     CameraServer camServer(*conf);
     camServer.start();
-
-    StreamManager stream(*conf);
-    stream.start();
 
     delete conf;
     log_debug("Starting Dronecode Camera Manager");

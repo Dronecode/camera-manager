@@ -131,47 +131,37 @@ BASE_FILES = \
 	src/mainloop.h \
 	src/pollable.cpp \
 	src/pollable.h \
-	src/rtsp_server.cpp \
-	src/rtsp_server.h \
 	src/socket.cpp \
 	src/socket.h \
-	src/stream.cpp \
-	src/stream.h \
-	src/stream_builder.cpp \
-	src/stream_builder.h \
-	src/stream_builder_v4l2.cpp \
-	src/stream_builder_v4l2.h \
-	src/stream_v4l2.cpp \
-	src/stream_v4l2.h \
-	src/stream_manager.cpp \
-	src/stream_manager.h \
 	src/util.c \
 	src/util.h \
-        src/CameraParameters.cpp \
-        src/CameraParameters.h \
-        src/CameraComponent.cpp \
-        src/CameraComponent.h \
-        src/CameraServer.cpp \
-        src/CameraServer.h \
-        src/CameraDevice.h \
-        src/ImageCapture.h \
-        src/ImageCaptureGst.h \
-        src/ImageCaptureGst.cpp \
-        src/VideoStream.h \
-        src/VideoStreamUdp.h \
-        src/VideoStreamUdp.cpp \
-        src/VideoCapture.h \
-        src/VideoCaptureGst.h \
-        src/VideoCaptureGst.cpp \
-        src/PluginManager.h \
-        src/PluginManager.cpp \
-        src/PluginBase.h \
-        plugins/V4l2Camera/v4l2_interface.cpp \
-        plugins/V4l2Camera/v4l2_interface.h\
-        plugins/V4l2Camera/PluginV4l2.h\
-        plugins/V4l2Camera/PluginV4l2.cpp \
-        plugins/V4l2Camera/CameraDeviceV4l2.cpp \
-        plugins/V4l2Camera/CameraDeviceV4l2.h
+	src/CameraParameters.cpp \
+	src/CameraParameters.h \
+	src/CameraComponent.cpp \
+	src/CameraComponent.h \
+	src/CameraServer.cpp \
+	src/CameraServer.h \
+	src/CameraDevice.h \
+	src/ImageCapture.h \
+	src/ImageCaptureGst.h \
+	src/ImageCaptureGst.cpp \
+	src/VideoStream.h \
+	src/VideoStreamUdp.h \
+	src/VideoStreamUdp.cpp \
+	src/VideoStreamRtsp.h \
+	src/VideoStreamRtsp.cpp \
+	src/VideoCapture.h \
+	src/VideoCaptureGst.h \
+	src/VideoCaptureGst.cpp \
+	src/PluginManager.h \
+	src/PluginManager.cpp \
+	src/PluginBase.h \
+	plugins/V4l2Camera/v4l2_interface.cpp \
+	plugins/V4l2Camera/v4l2_interface.h\
+	plugins/V4l2Camera/PluginV4l2.h\
+	plugins/V4l2Camera/PluginV4l2.cpp \
+	plugins/V4l2Camera/CameraDeviceV4l2.cpp \
+	plugins/V4l2Camera/CameraDeviceV4l2.h
 
 if ENABLE_REALSENSE
 BASE_FILES += \
