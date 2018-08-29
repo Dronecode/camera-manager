@@ -23,6 +23,10 @@
 #define DEFAULT_HOST "127.0.0.1"
 #define DEFAULT_SERVICE_PORT 8554
 
+GstRTSPServer *VideoStreamRtsp::mServer = nullptr;
+bool VideoStreamRtsp::isAttach = false;
+uint32_t VideoStreamRtsp::refCnt = 0;
+
 VideoStreamRtsp::VideoStreamRtsp(std::shared_ptr<CameraDevice> camDev)
     : mCamDev(camDev)
     , mState(STATE_IDLE)
@@ -30,7 +34,6 @@ VideoStreamRtsp::VideoStreamRtsp(std::shared_ptr<CameraDevice> camDev)
     , mHeight(DEFAULT_HEIGHT)
     , mHost(DEFAULT_HOST)
     , mPort(DEFAULT_SERVICE_PORT)
-    , mServer(nullptr)
     , mPipeline(nullptr)
 {
     log_info("%s Device:%s", __func__, mCamDev->getDeviceId().c_str());
@@ -312,13 +315,8 @@ int VideoStreamRtsp::startRtspServer()
 {
     log_debug("%s::%s", typeid(this).name(), __func__);
 
-    gst_init(nullptr, nullptr);
-
     /* create RTSP server */
-    mServer = gst_rtsp_server_new();
-
-    /* set the port number */
-    g_object_set(mServer, "service", std::to_string(mPort).c_str(), nullptr);
+    createRtspServer();
 
     GstRTSPMediaFactory *factory = gst_rtsp_media_factory_new();
     if (!factory) {
@@ -343,7 +341,8 @@ int VideoStreamRtsp::startRtspServer()
              mPath.c_str());
     g_object_unref(mounts);
 
-    gst_rtsp_server_attach(mServer, nullptr);
+    /* Attach RTSP Server */
+    attachRtspServer();
 
     return 0;
 }
@@ -352,7 +351,57 @@ int VideoStreamRtsp::stopRtspServer()
 {
     log_debug("%s::%s", typeid(this).name(), __func__);
 
-    g_object_unref(mServer);
+    /* get the default mount points from the server */
+    GstRTSPMountPoints *mounts = gst_rtsp_server_get_mount_points(mServer);
+
+    /* remove the media factory associated with path in mounts*/
+    gst_rtsp_mount_points_remove_factory(mounts, mPath.c_str());
+
+    g_object_unref(mounts);
+
+    /* Destroy RTSP server */
+    destroyRtspServer();
 
     return 0;
+}
+
+GstRTSPServer *VideoStreamRtsp::createRtspServer()
+{
+    if (mServer) {
+        refCnt++;
+        return mServer;
+    } else {
+        log_info("%s", __func__);
+        gst_init(nullptr, nullptr);
+
+        /* create RTSP server */
+        mServer = gst_rtsp_server_new();
+
+        /* set the port number */
+        g_object_set(mServer, "service", std::to_string(mPort).c_str(), nullptr);
+        refCnt++;
+        return mServer;
+    }
+}
+
+void VideoStreamRtsp::destroyRtspServer()
+{
+    refCnt--;
+    if (refCnt == 0) {
+        log_info("%s", __func__);
+        g_object_unref(mServer);
+        mServer = nullptr;
+        isAttach = false;
+    }
+
+    return;
+}
+
+void VideoStreamRtsp::attachRtspServer()
+{
+    if (!isAttach) {
+        log_info("%s", __func__);
+        gst_rtsp_server_attach(mServer, nullptr);
+        isAttach = true;
+    }
 }

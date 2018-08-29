@@ -50,6 +50,9 @@ public:
     GstBuffer *readFrame();
 
 private:
+    GstRTSPServer *createRtspServer();
+    void destroyRtspServer();
+    void attachRtspServer();
     int setState(int state);
     int startRtspServer();
     int stopRtspServer();
@@ -61,6 +64,8 @@ private:
     std::string mHost;
     std::string mPath;
     uint32_t mPort;
-    GstRTSPServer *mServer;
     GstElement *mPipeline;
+    static GstRTSPServer *mServer;
+    static bool isAttach;
+    static uint32_t refCnt;
 };
