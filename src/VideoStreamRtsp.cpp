@@ -397,11 +397,25 @@ void VideoStreamRtsp::destroyRtspServer()
     return;
 }
 
+static gboolean timeout(GstRTSPServer *server)
+{
+    GstRTSPSessionPool *pool;
+
+    pool = gst_rtsp_server_get_session_pool(server);
+    gst_rtsp_session_pool_cleanup(pool);
+    g_object_unref(pool);
+
+    return TRUE;
+}
+
 void VideoStreamRtsp::attachRtspServer()
 {
     if (!isAttach) {
         log_info("%s", __func__);
         gst_rtsp_server_attach(mServer, nullptr);
         isAttach = true;
+
+        /* Periodically remove timed out sessions*/
+        g_timeout_add_seconds(2, (GSourceFunc)timeout, mServer);
     }
 }
