@@ -20,6 +20,7 @@
 #include <atomic>
 #include <gst/gst.h>
 #include <gst/rtsp-server/rtsp-server.h>
+
 #include <memory>
 #include <string>
 
@@ -47,6 +48,9 @@ public:
     // The port to send the packets to
     int setPort(uint32_t port);
     int getPort();
+    int getCameraResolution(uint32_t &width, uint32_t &height);
+    CameraParameters::PixelFormat getCameraPixelFormat();
+    std::string getGstPipeline(std::map<std::string, std::string> &params);
     GstBuffer *readFrame();
 
 private:
@@ -56,15 +60,14 @@ private:
     int setState(int state);
     int startRtspServer();
     int stopRtspServer();
-    std::string rtspPipelineName();
     std::shared_ptr<CameraDevice> mCamDev;
     std::atomic<int> mState;
     uint32_t mWidth;
     uint32_t mHeight;
+    CameraParameters::VIDEO_CODING_FORMAT mEncFormat;
     std::string mHost;
-    std::string mPath;
     uint32_t mPort;
-    GstElement *mPipeline;
+    std::string mPath;
     static GstRTSPServer *mServer;
     static bool isAttach;
     static uint32_t refCnt;

@@ -16,10 +16,10 @@
  * limitations under the License.
  */
 
+#include <gst/app/gstappsrc.h>
+
 #include "VideoStreamRtsp.h"
 
-#define DEFAULT_WIDTH 640
-#define DEFAULT_HEIGHT 360
 #define DEFAULT_HOST "127.0.0.1"
 #define DEFAULT_SERVICE_PORT 8554
 
@@ -27,14 +27,137 @@ GstRTSPServer *VideoStreamRtsp::mServer = nullptr;
 bool VideoStreamRtsp::isAttach = false;
 uint32_t VideoStreamRtsp::refCnt = 0;
 
+static std::string getGstVideoConvertor()
+{
+    std::string convertor;
+
+    convertor = "videoconvert";
+
+    return convertor;
+}
+
+static std::string getGstVideoConvertorCaps(std::map<std::string, std::string> &params,
+                                            uint32_t setWidth, uint32_t setHeight)
+{
+    std::string caps;
+
+    /* output pixel format is fixed as QGC only supports I420*/
+    caps = "video/x-raw, format=I420";
+
+    std::string width = params["width"];
+    std::string height = params["height"];
+
+    /*
+     * RTSP Video Stream resolution
+     * 1. Set by query string in URL
+     * 2. Set by client using VideoStream API
+     * 3. Default - Camera Device Resolution
+     *
+     */
+
+    if (!width.empty() && !height.empty()) {
+        caps = caps + ", width=" + width + ", height=" + height;
+    } else if (setWidth != 0 && setHeight != 0) {
+        caps = caps + ", width=" + std::to_string(setWidth) + ", height="
+            + std::to_string(setHeight);
+    }
+
+    return caps;
+}
+
+static std::string getGstVideoEncoder(CameraParameters::VIDEO_CODING_FORMAT encFormat)
+{
+    std::string enc;
+
+    switch (encFormat) {
+    case CameraParameters::VIDEO_CODING_AVC:
+        enc = std::string("x264enc");
+        break;
+    default:
+        enc = std::string("x264enc");
+        break;
+    }
+
+    return enc;
+}
+
+static std::string getGstRtspVideoSink()
+{
+    std::string sink;
+
+    sink = "rtph264pay name=pay0";
+
+    return sink;
+}
+
+static std::string getGstPixFormat(CameraParameters::PixelFormat pixFormat)
+{
+    std::string pix;
+
+    switch (pixFormat) {
+    case CameraParameters::PixelFormat::PIXEL_FORMAT_RGB24:
+        pix = "RGB";
+        break;
+    default:
+        pix = "I420";
+    }
+
+    return pix;
+}
+
+static float getBytesPerPixel(CameraParameters::PixelFormat pixFormat)
+{
+    float ret = 2;
+
+    switch (pixFormat) {
+    case CameraParameters::PixelFormat::PIXEL_FORMAT_RGB24:
+        ret = 3;
+        break;
+    default:
+        ret = 2;
+    }
+
+    return ret;
+}
+
+static void addParam(std::map<std::string, std::string> &map, const std::string &param)
+{
+    size_t j = param.find('=');
+    if (j == std::string::npos)
+        return;
+
+    map[param.substr(0, j)] = param.substr(j + 1);
+}
+
+static std::map<std::string, std::string> parseUrlQuery(const char *query)
+{
+    std::map<std::string, std::string> map;
+
+    if (!query || !query[0])
+        return map;
+
+    std::string query_str = query;
+    size_t i = 0, j;
+
+    j = query_str.find('&');
+    while (j != std::string::npos) {
+        addParam(map, query_str.substr(i, j - i));
+        i = j + 1;
+        j = query_str.find('&', j + 1);
+    }
+    addParam(map, query_str.substr(i, j - i));
+
+    return map;
+}
+
 VideoStreamRtsp::VideoStreamRtsp(std::shared_ptr<CameraDevice> camDev)
     : mCamDev(camDev)
     , mState(STATE_IDLE)
-    , mWidth(DEFAULT_WIDTH)
-    , mHeight(DEFAULT_HEIGHT)
+    , mWidth(0)
+    , mHeight(0)
+    , mEncFormat(CameraParameters::VIDEO_CODING_AVC)
     , mHost(DEFAULT_HOST)
     , mPort(DEFAULT_SERVICE_PORT)
-    , mPipeline(nullptr)
 {
     log_info("%s Device:%s", __func__, mCamDev->getDeviceId().c_str());
     mPath = "/" + mCamDev->getDeviceId();
@@ -196,7 +319,6 @@ std::string VideoStreamRtsp::getAddress()
     return 0;
 }
 
-/* The port to send the packets to */
 int VideoStreamRtsp::setPort(uint32_t port)
 {
     mPort = port;
@@ -208,6 +330,37 @@ int VideoStreamRtsp::getPort()
     return mPort;
 }
 
+int VideoStreamRtsp::getCameraResolution(uint32_t &width, uint32_t &height)
+{
+    mCamDev->getSize(width, height);
+    return 0;
+}
+
+CameraParameters::PixelFormat VideoStreamRtsp::getCameraPixelFormat()
+{
+    CameraParameters::PixelFormat format;
+    mCamDev->getPixelFormat(format);
+    return format;
+}
+
+std::string VideoStreamRtsp::getGstPipeline(std::map<std::string, std::string> &params)
+{
+    std::string name;
+    std::string source;
+    if (mCamDev->isGstV4l2Src()) {
+        source = "v4l2src device=/dev/" + mCamDev->getDeviceId();
+    } else {
+        source = "appsrc name=mysrc";
+    }
+
+    name = source + " ! " + getGstVideoConvertor() + " ! "
+        + getGstVideoConvertorCaps(params, mWidth, mHeight) + " ! " + getGstVideoEncoder(mEncFormat)
+        + " ! " + getGstRtspVideoSink();
+
+    log_debug("%s:%s", __func__, name.c_str());
+    return name;
+}
+
 GstBuffer *VideoStreamRtsp::readFrame()
 {
     log_debug("%s::%s", typeid(this).name(), __func__);
@@ -217,6 +370,7 @@ GstBuffer *VideoStreamRtsp::readFrame()
     CameraData data;
     CameraDevice::Status ret = CameraDevice::Status::ERROR_UNKNOWN;
     ret = mCamDev->read(data);
+    /* add retry logic? */
     if (ret == CameraDevice::Status::SUCCESS) {
         gsize size = data.bufSize;
         gsize offset = 0;
@@ -226,7 +380,7 @@ GstBuffer *VideoStreamRtsp::readFrame()
     } else {
         log_error("Camera returned no frame");
         /* TODO :: Change the multiplication factor based on pix format */
-        gsize size = mWidth * mHeight * 3;
+        gsize size = mWidth * mHeight * getBytesPerPixel(getCameraPixelFormat());
         buffer = gst_buffer_new_allocate(NULL, size, NULL);
         /* this makes the image white */
         gst_buffer_memset(buffer, 0, 0xff, size);
@@ -256,59 +410,74 @@ static void need_data(GstElement *appsrc, guint unused, gpointer user_data)
     }
 }
 
-/* called when a new media pipeline is constructed. We can query the
- * pipeline and configure our appsrc */
-static void rtspMediaConfigure(GstRTSPMediaFactory *factory, GstRTSPMedia *media,
-                               gpointer user_data)
+/*
+ * ### For future reference ###
+ * After setup request, gst-rtsp-server does following to construct media and pipeline
+ * 1. Convert the URL to a key : Callback gen_key()
+ * 2. Construct the media : Callback construct()
+ * 3. Create element : Callback create_element()
+ * 4. Create pipeline : Callback create_pipeline()
+ * 5. Emit Signal: media_constructed
+ * 6. Configure media : Callback configure()
+ * 7. Emit Signal: media_configure
+ */
+
+static GstElement *cb_create_element(GstRTSPMediaFactory *factory, const GstRTSPUrl *url)
 {
-    log_info("%s", __func__);
+    log_debug("%s", __func__);
+    log_info("host:%s,port:%d,abspath:%s,query:%s", url->host, url->port, url->abspath, url->query);
 
-    VideoStreamRtsp *obj = reinterpret_cast<VideoStreamRtsp *>(user_data);
+    VideoStreamRtsp *obj
+        = reinterpret_cast<VideoStreamRtsp *>(g_object_get_data(G_OBJECT(factory), "user_data"));
 
-    GstElement *element, *appsrc;
-    int width, height;
+    /* parse query string from URL */
+    std::map<std::string, std::string> params = parseUrlQuery(url->query);
 
-    obj->getResolution(width, height);
-    obj->getPort();
+    /* build pipeline description based on params received from URL */
+    std::string launch = obj->getGstPipeline(params);
 
-    /* get the element used for providing the streams of the media */
-    element = gst_rtsp_media_get_element(media);
-
-    /* get our appsrc, we named it 'mysrc' with the name property */
-    appsrc = gst_bin_get_by_name_recurse_up(GST_BIN(element), "mysrc");
-
-    /* this instructs appsrc that we will be dealing with timed buffer */
-    gst_util_set_object_arg(G_OBJECT(appsrc), "format", "time");
-
-    /* configure the caps of the video */
-    g_object_set(G_OBJECT(appsrc), "caps",
-                 gst_caps_new_simple("video/x-raw", "format", G_TYPE_STRING, "RGB", "width",
-                                     G_TYPE_INT, width, "height", G_TYPE_INT, height, "framerate",
-                                     GST_TYPE_FRACTION, 0, 1, NULL),
-                 NULL);
-
-    /* install the callback that will be called when a buffer is needed */
-    g_signal_connect(appsrc, "need-data", (GCallback)need_data, user_data);
-    gst_object_unref(appsrc);
-    gst_object_unref(element);
-}
-
-std::string VideoStreamRtsp::rtspPipelineName()
-{
-    std::string source;
-    std::string name;
-
-    if (mCamDev->isGstV4l2Src()) {
-        source = "v4l2src device=/dev/" + mCamDev->getDeviceId();
-    } else {
-        source = "appsrc name=mysrc";
+    GError *error = NULL;
+    GstElement *pipeline = NULL;
+    /* create new pipeline */
+    pipeline = gst_parse_launch(launch.c_str(), &error);
+    if (pipeline == NULL) {
+        if (error)
+            g_error_free(error);
+        return NULL;
     }
 
-    /* TODO:: format, encoder elements should be configurable */
-    name = source + " ! videoconvert ! video/x-raw, format=I420 ! x264enc ! rtph264pay name=pay0";
+    if (error != NULL) {
+        /* a recoverable error was encountered */
+        log_warning("recoverable parsing error: %s", error->message);
+        g_error_free(error);
+    }
 
-    log_debug("%s:%s", __func__, name.c_str());
-    return name;
+    /* return if not appsrc pipeline, else configure */
+    if (launch.find("appsrc") == std::string::npos)
+        return pipeline;
+
+    /* configure the appsrc element*/
+    GstElement *appsrc = gst_bin_get_by_name(GST_BIN(pipeline), "mysrc");
+
+    uint32_t width, height;
+    obj->getCameraResolution(width, height);
+    std::string fmt = getGstPixFormat(obj->getCameraPixelFormat());
+
+    /* set capabilities of appsrc element*/
+    gst_app_src_set_caps(GST_APP_SRC(appsrc),
+                         gst_caps_new_simple("video/x-raw", "format", G_TYPE_STRING, fmt.c_str(),
+                                             "width", G_TYPE_INT, width, "height", G_TYPE_INT,
+                                             height, "framerate", GST_TYPE_FRACTION, 25, 1, NULL));
+
+    /* setup appsrc */
+    g_object_set(G_OBJECT(appsrc), "is-live", TRUE, "format", GST_FORMAT_TIME, NULL);
+
+    /* install the callback that will be called when a buffer is needed */
+    g_signal_connect(appsrc, "need-data", (GCallback)need_data, obj);
+
+    gst_object_unref(appsrc);
+
+    return pipeline;
 }
 
 int VideoStreamRtsp::startRtspServer()
@@ -324,20 +493,16 @@ int VideoStreamRtsp::startRtspServer()
         return -1;
     }
 
-    gst_rtsp_media_factory_set_launch(factory, rtspPipelineName().c_str());
-
-    if (!mCamDev->isGstV4l2Src()) {
-        /* notify when our media is ready, This is called whenever someone asks for
-         * the media and a new pipeline with our appsrc is created */
-        g_signal_connect(factory, "media-configure", (GCallback)rtspMediaConfigure, this);
-    }
+    g_object_set_data(G_OBJECT(factory), "user_data", this);
+    GstRTSPMediaFactoryClass *factory_class = GST_RTSP_MEDIA_FACTORY_GET_CLASS(factory);
+    factory_class->create_element = cb_create_element;
 
     /* get the default mount points from the server */
     GstRTSPMountPoints *mounts = gst_rtsp_server_get_mount_points(mServer);
 
     /* attach the video to the RTSP URL */
     gst_rtsp_mount_points_add_factory(mounts, mPath.c_str(), factory);
-    log_info("RTSP stream ready at rtsp://127.0.0.1:%s%s\n", std::to_string(mPort).c_str(),
+    log_info("RTSP stream ready at rtsp://<ip-address>:%s%s\n", std::to_string(mPort).c_str(),
              mPath.c_str());
     g_object_unref(mounts);
 
