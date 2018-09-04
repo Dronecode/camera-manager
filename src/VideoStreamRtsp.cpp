@@ -29,6 +29,7 @@ uint32_t VideoStreamRtsp::refCnt = 0;
 
 static std::string getGstVideoConvertor()
 {
+
     std::string convertor;
 
     convertor = "videoconvert";
@@ -71,10 +72,10 @@ static std::string getGstVideoEncoder(CameraParameters::VIDEO_CODING_FORMAT encF
 
     switch (encFormat) {
     case CameraParameters::VIDEO_CODING_AVC:
-        enc = std::string("x264enc");
+        enc = std::string("vaapih264enc");
         break;
     default:
-        enc = std::string("x264enc");
+        enc = std::string("vaapih264enc");
         break;
     }
 
@@ -163,6 +164,9 @@ VideoStreamRtsp::VideoStreamRtsp(std::shared_ptr<CameraDevice> camDev)
     mPath = "/" + mCamDev->getDeviceId();
     if (mPath.find("gazebo") != std::string::npos)
         mPath = "/gazebo";
+
+    /* Default: Set the RTSP video res same as camera res */
+    mCamDev->getSize(mWidth, mHeight);
 }
 
 VideoStreamRtsp::~VideoStreamRtsp()
@@ -379,8 +383,9 @@ GstBuffer *VideoStreamRtsp::readFrame()
                                              NULL, NULL);
     } else {
         log_error("Camera returned no frame");
-        /* TODO :: Change the multiplication factor based on pix format */
-        gsize size = mWidth * mHeight * getBytesPerPixel(getCameraPixelFormat());
+        uint32_t width, height;
+        getCameraResolution(width, height);
+        gsize size = width * height * getBytesPerPixel(getCameraPixelFormat());
         buffer = gst_buffer_new_allocate(NULL, size, NULL);
         /* this makes the image white */
         gst_buffer_memset(buffer, 0, 0xff, size);

@@ -165,10 +165,10 @@ BASE_FILES = \
 
 if ENABLE_REALSENSE
 BASE_FILES += \
-	src/stream_builder_realsense.h \
-	src/stream_builder_realsense.cpp \
-	src/stream_realsense.cpp \
-	src/stream_realsense.h
+	plugins/RealSenseCamera/PluginRealSense.h \
+	plugins/RealSenseCamera/PluginRealSense.cpp \
+	plugins/RealSenseCamera/CameraDeviceRealSense.h \
+	plugins/RealSenseCamera/CameraDeviceRealSense.cpp
 endif
 
 if ENABLE_AERO
