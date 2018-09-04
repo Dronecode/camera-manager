@@ -1,21 +1,25 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <mavlinkcamera>
+
     <definition version="1">
         <model>UVC Camera</model>
         <vendor>Logitech C270HD Webcam</vendor>
     </definition>
-        <parameter name="wb-mode" type="int32" default="1">
-            <description>White Balance Mode</description>
-            <options>
-                <option name="Manual Mode" value="0" />
-                <option name="Auto" value="1" >
-                <exclusions>
-                    <exclude>wb-temp</exclude>
-                </exclusions>
-                </option>
-            </options>
-        </parameter>
-        <parameter name="wb-temp" type="int32" default="4000" min="0" max="10000" step ="1">
-            <description>White Balance Temperature </description>
-        </parameter>
-        ...
+
+    <parameter name="wb-mode" type="int32" default="1">
+        <description>White Balance Mode</description>
+        <options>
+            <option name="Manual Mode" value="0" />
+            <option name="Auto" value="1" >
+            <exclusions>
+                <exclude>wb-temp</exclude>
+            </exclusions>
+            </option>
+        </options>
+    </parameter>
+    <parameter name="wb-temp"
+               type="int32" default="4000"
+               min="0" max="10000" step ="1">
+        <description>White Balance Temperature </description>
+    </parameter>
+    ...
