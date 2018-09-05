@@ -99,6 +99,9 @@ static std::string getGstPixFormat(CameraParameters::PixelFormat pixFormat)
     case CameraParameters::PixelFormat::PIXEL_FORMAT_RGB24:
         pix = "RGB";
         break;
+    case CameraParameters::PixelFormat::PIXEL_FORMAT_UYVY:
+        pix = "UYVY";
+        break;
     default:
         pix = "I420";
     }
@@ -113,6 +116,9 @@ static float getBytesPerPixel(CameraParameters::PixelFormat pixFormat)
     switch (pixFormat) {
     case CameraParameters::PixelFormat::PIXEL_FORMAT_RGB24:
         ret = 3;
+        break;
+    case CameraParameters::PixelFormat::PIXEL_FORMAT_UYVY:
+        ret = 2;
         break;
     default:
         ret = 2;

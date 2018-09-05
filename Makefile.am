@@ -156,8 +156,8 @@ BASE_FILES = \
 	src/PluginManager.h \
 	src/PluginManager.cpp \
 	src/PluginBase.h \
-	plugins/V4l2Camera/v4l2_interface.cpp \
-	plugins/V4l2Camera/v4l2_interface.h\
+	src/v4l2_interface.cpp \
+	src/v4l2_interface.h \
 	plugins/V4l2Camera/PluginV4l2.h\
 	plugins/V4l2Camera/PluginV4l2.cpp \
 	plugins/V4l2Camera/CameraDeviceV4l2.cpp \
@@ -173,10 +173,10 @@ endif
 
 if ENABLE_AERO
 BASE_FILES += \
-	src/stream_builder_aero_bottom.h \
-	src/stream_builder_aero_bottom.cpp \
-	src/stream_aero_bottom.cpp \
-	src/stream_aero_bottom.h
+	plugins/AeroAtomIspCamera/PluginAeroAtomIsp.h \
+	plugins/AeroAtomIspCamera/PluginAeroAtomIsp.cpp \
+	plugins/AeroAtomIspCamera/CameraDeviceAeroAtomIsp.h \
+	plugins/AeroAtomIspCamera/CameraDeviceAeroAtomIsp.cpp
 endif
 
 if ENABLE_CUSTOM
