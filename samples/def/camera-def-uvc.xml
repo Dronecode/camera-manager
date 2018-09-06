@@ -11,9 +11,9 @@
         <options>
             <option name="Manual Mode" value="0" />
             <option name="Auto" value="1" >
-            <exclusions>
-                <exclude>wb-temp</exclude>
-            </exclusions>
+                <exclusions>
+                    <exclude>wb-temp</exclude>
+                </exclusions>
             </option>
         </options>
     </parameter>
