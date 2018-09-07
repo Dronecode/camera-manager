@@ -214,10 +214,10 @@ test_test_custom_stream_LDADD = ${dcm_LDADD}
 test_test_custom_stream_SOURCES = \
 	$(BASE_FILES) \
 	src/main.cpp \
-	test/stream_builder_custom.h \
-	test/stream_builder_custom.cpp \
-	test/stream_custom.cpp \
-	test/stream_custom.h
+	plugins/CustomCamera/PluginCustom.cpp \
+	plugins/CustomCamera/PluginCustom.h \
+	plugins/CustomCamera/CameraDeviceCustom.cpp \
+	plugins/CustomCamera/CameraDeviceCustom.h
 
 if ENABLE_AVAHI
 EXTRA_PROGRAMS += test/test-rtsp-udp-stream-discovery
