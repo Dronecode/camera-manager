@@ -31,9 +31,9 @@
 #endif
 
 CameraServer::CameraServer(const ConfFile &conf)
-    :
+    : mPluginManager()
 #ifdef ENABLE_MAVLINK
-    mavlink_server(conf)
+    , mMavlinkServer(conf)
 #endif
 {
     std::string confDeviceId;
@@ -50,7 +50,7 @@ CameraServer::CameraServer(const ConfFile &conf)
     // Read blacklisted camera devices
     std::set<std::string> blackList = readBlacklistDevices(conf);
 
-    std::vector<std::string> deviceList = PM.listCameraDevices();
+    std::vector<std::string> deviceList = mPluginManager.listCameraDevices();
     for (auto deviceID : deviceList) {
         log_debug("Camera Device : %s", deviceID.c_str());
 
@@ -63,7 +63,7 @@ CameraServer::CameraServer(const ConfFile &conf)
         }
 
         // create camera device
-        std::shared_ptr<CameraDevice> device = PM.createCameraDevice(deviceID);
+        std::shared_ptr<CameraDevice> device = mPluginManager.createCameraDevice(deviceID);
         if (!device) {
             log_error("Error in creating device : %s", deviceID.c_str());
             continue;
@@ -103,7 +103,7 @@ CameraServer::CameraServer(const ConfFile &conf)
 
 // add to mavlink server
 #ifdef ENABLE_MAVLINK
-        if (mavlink_server.addCameraComponent(comp) == -1) {
+        if (mMavlinkServer.addCameraComponent(comp) == -1) {
             log_error("Error in adding Camera Component");
             // TODO :: delete component and break
         }
@@ -136,7 +136,7 @@ void CameraServer::start()
     }
 
 #ifdef ENABLE_MAVLINK
-    mavlink_server.start();
+    mMavlinkServer.start();
 #endif
 
 #ifdef ENABLE_AVAHI
@@ -162,7 +162,7 @@ void CameraServer::stop()
 #endif
 
 #ifdef ENABLE_MAVLINK
-    mavlink_server.stop();
+    mMavlinkServer.stop();
 #endif
 
     for (auto camComp : compList) {

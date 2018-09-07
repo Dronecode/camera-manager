@@ -47,14 +47,15 @@ private:
     bool readVidCapSettings(const ConfFile &conf, VideoSettings &vidSetting) const;
     std::string readVidCapLocation(const ConfFile &conf) const;
     std::string readGazeboCamTopic(const ConfFile &conf) const;
+    PluginManager mPluginManager;
+
 #ifdef ENABLE_MAVLINK
-    MavlinkServer mavlink_server;
+    MavlinkServer mMavlinkServer;
 #endif
 #ifdef ENABLE_AVAHI
     std::unique_ptr<AvahiPublisher> mAvahiPublisher;
 #endif
 
-    PluginManager PM;
     std::map<std::string, std::vector<std::string>> mCamInfoMap;
     std::vector<CameraComponent *> compList;
 };
