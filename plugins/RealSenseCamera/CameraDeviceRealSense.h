@@ -52,7 +52,7 @@ public:
     Status getSupportedModes(std::vector<CameraParameters::Mode> &modes) const;
     Status setFrameRate(const uint32_t fps);
     Status getFrameRate(uint32_t &fps) const;
-    Status getSupportedFrameRates(uint32_t &minFps, uint32_t &maxFps);
+    Status getSupportedFrameRates(uint32_t &minFps, uint32_t &maxFps) const;
     Status setCameraDefinitionUri(const std::string uri);
     std::string getCameraDefinitionUri() const;
 

@@ -61,6 +61,11 @@ CameraDeviceRealSense::CameraDeviceRealSense(std::string device)
     , mMode(CameraParameters::Mode::MODE_VIDEO)
     , mFrmRate(RS_DEFAULT_FRAME_RATE)
     , mCamDefUri{}
+    , mFrameBuffer(nullptr)
+    , mFrameBufferSize(0)
+    , mRSDev(nullptr)
+    , mRSCtx(nullptr)
+    , mRSStream(-1)
 {
     log_info("%s path:%s", __func__, mDeviceId.c_str());
     if (device == "rsdepth")
@@ -434,7 +439,7 @@ CameraDevice::Status CameraDeviceRealSense::getFrameRate(uint32_t &fps) const
 }
 
 CameraDevice::Status CameraDeviceRealSense::getSupportedFrameRates(uint32_t &minFps,
-                                                                   uint32_t &maxFps)
+                                                                   uint32_t &maxFps) const
 {
     /*
      * 1. Get the supported frame rates of the camera device.
