@@ -24,6 +24,9 @@
 #ifdef ENABLE_MAVLINK
 #include "mavlink_server.h"
 #endif
+#ifdef ENABLE_AVAHI
+#include "avahi_publisher.h"
+#endif
 
 #include "CameraComponent.h"
 #include "PluginManager.h"
@@ -36,6 +39,7 @@ public:
     void stop();
 
 private:
+    void addCameraInformation(const std::shared_ptr<CameraDevice> &device);
     std::set<std::string> readBlacklistDevices(const ConfFile &conf) const;
     std::string readURI(const ConfFile &conf, std::string deviceID);
     bool readImgCapSettings(const ConfFile &conf, ImageSettings &imgSetting) const;
@@ -46,6 +50,11 @@ private:
 #ifdef ENABLE_MAVLINK
     MavlinkServer mavlink_server;
 #endif
+#ifdef ENABLE_AVAHI
+    std::unique_ptr<AvahiPublisher> mAvahiPublisher;
+#endif
+
     PluginManager PM;
+    std::map<std::string, std::vector<std::string>> mCamInfoMap;
     std::vector<CameraComponent *> compList;
 };

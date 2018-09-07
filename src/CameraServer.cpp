@@ -23,6 +23,9 @@
 #include "log.h"
 #include "util.h"
 
+#define DEFAULT_SERVICE_PORT 8554
+#define DEFAULT_SERVICE_TYPE "_rtsp._udp"
+
 #ifdef ENABLE_GAZEBO
 #define GAZEBO_STRING "gazebo"
 #endif
@@ -65,6 +68,9 @@ CameraServer::CameraServer(const ConfFile &conf)
             log_error("Error in creating device : %s", deviceID.c_str());
             continue;
         }
+
+        // save camera device details in a table
+        addCameraInformation(device);
 
         confDeviceId = deviceID;
 
@@ -132,10 +138,29 @@ void CameraServer::start()
 #ifdef ENABLE_MAVLINK
     mavlink_server.start();
 #endif
+
+#ifdef ENABLE_AVAHI
+    /* create avahi publisher */
+    mAvahiPublisher = std::unique_ptr<AvahiPublisher>(
+        new AvahiPublisher(mCamInfoMap, DEFAULT_SERVICE_PORT, DEFAULT_SERVICE_TYPE));
+
+    /* start avahi publisher */
+    mAvahiPublisher->start();
+
+#endif
 }
 
 void CameraServer::stop()
 {
+
+#ifdef ENABLE_AVAHI
+    /* stop avahi publisher */
+    mAvahiPublisher->stop();
+
+    /* delete avahi publisher */
+    mAvahiPublisher.reset();
+#endif
+
 #ifdef ENABLE_MAVLINK
     mavlink_server.stop();
 #endif
@@ -144,6 +169,28 @@ void CameraServer::stop()
         camComp->stop();
     }
 
+}
+
+void CameraServer::addCameraInformation(const std::shared_ptr<CameraDevice> &device)
+{
+    std::string name = "/" + device->getDeviceId();
+
+    std::vector<std::string> txtList;
+
+    CameraInfo camInfo;
+    device->getInfo(camInfo);
+
+    std::string vendor
+        = "vendor=" + std::string(reinterpret_cast<const char *>(camInfo.vendorName), 32);
+    txtList.push_back(vendor);
+    std::string model
+        = "model=" + std::string(reinterpret_cast<const char *>(camInfo.modelName), 32);
+    txtList.push_back(model);
+    /* TODO:: Fill more details like supported sizes, formats etc*/
+
+    mCamInfoMap[name] = txtList;
+
+    return;
 }
 
 std::set<std::string> CameraServer::readBlacklistDevices(const ConfFile &conf) const
