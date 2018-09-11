@@ -177,7 +177,7 @@ VideoStreamRtsp::VideoStreamRtsp(std::shared_ptr<CameraDevice> camDev)
 
 VideoStreamRtsp::~VideoStreamRtsp()
 {
-    log_debug("%s::%s", typeid(this).name(), __func__);
+    log_debug("%s::%s", __func__, mPath.c_str());
 
     stop();
     uninit();
@@ -373,7 +373,7 @@ std::string VideoStreamRtsp::getGstPipeline(std::map<std::string, std::string> &
 
 GstBuffer *VideoStreamRtsp::readFrame()
 {
-    log_debug("%s::%s", typeid(this).name(), __func__);
+    // log_debug("%s::%s", typeid(this).name(), __func__);
 
     GstBuffer *buffer;
     static GstClockTime timestamp = 0;

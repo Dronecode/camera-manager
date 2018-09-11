@@ -166,6 +166,7 @@ void CameraServer::stop()
 #endif
 
     for (auto camComp : compList) {
+        camComp->stopVideoStream();
         camComp->stop();
     }
 

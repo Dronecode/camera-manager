@@ -135,10 +135,14 @@ CameraDevice::Status CameraDeviceGazebo::start()
 
 CameraDevice::Status CameraDeviceGazebo::stop()
 {
+    log_error("%s:%s:enter", __func__, mDeviceId.c_str());
     std::lock_guard<std::mutex> locker(mLock);
-    mState = State::STATE_INIT;
+    if (mState != State::STATE_RUN)
+        return Status::INVALID_STATE;
     // Make sure to shut everything down.
     gazebo::client::shutdown();
+    mState = State::STATE_INIT;
+    log_error("%s:%s:return", __func__, mDeviceId.c_str());
     return CameraDevice::Status::SUCCESS;
 }
 
@@ -290,7 +294,7 @@ void CameraDeviceGazebo::cbOnImages(ConstImagesStampedPtr &_msg)
 {
     std::lock_guard<std::mutex> locker(mLock);
 
-    log_debug("Image Count: %d", _msg->image_size());
+    // log_debug("Image Count: %d", _msg->image_size());
     for (int i = 0; i < _msg->image_size(); ++i) {
         getImage(_msg->image(i));
     }

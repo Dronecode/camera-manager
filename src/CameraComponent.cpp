@@ -41,7 +41,7 @@ CameraComponent::CameraComponent(std::shared_ptr<CameraDevice> device)
 
 CameraComponent::~CameraComponent()
 {
-    log_debug("%s", __func__);
+    log_debug("%s::%s", __func__, mCamDev->getDeviceId().c_str());
 
     if (mVidCap) {
         mVidCap->stop();
@@ -99,6 +99,12 @@ int CameraComponent::stop()
         mImgCap->stop();
         mImgCap->uninit();
         mImgCap.reset();
+    }
+
+    if (mVidStream) {
+        mVidStream->stop();
+        mVidStream->uninit();
+        mVidStream.reset();
     }
 
     // stop the camera device
