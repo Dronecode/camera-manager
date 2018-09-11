@@ -376,7 +376,6 @@ GstBuffer *VideoStreamRtsp::readFrame()
     // log_debug("%s::%s", typeid(this).name(), __func__);
 
     GstBuffer *buffer;
-    static GstClockTime timestamp = 0;
     CameraData data;
     CameraDevice::Status ret = CameraDevice::Status::ERROR_UNKNOWN;
     ret = mCamDev->read(data);
@@ -397,19 +396,12 @@ GstBuffer *VideoStreamRtsp::readFrame()
         gst_buffer_memset(buffer, 0, 0xff, size);
     }
 
-    /* Add timestamp */
-    GST_BUFFER_PTS(buffer) = timestamp;
-    GST_BUFFER_DURATION(buffer) = gst_util_uint64_scale_int(1, GST_SECOND, 25);
-    timestamp += GST_BUFFER_DURATION(buffer);
-
     return buffer;
 }
 
 /* called when we need to give data to appsrc */
 static void cb_need_data(GstAppSrc *appsrc, guint unused, gpointer user_data)
 {
-    log_debug("%s", __func__);
-
     GstFlowReturn ret;
     VideoStreamRtsp *obj = reinterpret_cast<VideoStreamRtsp *>(user_data);
 
@@ -421,15 +413,6 @@ static void cb_need_data(GstAppSrc *appsrc, guint unused, gpointer user_data)
             log_error("Error in sending data to gst pipeline");
         }
     }
-}
-
-static void cb_enough_data(GstAppSrc *src, gpointer user_data)
-{
-}
-
-static gboolean cb_seek_data(GstAppSrc *src, guint64 offset, gpointer user_data)
-{
-    return TRUE;
 }
 
 /*
@@ -498,13 +481,30 @@ static GstElement *cb_create_element(GstRTSPMediaFactory *factory, const GstRTSP
     /* install the callback that will be called when a buffer is needed */
     GstAppSrcCallbacks cbs;
     cbs.need_data = cb_need_data;
-    cbs.enough_data = cb_enough_data;
-    cbs.seek_data = cb_seek_data;
+    cbs.enough_data = NULL;
+    cbs.seek_data = NULL;
     gst_app_src_set_callbacks(GST_APP_SRC_CAST(appsrc), &cbs, obj, NULL);
 
     gst_object_unref(appsrc);
 
     return pipeline;
+}
+
+static void cb_unprepared(GstRTSPMedia *media, gpointer user_data)
+{
+    log_debug("%s", __func__);
+
+    /* TODO:: Stop camera device capturing*/
+}
+
+static void cb_media_configure(GstRTSPMediaFactory *factory, GstRTSPMedia *media)
+{
+    log_debug("%s", __func__);
+
+    /* TODO:: Start camera device capturing */
+
+    g_signal_connect(media, "unprepared", (GCallback)cb_unprepared,
+                     g_object_get_data(G_OBJECT(factory), "user_data"));
 }
 
 int VideoStreamRtsp::startRtspServer()
@@ -523,6 +523,8 @@ int VideoStreamRtsp::startRtspServer()
     g_object_set_data(G_OBJECT(factory), "user_data", this);
     GstRTSPMediaFactoryClass *factory_class = GST_RTSP_MEDIA_FACTORY_GET_CLASS(factory);
     factory_class->create_element = cb_create_element;
+
+    g_signal_connect(factory, "media-configure", (GCallback)cb_media_configure, NULL);
 
     /* get the default mount points from the server */
     GstRTSPMountPoints *mounts = gst_rtsp_server_get_mount_points(mServer);
