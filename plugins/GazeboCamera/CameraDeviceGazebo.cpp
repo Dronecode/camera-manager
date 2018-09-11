@@ -135,14 +135,12 @@ CameraDevice::Status CameraDeviceGazebo::start()
 
 CameraDevice::Status CameraDeviceGazebo::stop()
 {
-    log_error("%s:%s:enter", __func__, mDeviceId.c_str());
     std::lock_guard<std::mutex> locker(mLock);
     if (mState != State::STATE_RUN)
         return Status::INVALID_STATE;
     // Make sure to shut everything down.
     gazebo::client::shutdown();
     mState = State::STATE_INIT;
-    log_error("%s:%s:return", __func__, mDeviceId.c_str());
     return CameraDevice::Status::SUCCESS;
 }
 

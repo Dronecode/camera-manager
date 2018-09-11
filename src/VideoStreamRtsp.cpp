@@ -406,14 +406,16 @@ GstBuffer *VideoStreamRtsp::readFrame()
 }
 
 /* called when we need to give data to appsrc */
-static void need_data(GstElement *appsrc, guint unused, gpointer user_data)
+static void cb_need_data(GstAppSrc *appsrc, guint unused, gpointer user_data)
 {
+    log_debug("%s", __func__);
+
     GstFlowReturn ret;
     VideoStreamRtsp *obj = reinterpret_cast<VideoStreamRtsp *>(user_data);
 
     GstBuffer *buffer = obj->readFrame();
     if (buffer) {
-        g_signal_emit_by_name(appsrc, "push-buffer", buffer, &ret);
+        ret = gst_app_src_push_buffer(appsrc, buffer);
         if (ret != GST_FLOW_OK) {
             /* some error */
             log_error("Error in sending data to gst pipeline");
@@ -421,13 +423,22 @@ static void need_data(GstElement *appsrc, guint unused, gpointer user_data)
     }
 }
 
+static void cb_enough_data(GstAppSrc *src, gpointer user_data)
+{
+}
+
+static gboolean cb_seek_data(GstAppSrc *src, guint64 offset, gpointer user_data)
+{
+    return TRUE;
+}
+
 /*
  * ### For future reference ###
  * After setup request, gst-rtsp-server does following to construct media and pipeline
  * 1. Convert the URL to a key : Callback gen_key()
  * 2. Construct the media : Callback construct()
- * 3. Create element : Callback create_element()
- * 4. Create pipeline : Callback create_pipeline()
+ * 2a. Create element : Callback create_element()
+ * 2b. Create pipeline : Callback create_pipeline()
  * 5. Emit Signal: media_constructed
  * 6. Configure media : Callback configure()
  * 7. Emit Signal: media_configure
@@ -481,10 +492,15 @@ static GstElement *cb_create_element(GstRTSPMediaFactory *factory, const GstRTSP
                                              height, "framerate", GST_TYPE_FRACTION, 25, 1, NULL));
 
     /* setup appsrc */
-    g_object_set(G_OBJECT(appsrc), "is-live", TRUE, "format", GST_FORMAT_TIME, NULL);
+    g_object_set(G_OBJECT(appsrc), "stream-type", 0, "format", GST_FORMAT_TIME, "is-live", TRUE,
+                 NULL);
 
     /* install the callback that will be called when a buffer is needed */
-    g_signal_connect(appsrc, "need-data", (GCallback)need_data, obj);
+    GstAppSrcCallbacks cbs;
+    cbs.need_data = cb_need_data;
+    cbs.enough_data = cb_enough_data;
+    cbs.seek_data = cb_seek_data;
+    gst_app_src_set_callbacks(GST_APP_SRC_CAST(appsrc), &cbs, obj, NULL);
 
     gst_object_unref(appsrc);
 
