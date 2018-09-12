@@ -122,8 +122,6 @@ BASE_FILES = \
 	src/conf_file.h \
 	src/glib_mainloop.cpp \
 	src/glib_mainloop.h \
-	src/gstreamer_pipeline_builder.cpp \
-	src/gstreamer_pipeline_builder.h \
 	src/log.cpp \
 	src/log.h \
 	src/macro.h \
