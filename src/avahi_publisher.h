@@ -21,15 +21,15 @@
 #include <avahi-client/client.h>
 #include <avahi-client/publish.h>
 #include <avahi-common/watch.h>
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
 
-#include "stream.h"
-
 class AvahiPublisher {
 public:
-    AvahiPublisher(std::vector<std::unique_ptr<Stream>> &_streams, int _port, const char *_type);
+    AvahiPublisher(std::map<std::string, std::vector<std::string>> &_strMap, int _port,
+                   const char *_type);
     ~AvahiPublisher();
     void start();
     void stop();
@@ -37,7 +37,7 @@ public:
 private:
     bool is_running;
     const AvahiPoll *avahi_poll;
-    const std::vector<std::unique_ptr<Stream>> &streams;
+    std::map<std::string, std::vector<std::string>> &info_map;
     AvahiClient *client;
     AvahiEntryGroup *group;
     int port;
@@ -48,6 +48,6 @@ private:
     static void avahi_client_cb(AvahiClient *c, AvahiClientState state, void *userdata);
     static void entry_group_callback(AvahiEntryGroup *g, AvahiEntryGroupState state,
                                      void *userdata);
-    AvahiStringList *txt_record_from_stream(const std::unique_ptr<Stream> &s);
+    AvahiStringList *txt_record_from_list(const std::vector<std::string> &txtList);
 };
 #endif

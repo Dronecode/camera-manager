@@ -1,7 +1,7 @@
 /*
  * This file is part of the Dronecode Camera Manager
  *
- * Copyright (C) 2017  Intel Corporation. All rights reserved.
+ * Copyright (C) 2018  Intel Corporation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,15 +17,21 @@
  */
 #pragma once
 
-#include "stream_builder.h"
+#include <string>
+#include <vector>
 
-class StreamBuilderAeroBottom final : public StreamBuilder {
+#include "CameraDevice.h"
+#include "PluginBase.h"
+
+class PluginAeroAtomIsp final : public PluginBase {
 public:
-    StreamBuilderAeroBottom()
-        : StreamBuilder()
-    {
-    }
-    ~StreamBuilderAeroBottom() {}
+    PluginAeroAtomIsp();
+    ~PluginAeroAtomIsp();
 
-    std::vector<Stream *> build_streams(const ConfFile &conf);
+    std::vector<std::string> getCameraDevices();
+    std::shared_ptr<CameraDevice> createCameraDevice(std::string);
+
+private:
+    std::vector<std::string> mCamList;
+    void discoverCameras(std::vector<std::string> &camList);
 };

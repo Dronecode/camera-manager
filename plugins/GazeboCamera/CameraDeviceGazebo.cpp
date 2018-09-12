@@ -136,9 +136,11 @@ CameraDevice::Status CameraDeviceGazebo::start()
 CameraDevice::Status CameraDeviceGazebo::stop()
 {
     std::lock_guard<std::mutex> locker(mLock);
-    mState = State::STATE_INIT;
+    if (mState != State::STATE_RUN)
+        return Status::INVALID_STATE;
     // Make sure to shut everything down.
     gazebo::client::shutdown();
+    mState = State::STATE_INIT;
     return CameraDevice::Status::SUCCESS;
 }
 
@@ -290,7 +292,7 @@ void CameraDeviceGazebo::cbOnImages(ConstImagesStampedPtr &_msg)
 {
     std::lock_guard<std::mutex> locker(mLock);
 
-    log_debug("Image Count: %d", _msg->image_size());
+    // log_debug("Image Count: %d", _msg->image_size());
     for (int i = 0; i < _msg->image_size(); ++i) {
         getImage(_msg->image(i));
     }
@@ -327,7 +329,7 @@ int CameraDeviceGazebo::getImage(const gazebo::msgs::Image &_msg)
     }
 
     // copy image data to frame buffer
-    // log_debug("Image Size: %lu Format:%d", _msg.data().size(), pixFormat);
+    // log_debug("Image Size: %lu Format:%d", _msg.data().size(), _msg.pixel_format());
     const char *buffer = (const char *)_msg.data().c_str();
     uint buffer_size = _msg.data().size();
     mFrameBuffer = std::vector<uint8_t>(buffer, buffer + buffer_size);

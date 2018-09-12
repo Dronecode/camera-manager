@@ -16,26 +16,24 @@
  * limitations under the License.
  */
 
+#include <cstddef>
 #include <set>
 
-#include "CameraComponent.h"
 #include "CameraServer.h"
 #include "log.h"
 #include "util.h"
-#ifdef ENABLE_MAVLINK
-#include "mavlink_server.h"
-#endif
+
+#define DEFAULT_SERVICE_PORT 8554
+#define DEFAULT_SERVICE_TYPE "_rtsp._udp"
 
 #ifdef ENABLE_GAZEBO
 #define GAZEBO_STRING "gazebo"
 #endif
 
-#define DEFAULT_SERVICE_PORT 8554
-
 CameraServer::CameraServer(const ConfFile &conf)
-    : rtsp_server(streams, DEFAULT_SERVICE_PORT)
+    : mPluginManager()
 #ifdef ENABLE_MAVLINK
-    , mavlink_server(conf, streams, rtsp_server)
+    , mMavlinkServer(conf)
 #endif
 {
     std::string confDeviceId;
@@ -52,7 +50,7 @@ CameraServer::CameraServer(const ConfFile &conf)
     // Read blacklisted camera devices
     std::set<std::string> blackList = readBlacklistDevices(conf);
 
-    std::vector<std::string> deviceList = PM.listCameraDevices();
+    std::vector<std::string> deviceList = mPluginManager.listCameraDevices();
     for (auto deviceID : deviceList) {
         log_debug("Camera Device : %s", deviceID.c_str());
 
@@ -65,11 +63,14 @@ CameraServer::CameraServer(const ConfFile &conf)
         }
 
         // create camera device
-        std::shared_ptr<CameraDevice> device = PM.createCameraDevice(deviceID);
+        std::shared_ptr<CameraDevice> device = mPluginManager.createCameraDevice(deviceID);
         if (!device) {
             log_error("Error in creating device : %s", deviceID.c_str());
             continue;
         }
+
+        // save camera device details in a table
+        addCameraInformation(device);
 
         confDeviceId = deviceID;
 
@@ -102,7 +103,7 @@ CameraServer::CameraServer(const ConfFile &conf)
 
 // add to mavlink server
 #ifdef ENABLE_MAVLINK
-        if (mavlink_server.addCameraComponent(comp) == -1) {
+        if (mMavlinkServer.addCameraComponent(comp) == -1) {
             log_error("Error in adding Camera Component");
             // TODO :: delete component and break
         }
@@ -111,12 +112,6 @@ CameraServer::CameraServer(const ConfFile &conf)
         // Add component to the list
         compList.push_back(comp);
 
-#ifdef ENABLE_GAZEBO
-        // If the camera device is gazebo, start UDP streaming
-        if (deviceID.find(GAZEBO_STRING) != std::string::npos) {
-            comp->startVideoStream(true);
-        }
-#endif
     }
 }
 
@@ -136,23 +131,67 @@ void CameraServer::start()
     for (auto camComp : compList) {
         if (camComp->start())
             log_error("Error in starting camera component");
+
+        camComp->startVideoStream(false);
     }
 
 #ifdef ENABLE_MAVLINK
-    mavlink_server.start();
+    mMavlinkServer.start();
+#endif
+
+#ifdef ENABLE_AVAHI
+    /* create avahi publisher */
+    mAvahiPublisher = std::unique_ptr<AvahiPublisher>(
+        new AvahiPublisher(mCamInfoMap, DEFAULT_SERVICE_PORT, DEFAULT_SERVICE_TYPE));
+
+    /* start avahi publisher */
+    mAvahiPublisher->start();
+
 #endif
 }
 
 void CameraServer::stop()
 {
+
+#ifdef ENABLE_AVAHI
+    /* stop avahi publisher */
+    mAvahiPublisher->stop();
+
+    /* delete avahi publisher */
+    mAvahiPublisher.reset();
+#endif
+
 #ifdef ENABLE_MAVLINK
-    mavlink_server.stop();
+    mMavlinkServer.stop();
 #endif
 
     for (auto camComp : compList) {
+        camComp->stopVideoStream();
         camComp->stop();
     }
 
+}
+
+void CameraServer::addCameraInformation(const std::shared_ptr<CameraDevice> &device)
+{
+    std::string name = "/" + device->getDeviceId();
+
+    std::vector<std::string> txtList;
+
+    CameraInfo camInfo;
+    device->getInfo(camInfo);
+
+    std::string vendor
+        = "vendor=" + std::string(reinterpret_cast<const char *>(camInfo.vendorName), 32);
+    txtList.push_back(vendor);
+    std::string model
+        = "model=" + std::string(reinterpret_cast<const char *>(camInfo.modelName), 32);
+    txtList.push_back(model);
+    /* TODO:: Fill more details like supported sizes, formats etc*/
+
+    mCamInfoMap[name] = txtList;
+
+    return;
 }
 
 std::set<std::string> CameraServer::readBlacklistDevices(const ConfFile &conf) const

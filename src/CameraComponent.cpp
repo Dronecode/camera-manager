@@ -20,6 +20,7 @@
 #include "CameraComponent.h"
 #include "ImageCaptureGst.h"
 #include "VideoCaptureGst.h"
+#include "VideoStreamRtsp.h"
 #include "VideoStreamUdp.h"
 #ifdef ENABLE_MAVLINK
 #include "mavlink_server.h"
@@ -40,7 +41,7 @@ CameraComponent::CameraComponent(std::shared_ptr<CameraDevice> device)
 
 CameraComponent::~CameraComponent()
 {
-    log_debug("%s", __func__);
+    log_debug("%s::%s", __func__, mCamDev->getDeviceId().c_str());
 
     if (mVidCap) {
         mVidCap->stop();
@@ -98,6 +99,12 @@ int CameraComponent::stop()
         mImgCap->stop();
         mImgCap->uninit();
         mImgCap.reset();
+    }
+
+    if (mVidStream) {
+        mVidStream->stop();
+        mVidStream->uninit();
+        mVidStream.reset();
     }
 
     // stop the camera device
@@ -414,8 +421,7 @@ int CameraComponent::startVideoStream(const bool isUdp)
     if (isUdp)
         mVidStream = std::make_shared<VideoStreamUdp>(mCamDev);
     else {
-        log_error("RTSP Streaming start/stop not supported");
-        return -1;
+        mVidStream = std::make_shared<VideoStreamRtsp>(mCamDev);
     }
 
     ret = mVidStream->init();

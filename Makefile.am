@@ -131,62 +131,52 @@ BASE_FILES = \
 	src/mainloop.h \
 	src/pollable.cpp \
 	src/pollable.h \
-	src/rtsp_server.cpp \
-	src/rtsp_server.h \
 	src/socket.cpp \
 	src/socket.h \
-	src/stream.cpp \
-	src/stream.h \
-	src/stream_builder.cpp \
-	src/stream_builder.h \
-	src/stream_builder_v4l2.cpp \
-	src/stream_builder_v4l2.h \
-	src/stream_v4l2.cpp \
-	src/stream_v4l2.h \
-	src/stream_manager.cpp \
-	src/stream_manager.h \
 	src/util.c \
 	src/util.h \
-        src/CameraParameters.cpp \
-        src/CameraParameters.h \
-        src/CameraComponent.cpp \
-        src/CameraComponent.h \
-        src/CameraServer.cpp \
-        src/CameraServer.h \
-        src/CameraDevice.h \
-        src/ImageCapture.h \
-        src/ImageCaptureGst.h \
-        src/ImageCaptureGst.cpp \
-        src/VideoStream.h \
-        src/VideoStreamUdp.h \
-        src/VideoStreamUdp.cpp \
-        src/VideoCapture.h \
-        src/VideoCaptureGst.h \
-        src/VideoCaptureGst.cpp \
-        src/PluginManager.h \
-        src/PluginManager.cpp \
-        src/PluginBase.h \
-        plugins/V4l2Camera/v4l2_interface.cpp \
-        plugins/V4l2Camera/v4l2_interface.h\
-        plugins/V4l2Camera/PluginV4l2.h\
-        plugins/V4l2Camera/PluginV4l2.cpp \
-        plugins/V4l2Camera/CameraDeviceV4l2.cpp \
-        plugins/V4l2Camera/CameraDeviceV4l2.h
+	src/CameraParameters.cpp \
+	src/CameraParameters.h \
+	src/CameraComponent.cpp \
+	src/CameraComponent.h \
+	src/CameraServer.cpp \
+	src/CameraServer.h \
+	src/CameraDevice.h \
+	src/ImageCapture.h \
+	src/ImageCaptureGst.h \
+	src/ImageCaptureGst.cpp \
+	src/VideoStream.h \
+	src/VideoStreamUdp.h \
+	src/VideoStreamUdp.cpp \
+	src/VideoStreamRtsp.h \
+	src/VideoStreamRtsp.cpp \
+	src/VideoCapture.h \
+	src/VideoCaptureGst.h \
+	src/VideoCaptureGst.cpp \
+	src/PluginManager.h \
+	src/PluginManager.cpp \
+	src/PluginBase.h \
+	src/v4l2_interface.cpp \
+	src/v4l2_interface.h \
+	plugins/V4l2Camera/PluginV4l2.h\
+	plugins/V4l2Camera/PluginV4l2.cpp \
+	plugins/V4l2Camera/CameraDeviceV4l2.cpp \
+	plugins/V4l2Camera/CameraDeviceV4l2.h
 
 if ENABLE_REALSENSE
 BASE_FILES += \
-	src/stream_builder_realsense.h \
-	src/stream_builder_realsense.cpp \
-	src/stream_realsense.cpp \
-	src/stream_realsense.h
+	plugins/RealSenseCamera/PluginRealSense.h \
+	plugins/RealSenseCamera/PluginRealSense.cpp \
+	plugins/RealSenseCamera/CameraDeviceRealSense.h \
+	plugins/RealSenseCamera/CameraDeviceRealSense.cpp
 endif
 
 if ENABLE_AERO
 BASE_FILES += \
-	src/stream_builder_aero_bottom.h \
-	src/stream_builder_aero_bottom.cpp \
-	src/stream_aero_bottom.cpp \
-	src/stream_aero_bottom.h
+	plugins/AeroAtomIspCamera/PluginAeroAtomIsp.h \
+	plugins/AeroAtomIspCamera/PluginAeroAtomIsp.cpp \
+	plugins/AeroAtomIspCamera/CameraDeviceAeroAtomIsp.h \
+	plugins/AeroAtomIspCamera/CameraDeviceAeroAtomIsp.cpp
 endif
 
 if ENABLE_CUSTOM
@@ -224,10 +214,10 @@ test_test_custom_stream_LDADD = ${dcm_LDADD}
 test_test_custom_stream_SOURCES = \
 	$(BASE_FILES) \
 	src/main.cpp \
-	test/stream_builder_custom.h \
-	test/stream_builder_custom.cpp \
-	test/stream_custom.cpp \
-	test/stream_custom.h
+	plugins/CustomCamera/PluginCustom.cpp \
+	plugins/CustomCamera/PluginCustom.h \
+	plugins/CustomCamera/CameraDeviceCustom.cpp \
+	plugins/CustomCamera/CameraDeviceCustom.h
 
 if ENABLE_AVAHI
 EXTRA_PROGRAMS += test/test-rtsp-udp-stream-discovery

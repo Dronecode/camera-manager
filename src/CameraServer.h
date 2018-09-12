@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 #pragma once
-#include <map>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -24,14 +24,11 @@
 #ifdef ENABLE_MAVLINK
 #include "mavlink_server.h"
 #endif
-#include "rtsp_server.h"
-#include "stream.h"
+#ifdef ENABLE_AVAHI
+#include "avahi_publisher.h"
+#endif
 
 #include "CameraComponent.h"
-#include "CameraParameters.h"
-#include "VideoCapture.h"
-#include "log.h"
-
 #include "PluginManager.h"
 
 class CameraServer {
@@ -42,6 +39,7 @@ public:
     void stop();
 
 private:
+    void addCameraInformation(const std::shared_ptr<CameraDevice> &device);
     std::set<std::string> readBlacklistDevices(const ConfFile &conf) const;
     std::string readURI(const ConfFile &conf, std::string deviceID);
     bool readImgCapSettings(const ConfFile &conf, ImageSettings &imgSetting) const;
@@ -49,11 +47,15 @@ private:
     bool readVidCapSettings(const ConfFile &conf, VideoSettings &vidSetting) const;
     std::string readVidCapLocation(const ConfFile &conf) const;
     std::string readGazeboCamTopic(const ConfFile &conf) const;
-    RTSPServer rtsp_server;
+    PluginManager mPluginManager;
+
 #ifdef ENABLE_MAVLINK
-    MavlinkServer mavlink_server;
+    MavlinkServer mMavlinkServer;
 #endif
-    PluginManager PM;
+#ifdef ENABLE_AVAHI
+    std::unique_ptr<AvahiPublisher> mAvahiPublisher;
+#endif
+
+    std::map<std::string, std::vector<std::string>> mCamInfoMap;
     std::vector<CameraComponent *> compList;
-    std::vector<std::unique_ptr<Stream>> streams; // Remove it
 };

@@ -17,6 +17,7 @@
  */
 #include <assert.h>
 #include <cmath>
+#include <cstddef>
 #include <mavlink.h>
 #include <sys/socket.h>
 #include <unistd.h>
@@ -36,17 +37,13 @@ using namespace std::placeholders;
 
 static const float epsilon = std::numeric_limits<float>::epsilon();
 
-MavlinkServer::MavlinkServer(const ConfFile &conf, std::vector<std::unique_ptr<Stream>> &streams,
-                             RTSPServer &rtsp)
-    : _streams(streams)
-    , _is_running(false)
+MavlinkServer::MavlinkServer(const ConfFile &conf)
+    : _is_running(false)
     , _timeout_handler(0)
     , _broadcast_addr{}
     , _is_sys_id_found(false)
     , _system_id(DEFAULT_SYSTEM_ID)
     , _comp_id(MAV_COMP_ID_CAMERA)
-    , _rtsp_server_addr(nullptr)
-    , _rtsp(rtsp)
 {
     struct options {
         unsigned long int port;
@@ -88,13 +85,11 @@ MavlinkServer::MavlinkServer(const ConfFile &conf, std::vector<std::unique_ptr<S
     else
         _broadcast_addr.sin_addr.s_addr = inet_addr(DEFAULT_MAVLINK_BROADCAST_ADDR);
     _broadcast_addr.sin_family = AF_INET;
-    _rtsp_server_addr = opt.rtsp_server_addr;
 }
 
 MavlinkServer::~MavlinkServer()
 {
     stop();
-    free(_rtsp_server_addr);
 }
 
 void MavlinkServer::_send_ack(const struct sockaddr_in &addr, int cmd, int comp_id, bool success)
@@ -340,6 +335,7 @@ void MavlinkServer::_handle_request_camera_capture_status(const struct sockaddr_
     _send_ack(addr, cmd.command, cmd.target_component, success);
 }
 
+#if 0
 void MavlinkServer::_handle_camera_video_stream_request(const struct sockaddr_in &addr, int command,
                                                         unsigned int camera_id, unsigned int action)
 {
@@ -421,6 +417,7 @@ void MavlinkServer::_handle_camera_set_video_stream_settings(const struct sockad
         stream->sel_frame_size
             = _find_best_frame_size(*stream, settings.resolution_h, settings.resolution_v);
 }
+#endif
 
 void MavlinkServer::_handle_param_ext_request_read(const struct sockaddr_in &addr,
                                                    mavlink_message_t *msg)
@@ -605,8 +602,10 @@ void MavlinkServer::_handle_mavlink_message(const struct sockaddr_in &addr, mavl
             this->_handle_request_camera_information(addr, cmd);
             break;
         case MAV_CMD_REQUEST_VIDEO_STREAM_INFORMATION:
+#if 0
             this->_handle_camera_video_stream_request(addr, cmd.command, cmd.param1 /* Camera ID */,
                                                       cmd.param2 /* Action */);
+#endif
             break;
         case MAV_CMD_REQUEST_CAMERA_SETTINGS:
             this->_handle_request_camera_settings(addr, cmd);
@@ -657,7 +656,9 @@ void MavlinkServer::_handle_mavlink_message(const struct sockaddr_in &addr, mavl
                 this->_handle_heartbeat(addr, msg);
             break;
         case MAVLINK_MSG_ID_SET_VIDEO_STREAM_SETTINGS:
+#if 0
             this->_handle_camera_set_video_stream_settings(addr, msg);
+#endif
             break;
         case MAVLINK_MSG_ID_PARAM_EXT_REQUEST_READ:
             this->_handle_param_ext_request_read(addr, msg);

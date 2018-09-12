@@ -73,6 +73,7 @@ int v4l2_open(std::string deviceID)
     return fd;
 }
 
+#if 0
 int v4l2_open(const char *devicepath)
 {
     int fd = -1;
@@ -83,6 +84,7 @@ int v4l2_open(const char *devicepath)
 
     return fd;
 }
+#endif
 
 int v4l2_close(int fd)
 {
@@ -179,6 +181,167 @@ int v4l2_query_framesizes(int fd)
 
     // TODO::Return the list of pixformats & framesizes
     return 0;
+}
+
+int v4l2_set_input(int fd, int id)
+{
+    int ret = -1;
+
+    // set device_id
+    ret = v4l2_ioctl(fd, VIDIOC_S_INPUT, (int *)&id);
+    if (ret) {
+        log_error("Error setting device id: %s", strerror(errno));
+    }
+
+    return ret;
+}
+
+int v4l2_get_input(int fd)
+{
+    int ret = -1;
+
+    return ret;
+}
+
+int v4l2_set_capturemode(int fd, uint32_t mode)
+{
+    int ret = -1;
+
+    // set stream parameters
+    struct v4l2_streamparm parm;
+    memset(&parm, 0, sizeof(struct v4l2_streamparm));
+    parm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    parm.parm.capture.capturemode = mode;
+    ret = v4l2_ioctl(fd, VIDIOC_S_PARM, &parm);
+    if (ret) {
+        log_error("Unable to set stream parameters: %s", strerror(errno));
+    }
+
+    return ret;
+}
+
+int v4l2_set_pixformat(int fd, uint32_t w, uint32_t h, uint32_t pf)
+{
+    int ret = -1;
+
+    // set pixel format
+    struct v4l2_format fmt;
+    memset(&fmt, 0, sizeof(struct v4l2_format));
+    fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    fmt.fmt.pix.width = w;
+    fmt.fmt.pix.height = h;
+    fmt.fmt.pix.pixelformat = pf;
+    fmt.fmt.pix.field = V4L2_FIELD_INTERLACED;
+    ret = v4l2_ioctl(fd, VIDIOC_S_FMT, &fmt);
+    if (ret) {
+        log_error("Setting pixel format: %s", strerror(errno));
+    }
+
+    return ret;
+}
+
+int v4l2_streamon(int fd)
+{
+    int ret = -1;
+
+    enum v4l2_buf_type type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    ret = v4l2_ioctl(fd, VIDIOC_STREAMON, &type);
+    if (ret) {
+        log_error("Error starting streaming: %s", strerror(errno));
+    }
+
+    return ret;
+}
+
+int v4l2_streamoff(int fd)
+{
+    int ret = -1;
+
+    enum v4l2_buf_type type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    ret = v4l2_ioctl(fd, VIDIOC_STREAMOFF, &type);
+    if (ret) {
+        log_error("Error stopping streaming: %s", strerror(errno));
+    }
+
+    return ret;
+}
+
+int v4l2_buf_req(int fd, uint32_t count)
+{
+    int ret = -1;
+
+    // Initiate I/O
+    struct v4l2_requestbuffers req;
+    memset(&req, 0, sizeof(struct v4l2_requestbuffers));
+    req.count = count;
+    req.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    req.memory = V4L2_MEMORY_USERPTR;
+    ret = v4l2_ioctl(fd, VIDIOC_REQBUFS, &req);
+    if (ret) {
+        log_error("Error in REQBUFS %s", strerror(errno));
+    }
+
+    return ret;
+}
+
+int v4l2_buf_q(int fd, uint32_t i, unsigned long bufptr, uint32_t buflen)
+{
+    int ret = -1;
+
+    struct v4l2_buffer buf;
+    memset(&buf, 0, sizeof(struct v4l2_buffer));
+    buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    buf.memory = V4L2_MEMORY_USERPTR;
+    buf.length = buflen;
+    buf.index = i;
+    buf.m.userptr = (unsigned long)bufptr;
+    ret = v4l2_ioctl(fd, VIDIOC_QBUF, &buf);
+    if (ret) {
+        log_error("Error giving buffers to backend: %s | i=%i", strerror(errno), i);
+    }
+
+    return ret;
+}
+
+int v4l2_buf_q(int fd, struct v4l2_buffer *pbuf)
+{
+    int ret = -1;
+
+    ret = v4l2_ioctl(fd, VIDIOC_QBUF, pbuf);
+    if (ret) {
+        log_error("Error giving frame to camera: %s ", strerror(errno));
+    }
+
+    return ret;
+}
+
+int v4l2_buf_dq(int fd, struct v4l2_buffer *pbuf)
+{
+    int ret = -1;
+
+    ret = v4l2_ioctl(fd, VIDIOC_DQBUF, pbuf);
+    if (ret) {
+        log_error("Error getting frame from camera: %s", strerror(errno));
+    }
+
+    return ret;
+}
+
+int v4l2_buf_dq(int fd)
+{
+    int ret = -1;
+
+    struct v4l2_buffer buf;
+    memset(&buf, 0, sizeof(struct v4l2_buffer));
+    buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    buf.memory = V4L2_MEMORY_USERPTR;
+
+    ret = v4l2_ioctl(fd, VIDIOC_DQBUF, &buf);
+    if (ret) {
+        log_error("Error getting frame from camera: %s", strerror(errno));
+    }
+
+    return ret;
 }
 
 int v4l2_get_control(int fd, int ctrl_id)
