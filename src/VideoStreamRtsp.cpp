@@ -29,7 +29,6 @@ uint32_t VideoStreamRtsp::refCnt = 0;
 
 static std::string getGstVideoConvertor()
 {
-
     std::string convertor;
 
     convertor = "videoconvert";
@@ -73,6 +72,9 @@ static std::string getGstVideoEncoder(CameraParameters::VIDEO_CODING_FORMAT encF
     switch (encFormat) {
     case CameraParameters::VIDEO_CODING_AVC:
         enc = std::string("vaapih264enc");
+        break;
+    case CameraParameters::VIDEO_CODING_PICAM:
+        enc = std::string("h264parse");
         break;
     default:
         enc = std::string("vaapih264enc");
@@ -356,16 +358,19 @@ CameraParameters::PixelFormat VideoStreamRtsp::getCameraPixelFormat()
 std::string VideoStreamRtsp::getGstPipeline(std::map<std::string, std::string> &params)
 {
     std::string name;
-    std::string source;
-    if (mCamDev->isGstV4l2Src()) {
-        source = "v4l2src device=/dev/" + mCamDev->getDeviceId();
+
+    if (mEncFormat != CameraParameters::VIDEO_CODING_PICAM) {
+        if (mCamDev->isGstV4l2Src()) {
+            name = "v4l2src device=/dev/" + mCamDev->getDeviceId();
+        } else {
+            name = "appsrc name=mysrc";
+        }
+        name += " ! " + getGstVideoConvertor() + " ! " + getGstVideoConvertorCaps(params, mWidth, mHeight);
     } else {
-        source = "appsrc name=mysrc";
+        name = "rpicamsrc width=640 height=480 framerate=25 bitrate=1000000";
     }
 
-    name = source + " ! " + getGstVideoConvertor() + " ! "
-        + getGstVideoConvertorCaps(params, mWidth, mHeight) + " ! " + getGstVideoEncoder(mEncFormat)
-        + " ! " + getGstRtspVideoSink();
+    name += " ! " + getGstVideoEncoder(mEncFormat) + " ! " + getGstRtspVideoSink();
 
     log_debug("%s:%s", __func__, name.c_str());
     return name;
