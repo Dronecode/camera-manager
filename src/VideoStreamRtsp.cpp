@@ -359,7 +359,12 @@ std::string VideoStreamRtsp::getGstPipeline(std::map<std::string, std::string> &
 {
     std::string name;
 
+
+    mEncFormat = CameraParameters::VIDEO_CODING_PICAM;
+    log_info("EncFormat: %d", mEncFormat);
+
     if (mEncFormat != CameraParameters::VIDEO_CODING_PICAM) {
+	log_info("XXX 1");
         if (mCamDev->isGstV4l2Src()) {
             name = "v4l2src device=/dev/" + mCamDev->getDeviceId();
         } else {
@@ -367,11 +372,14 @@ std::string VideoStreamRtsp::getGstPipeline(std::map<std::string, std::string> &
         }
         name += " ! " + getGstVideoConvertor() + " ! " + getGstVideoConvertorCaps(params, mWidth, mHeight);
     } else {
-        name = "rpicamsrc width=640 height=480 framerate=25 bitrate=1000000";
+	    log_info("XXX 2");
+        name = "rpicamsrc";
     }
 
     name += " ! " + getGstVideoEncoder(mEncFormat) + " ! " + getGstRtspVideoSink();
 
+    log_info("GST Pipeline: %s", name.c_str());
+    
     log_debug("%s:%s", __func__, name.c_str());
     return name;
 }
@@ -536,6 +544,7 @@ int VideoStreamRtsp::startRtspServer()
 
     /* attach the video to the RTSP URL */
     gst_rtsp_mount_points_add_factory(mounts, mPath.c_str(), factory);
+
     log_info("RTSP stream ready at rtsp://<ip-address>:%s%s\n", std::to_string(mPort).c_str(),
              mPath.c_str());
     g_object_unref(mounts);
