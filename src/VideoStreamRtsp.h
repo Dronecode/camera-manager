@@ -50,8 +50,8 @@ public:
     int getPort();
     int getCameraResolution(uint32_t &width, uint32_t &height);
     CameraParameters::PixelFormat getCameraPixelFormat();
-    std::string getGstPipeline(std::map<std::string, std::string> &params);
     GstBuffer *readFrame();
+    std::shared_ptr<CameraDevice> getCameraDevice() { return mCamDev;  };
 
 private:
     GstRTSPServer *createRtspServer();
@@ -64,7 +64,6 @@ private:
     std::atomic<int> mState;
     uint32_t mWidth;
     uint32_t mHeight;
-    CameraParameters::VIDEO_CODING_FORMAT mEncFormat;
     std::string mHost;
     uint32_t mPort;
     std::string mPath;

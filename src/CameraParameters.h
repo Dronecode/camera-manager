@@ -233,7 +233,6 @@ public:
         VIDEO_CODING_AVC,   /* H.264/AVC */
         VIDEO_CODING_MJPEG, /* Motion JPEG */
         VIDEO_CODING_WMV,   /* Windows Media Video */
-        VIDEO_CODING_PICAM, /* H.264 encoded by RasPI bcm2835-v4l2 kernel module */
         VIDEO_CODING_MAX = 99
     } VIDEO_CODING_FORMAT;
 

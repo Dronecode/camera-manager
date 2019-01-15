@@ -42,6 +42,7 @@ private:
     void addCameraInformation(const std::shared_ptr<CameraDevice> &device);
     std::set<std::string> readBlacklistDevices(const ConfFile &conf) const;
     std::string readURI(const ConfFile &conf, std::string deviceID);
+    std::string readRTSPPipeline(const ConfFile &conf, std::string deviceID);
     bool readImgCapSettings(const ConfFile &conf, ImageSettings &imgSetting) const;
     std::string readImgCapLocation(const ConfFile &conf) const;
     bool readVidCapSettings(const ConfFile &conf, VideoSettings &vidSetting) const;
