@@ -356,6 +356,9 @@ static GstElement *cb_create_element(GstRTSPMediaFactory *factory, const GstRTSP
     std::map<std::string, std::string> params = parseUrlQuery(url->query);
 
     std::string launch = obj->getCameraDevice()->getGstRTSPPipeline();
+    if (launch.empty()) {
+        launch = "appsrc name=mysrc ! videoconvert ! video/x-raw, format=I420 ! vaapih264enc ! rtph264pay name=pay0";
+    }
 
     log_info("GST Pipeline: %s", launch.c_str());
 
