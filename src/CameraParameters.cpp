@@ -165,33 +165,52 @@ std::string CameraParameters::getParameter(std::string key)
 
 void CameraParameters::initParamIdType()
 {
-    paramIdType[CAMERA_MODE] = std::make_pair(PARAM_ID_CAMERA_MODE, PARAM_TYPE_UINT32);
-    paramIdType[BRIGHTNESS] = std::make_pair(PARAM_ID_BRIGHTNESS, PARAM_TYPE_UINT32);
-    paramIdType[CONTRAST] = std::make_pair(PARAM_ID_CONTRAST, PARAM_TYPE_UINT32);
-    paramIdType[SATURATION] = std::make_pair(PARAM_ID_SATURATION, PARAM_TYPE_UINT32);
-    paramIdType[HUE] = std::make_pair(PARAM_ID_HUE, PARAM_TYPE_INT32);
+    paramIdType[CAMERA_MODE]
+        = std::make_pair(static_cast<int>(PARAM_ID_CAMERA_MODE), PARAM_TYPE_UINT32);
+    paramIdType[BRIGHTNESS]
+        = std::make_pair(static_cast<int>(PARAM_ID_BRIGHTNESS), PARAM_TYPE_UINT32);
+    paramIdType[CONTRAST]
+        = std::make_pair(static_cast<int>(PARAM_ID_CONTRAST), PARAM_TYPE_UINT32);
+    paramIdType[SATURATION]
+        = std::make_pair(static_cast<int>(PARAM_ID_SATURATION), PARAM_TYPE_UINT32);
+    paramIdType[HUE]
+        = std::make_pair(static_cast<int>(PARAM_ID_HUE), PARAM_TYPE_INT32);
     paramIdType[WHITE_BALANCE_MODE]
-        = std::make_pair(PARAM_ID_WHITE_BALANCE_MODE, PARAM_TYPE_UINT32);
-    paramIdType[GAMMA] = std::make_pair(PARAM_ID_GAMMA, PARAM_TYPE_UINT32);
-    paramIdType[GAIN] = std::make_pair(PARAM_ID_GAIN, PARAM_TYPE_UINT32);
+        = std::make_pair(static_cast<int>(PARAM_ID_WHITE_BALANCE_MODE), PARAM_TYPE_UINT32);
+    paramIdType[GAMMA]
+        = std::make_pair(static_cast<int>(PARAM_ID_GAMMA), PARAM_TYPE_UINT32);
+    paramIdType[GAIN]
+        = std::make_pair(static_cast<int>(PARAM_ID_GAIN), PARAM_TYPE_UINT32);
     paramIdType[POWER_LINE_FREQ_MODE]
-        = std::make_pair(PARAM_ID_POWER_LINE_FREQ_MODE, PARAM_TYPE_UINT32);
+        = std::make_pair(static_cast<int>(PARAM_ID_POWER_LINE_FREQ_MODE), PARAM_TYPE_UINT32);
     paramIdType[WHITE_BALANCE_TEMPERATURE]
-        = std::make_pair(PARAM_ID_WHITE_BALANCE_TEMPERATURE, PARAM_TYPE_UINT32);
-    paramIdType[SHARPNESS] = std::make_pair(PARAM_ID_SHARPNESS, PARAM_TYPE_UINT32);
+        = std::make_pair(static_cast<int>(PARAM_ID_WHITE_BALANCE_TEMPERATURE), PARAM_TYPE_UINT32);
+    paramIdType[SHARPNESS]
+        = std::make_pair(static_cast<int>(PARAM_ID_SHARPNESS), PARAM_TYPE_UINT32);
     paramIdType[BACKLIGHT_COMPENSATION]
-        = std::make_pair(PARAM_ID_BACKLIGHT_COMPENSATION, PARAM_TYPE_UINT32);
-    paramIdType[EXPOSURE_MODE] = std::make_pair(PARAM_ID_EXPOSURE_MODE, PARAM_TYPE_UINT32);
-    paramIdType[EXPOSURE_ABSOLUTE] = std::make_pair(PARAM_ID_EXPOSURE_ABSOLUTE, PARAM_TYPE_UINT32);
-    paramIdType[IMAGE_SIZE] = std::make_pair(PARAM_ID_IMAGE_SIZE, PARAM_TYPE_UINT32);
-    paramIdType[IMAGE_FORMAT] = std::make_pair(PARAM_ID_IMAGE_FORMAT, PARAM_TYPE_UINT32);
-    paramIdType[PIXEL_FORMAT] = std::make_pair(PARAM_ID_PIXEL_FORMAT, PARAM_TYPE_UINT32);
-    paramIdType[SCENE_MODE] = std::make_pair(PARAM_ID_SCENE_MODE, PARAM_TYPE_UINT32);
-    paramIdType[VIDEO_SIZE] = std::make_pair(PARAM_ID_VIDEO_SIZE, PARAM_TYPE_UINT32);
+        = std::make_pair(static_cast<int>(PARAM_ID_BACKLIGHT_COMPENSATION), PARAM_TYPE_UINT32);
+    paramIdType[EXPOSURE_MODE]
+        = std::make_pair(static_cast<int>(PARAM_ID_EXPOSURE_MODE), PARAM_TYPE_UINT32);
+    paramIdType[EXPOSURE_ABSOLUTE]
+        = std::make_pair(static_cast<int>(PARAM_ID_EXPOSURE_ABSOLUTE), PARAM_TYPE_UINT32);
+    paramIdType[IMAGE_SIZE]
+        = std::make_pair(static_cast<int>(PARAM_ID_IMAGE_SIZE), PARAM_TYPE_UINT32);
+    paramIdType[IMAGE_FORMAT]
+        = std::make_pair(static_cast<int>(PARAM_ID_IMAGE_FORMAT), PARAM_TYPE_UINT32);
+    paramIdType[PIXEL_FORMAT]
+        = std::make_pair(static_cast<int>(PARAM_ID_PIXEL_FORMAT), PARAM_TYPE_UINT32);
+    paramIdType[SCENE_MODE]
+        = std::make_pair(static_cast<int>(PARAM_ID_SCENE_MODE), PARAM_TYPE_UINT32);
+    paramIdType[VIDEO_SIZE]
+        = std::make_pair(static_cast<int>(PARAM_ID_VIDEO_SIZE), PARAM_TYPE_UINT32);
     paramIdType[VIDEO_FRAME_FORMAT]
-        = std::make_pair(PARAM_ID_VIDEO_FRAME_FORMAT, PARAM_TYPE_UINT32);
-    paramIdType[IMAGE_CAPTURE] = std::make_pair(PARAM_ID_IMAGE_CAPTURE, PARAM_TYPE_UINT32);
-    paramIdType[VIDEO_CAPTURE] = std::make_pair(PARAM_ID_VIDEO_CAPTURE, PARAM_TYPE_UINT32);
-    paramIdType[VIDEO_SNAPSHOT] = std::make_pair(PARAM_ID_VIDEO_SNAPSHOT, PARAM_TYPE_UINT32);
-    paramIdType[IMAGE_VIDEOSHOT] = std::make_pair(PARAM_ID_IMAGE_VIDEOSHOT, PARAM_TYPE_UINT32);
+        = std::make_pair(static_cast<int>(PARAM_ID_VIDEO_FRAME_FORMAT), PARAM_TYPE_UINT32);
+    paramIdType[IMAGE_CAPTURE]
+        = std::make_pair(static_cast<int>(PARAM_ID_IMAGE_CAPTURE), PARAM_TYPE_UINT32);
+    paramIdType[VIDEO_CAPTURE]
+        = std::make_pair(static_cast<int>(PARAM_ID_VIDEO_CAPTURE), PARAM_TYPE_UINT32);
+    paramIdType[VIDEO_SNAPSHOT]
+        = std::make_pair(static_cast<int>(PARAM_ID_VIDEO_SNAPSHOT), PARAM_TYPE_UINT32);
+    paramIdType[IMAGE_VIDEOSHOT]
+        = std::make_pair(static_cast<int>(PARAM_ID_IMAGE_VIDEOSHOT), PARAM_TYPE_UINT32);
 }

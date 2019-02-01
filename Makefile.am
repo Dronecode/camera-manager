@@ -131,7 +131,7 @@ BASE_FILES = \
 	src/pollable.h \
 	src/socket.cpp \
 	src/socket.h \
-	src/util.c \
+	src/util.cpp \
 	src/util.h \
 	src/CameraParameters.cpp \
 	src/CameraParameters.h \
@@ -249,7 +249,7 @@ test_test_camera_parameters_SOURCES = \
         test/test_camera_parameters.cpp \
         src/log.cpp \
         src/log.h \
-        src/util.c \
+        src/util.cpp \
         src/util.h
 
 test_test_camera_parameters_LDADD = $(GLIB_LIBS)
@@ -284,7 +284,7 @@ test_test_mavlink_protocol_SOURCES = \
         src/pollable.h \
         src/socket.cpp \
         src/socket.h \
-        src/util.c \
+        src/util.cpp \
         src/util.h
 
 test_test_mavlink_protocol_LDADD = $(GLIB_LIBS)
