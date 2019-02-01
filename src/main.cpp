@@ -27,7 +27,6 @@
 #include "conf_file.h"
 #include "glib_mainloop.h"
 #include "log.h"
-#include "settings.h"
 #include "util.h"
 #include "CameraServer.h"
 
