@@ -27,8 +27,6 @@
 
 #define GZB_CMD_TOPIC "gz topic -l | grep \"camera/image\" "
 
-static PluginGazebo gzb;
-
 PluginGazebo::PluginGazebo()
     : PluginBase()
 {
