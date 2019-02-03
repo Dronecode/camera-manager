@@ -22,8 +22,6 @@
 #include "CameraDeviceRealSense.h"
 #include "PluginRealSense.h"
 
-static PluginRealSense rs;
-
 PluginRealSense::PluginRealSense()
     : PluginBase()
 {

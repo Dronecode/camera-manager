@@ -21,8 +21,6 @@
 #include "PluginV4l2.h"
 #include "v4l2_interface.h"
 
-static PluginV4l2 v4l2;
-
 PluginV4l2::PluginV4l2()
     : PluginBase()
 {

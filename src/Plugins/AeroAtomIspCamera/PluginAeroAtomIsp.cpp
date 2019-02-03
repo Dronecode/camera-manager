@@ -21,8 +21,6 @@
 #include "CameraDeviceAeroAtomIsp.h"
 #include "PluginAeroAtomIsp.h"
 
-static PluginAeroAtomIsp aero;
-
 PluginAeroAtomIsp::PluginAeroAtomIsp()
     : PluginBase()
 {

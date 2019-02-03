@@ -22,8 +22,6 @@
 #include "CameraDeviceCustom.h"
 #include "PluginCustom.h"
 
-static PluginCustom custom;
-
 PluginCustom::PluginCustom()
     : PluginBase()
 {

@@ -5,6 +5,18 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 find_package(PkgConfig REQUIRED)
 find_package(Avahi REQUIRED)
 
+# RealSense
+FIND_PACKAGE(RealSense QUIET)
+IF(RealSense_FOUND)
+    MESSAGE(STATUS "Found RealSense: ${RealSense_INCLUDE_DIRS}")
+ENDIF(RealSense_FOUND)
+
+# RealSense2
+#FIND_PACKAGE(RealSense2 QUIET)
+#IF(RealSense2_FOUND)
+#    MESSAGE(STATUS "Found RealSense2: ${RealSense2_INCLUDE_DIRS}")
+#ENDIF(RealSense2_FOUND)
+
 set(GSTREAMER_MINIMUM_VERSION 1.8)
 pkg_check_modules(GST1_TEST gstreamer-1.0)
 
@@ -56,6 +68,7 @@ target_link_libraries(${PROJECT_NAME}
     CustomCamera
     GazeboCamera
     RealSenseCamera
+    ${RealSense_LIBRARIES}
     V4l2Camera
     Avahi::client
     Avahi::glib
