@@ -3,11 +3,28 @@ cmake_minimum_required(VERSION 3.5)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 
 find_package(PkgConfig REQUIRED)
-find_package(Avahi REQUIRED)
+
+SET(DEFINES "-DENABLE_MAVLINK -DENABLE_CUSTOM -DENABLE_AERO")    
+
+# Avahi
+find_package(Avahi QUIET)
+IF(Avahi_FOUND)
+    SET(DEFINES "${DEFINES} -DENABLE_AVAHI")
+    MESSAGE(STATUS "Found Avahi: ${Avahi_CLIENT_INCLUDE_DIRS}")
+ENDIF(Avahi_FOUND)
+
+# Gazebo
+find_package(gazebo QUIET)
+IF(NOT GAZEBO_LIBRARIES STREQUAL "")
+    SET(Gazebo_FOUND ON)
+    SET(DEFINES "${DEFINES} -DENABLE_GAZEBO")
+    MESSAGE(STATUS "Found Gazebo: ${GAZEBO_LIBRARIES}")
+ENDIF(NOT GAZEBO_INCLUDE_DIR STREQUAL "")
 
 # RealSense
 FIND_PACKAGE(RealSense QUIET)
 IF(RealSense_FOUND)
+    SET(DEFINES, "${DEFINES} -DENABLE_REALSENSE")
     MESSAGE(STATUS "Found RealSense: ${RealSense_INCLUDE_DIRS}")
 ENDIF(RealSense_FOUND)
 
@@ -43,21 +60,22 @@ add_definitions(
     -Wno-unused-parameter
     -Wno-unused-variable
     -Wno-missing-field-initializers
-    -DENABLE_GAZEBO
-    -DENABLE_MAVLINK
-    -DENABLE_AVAHI
-    -DENABLE_REALSENSE
-    -DENABLE_CUSTOM
-    -DENABLE_AERO
+    ${DEFINES}
 )
 
 file(GLOB SRC_FILES *.cpp)
 
 add_subdirectory(Plugins/AeroAtomIspCamera)
 add_subdirectory(Plugins/CustomCamera)
-add_subdirectory(Plugins/GazeboCamera)
-add_subdirectory(Plugins/RealSenseCamera)
 add_subdirectory(Plugins/V4l2Camera)
+
+IF(Gazebo_FOUND)
+add_subdirectory(Plugins/GazeboCamera)
+ENDIF(Gazebo_FOUND)
+
+IF(RealSense_FOUND)
+add_subdirectory(Plugins/RealSenseCamera)
+ENDIF(RealSense_FOUND)
 
 add_executable(${PROJECT_NAME}
     ${SRC_FILES}
@@ -67,6 +85,7 @@ target_link_libraries(${PROJECT_NAME}
     AeroAtomIspCamera
     CustomCamera
     GazeboCamera
+    ${GAZEBO_LIBRARIES}
     RealSenseCamera
     ${RealSense_LIBRARIES}
     V4l2Camera

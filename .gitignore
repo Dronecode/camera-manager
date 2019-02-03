@@ -24,12 +24,15 @@ Makefile.in
 /perf.data
 /perf.data.old
 /stamp-h1
+/CMakeCache.txt
+/build
 
 *~
 .*.swp
 cscope.out
 tags
 
+/src/CameraManager
 /dcm
 /test/test-camera-parameters
 /test/test-custom-stream
