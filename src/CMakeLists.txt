@@ -19,7 +19,7 @@ IF(NOT GAZEBO_LIBRARIES STREQUAL "")
     SET(Gazebo_FOUND ON)
     SET(DEFINES "${DEFINES} -DENABLE_GAZEBO")
     MESSAGE(STATUS "Found Gazebo: ${GAZEBO_LIBRARIES}")
-ENDIF(NOT GAZEBO_INCLUDE_DIR STREQUAL "")
+ENDIF()
 
 # RealSense
 FIND_PACKAGE(RealSense QUIET)
@@ -51,7 +51,7 @@ pkg_check_modules(GST REQUIRED
     gstreamer-app-1.0
 )
 
-project(CameraManager)
+project(dcm)
 
 add_definitions(
     -std=c++11
@@ -84,13 +84,33 @@ add_executable(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME}
     AeroAtomIspCamera
     CustomCamera
+    V4l2Camera
+)
+
+IF(Gazebo_FOUND)
+target_link_libraries(${PROJECT_NAME}
     GazeboCamera
     ${GAZEBO_LIBRARIES}
+)
+ENDIF(Gazebo_FOUND)
+
+IF(RealSense_FOUND)
+target_link_libraries(${PROJECT_NAME}
     RealSenseCamera
     ${RealSense_LIBRARIES}
-    V4l2Camera
+)
+ENDIF(RealSense_FOUND)
+
+IF(Avahi_FOUND)
+target_link_libraries(${PROJECT_NAME}
     Avahi::client
     Avahi::glib
+)
+ENDIF(Avahi_FOUND)
+
+target_link_libraries(${PROJECT_NAME}
+    pthread
+    ${GST_LIBRARIES}
 )
 
 include_directories(
@@ -109,9 +129,4 @@ target_compile_options(${PROJECT_NAME} PUBLIC
 target_include_directories(${PROJECT_NAME} PUBLIC
     ${PROJECT_SOURCE_DIR}/../modules/mavlink/common
     ${GST_INCLUDE_DIRS}
-)
-
-target_link_libraries(CameraManager
-    pthread
-    ${GST_LIBRARIES}
 )
