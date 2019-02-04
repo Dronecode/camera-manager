@@ -15,11 +15,10 @@ ENDIF(Avahi_FOUND)
 
 # Gazebo
 find_package(gazebo QUIET)
-IF(NOT GAZEBO_LIBRARIES STREQUAL "")
-    SET(Gazebo_FOUND ON)
+IF(gazebo_FOUND)
     SET(DEFINES "${DEFINES} -DENABLE_GAZEBO")
     MESSAGE(STATUS "Found Gazebo: ${GAZEBO_LIBRARIES}")
-ENDIF()
+ENDIF(gazebo_FOUND)
 
 # RealSense
 FIND_PACKAGE(RealSense QUIET)
@@ -69,9 +68,9 @@ add_subdirectory(Plugins/AeroAtomIspCamera)
 add_subdirectory(Plugins/CustomCamera)
 add_subdirectory(Plugins/V4l2Camera)
 
-IF(Gazebo_FOUND)
+IF(gazebo_FOUND)
 add_subdirectory(Plugins/GazeboCamera)
-ENDIF(Gazebo_FOUND)
+ENDIF(gazebo_FOUND)
 
 IF(RealSense_FOUND)
 add_subdirectory(Plugins/RealSenseCamera)
@@ -87,12 +86,12 @@ target_link_libraries(${PROJECT_NAME}
     V4l2Camera
 )
 
-IF(Gazebo_FOUND)
+IF(gazebo_FOUND)
 target_link_libraries(${PROJECT_NAME}
     GazeboCamera
     ${GAZEBO_LIBRARIES}
 )
-ENDIF(Gazebo_FOUND)
+ENDIF(gazebo_FOUND)
 
 IF(RealSense_FOUND)
 target_link_libraries(${PROJECT_NAME}
