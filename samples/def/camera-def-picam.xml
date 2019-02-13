@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <mavlinkcamera>
     <definition version="1">
-        <model>UVC Camera</model>
-        <vendor>Logitech C270HD Webcam</vendor>
+        <model>PiCam</model>
+        <vendor>Raspberry PI Cam</vendor>
     </definition>
     <parameters>
         <parameter name="camera-mode" type="uint32" default="1" control="0">
