@@ -27,6 +27,70 @@ GstRTSPServer *VideoStreamRtsp::mServer = nullptr;
 bool VideoStreamRtsp::isAttach = false;
 uint32_t VideoStreamRtsp::refCnt = 0;
 
+static std::string getGstVideoConvertor()
+{
+
+    std::string convertor;
+
+    convertor = "videoconvert";
+
+    return convertor;
+}
+
+static std::string getGstVideoConvertorCaps(std::map<std::string, std::string> &params,
+                                            uint32_t setWidth, uint32_t setHeight)
+{
+    std::string caps;
+
+    /* output pixel format is fixed as QGC only supports I420*/
+    caps = "video/x-raw, format=I420";
+
+    std::string width = params["width"];
+    std::string height = params["height"];
+
+    /*
+     * RTSP Video Stream resolution
+     * 1. Set by query string in URL
+     * 2. Set by client using VideoStream API
+     * 3. Default - Camera Device Resolution
+     *
+     */
+
+    if (!width.empty() && !height.empty()) {
+        caps = caps + ", width=" + width + ", height=" + height;
+    } else if (setWidth != 0 && setHeight != 0) {
+        caps = caps + ", width=" + std::to_string(setWidth) + ", height="
+            + std::to_string(setHeight);
+    }
+
+    return caps;
+}
+
+static std::string getGstVideoEncoder(CameraParameters::VIDEO_CODING_FORMAT encFormat)
+{
+    std::string enc;
+
+    switch (encFormat) {
+    case CameraParameters::VIDEO_CODING_AVC:
+        enc = std::string("vaapih264enc");
+        break;
+    default:
+        enc = std::string("vaapih264enc");
+        break;
+    }
+
+    return enc;
+}
+
+static std::string getGstRtspVideoSink()
+{
+    std::string sink;
+
+    sink = "rtph264pay name=pay0";
+
+    return sink;
+}
+
 static std::string getGstPixFormat(CameraParameters::PixelFormat pixFormat)
 {
     std::string pix;
@@ -98,6 +162,7 @@ VideoStreamRtsp::VideoStreamRtsp(std::shared_ptr<CameraDevice> camDev)
     , mState(STATE_IDLE)
     , mWidth(0)
     , mHeight(0)
+    , mEncFormat(CameraParameters::VIDEO_CODING_AVC)
     , mHost(DEFAULT_HOST)
     , mPort(DEFAULT_SERVICE_PORT)
 {
@@ -288,6 +353,24 @@ CameraParameters::PixelFormat VideoStreamRtsp::getCameraPixelFormat()
     return format;
 }
 
+std::string VideoStreamRtsp::getGstPipeline(std::map<std::string, std::string> &params)
+{
+    std::string name;
+    std::string source;
+    if (mCamDev->isGstV4l2Src()) {
+        source = "v4l2src device=/dev/" + mCamDev->getDeviceId();
+    } else {
+        source = "appsrc name=mysrc";
+    }
+
+    name = source + " ! " + getGstVideoConvertor() + " ! "
+        + getGstVideoConvertorCaps(params, mWidth, mHeight) + " ! " + getGstVideoEncoder(mEncFormat)
+        + " ! " + getGstRtspVideoSink();
+
+    log_debug("%s:%s", __func__, name.c_str());
+    return name;
+}
+
 GstBuffer *VideoStreamRtsp::readFrame()
 {
     // log_debug("%s::%s", typeid(this).name(), __func__);
@@ -357,7 +440,8 @@ static GstElement *cb_create_element(GstRTSPMediaFactory *factory, const GstRTSP
 
     std::string launch = obj->getCameraDevice()->getGstRTSPPipeline();
     if (launch.empty()) {
-        launch = "appsrc name=mysrc ! videoconvert ! video/x-raw, format=I420 ! vaapih264enc ! rtph264pay name=pay0";
+        /* build pipeline description based on params received from URL */
+        launch = obj->getGstPipeline(params);
     }
 
     log_info("GST Pipeline: %s", launch.c_str());
@@ -452,7 +536,6 @@ int VideoStreamRtsp::startRtspServer()
 
     /* attach the video to the RTSP URL */
     gst_rtsp_mount_points_add_factory(mounts, mPath.c_str(), factory);
-
     log_info("RTSP stream ready at rtsp://<ip-address>:%s%s\n", std::to_string(mPort).c_str(),
              mPath.c_str());
     g_object_unref(mounts);
