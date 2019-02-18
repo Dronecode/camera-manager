@@ -438,8 +438,13 @@ static GstElement *cb_create_element(GstRTSPMediaFactory *factory, const GstRTSP
     /* parse query string from URL */
     std::map<std::string, std::string> params = parseUrlQuery(url->query);
 
-    /* build pipeline description based on params received from URL */
-    std::string launch = obj->getGstPipeline(params);
+    std::string launch = obj->getCameraDevice()->getGstRTSPPipeline();
+    if (launch.empty()) {
+        /* build pipeline description based on params received from URL */
+        launch = obj->getGstPipeline(params);
+    }
+
+    log_info("GST Pipeline: %s", launch.c_str());
 
     GError *error = NULL;
     GstElement *pipeline = NULL;

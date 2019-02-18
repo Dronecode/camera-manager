@@ -85,6 +85,9 @@ CameraServer::CameraServer(const ConfFile &conf)
         // Set the URI read from conf file
         device->setCameraDefinitionUri(readURI(conf, confDeviceId));
 
+        // Set the GStreamer RTSP pipeline from conf file
+        device->setGstRTSPPipeline(readRTSPPipeline(conf, confDeviceId));
+
         // create camera component with camera device
         CameraComponent *comp = new CameraComponent(device);
 
@@ -211,6 +214,17 @@ std::string CameraServer::readURI(const ConfFile &conf, std::string deviceID)
         std::string uriString(uriAddr);
         free(uriAddr);
         return uriString;
+    } else
+        return {};
+}
+
+std::string CameraServer::readRTSPPipeline(const ConfFile &conf, std::string deviceID)
+{
+    char *rtspPipeline = 0;
+    if (!conf.extract_options("rtsp", "pipeline", &rtspPipeline)) {
+        std::string rtspPipelineString(rtspPipeline);
+        free(rtspPipeline);
+        return rtspPipelineString;
     } else
         return {};
 }

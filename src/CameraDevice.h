@@ -60,6 +60,9 @@ struct CameraData {
  */
 
 class CameraDevice {
+private:
+    std::string mCamGstRTSPPipeline;
+
 public:
     CameraDevice() {}
     virtual ~CameraDevice() {}
@@ -371,4 +374,24 @@ public:
      *  @return string Overlay text.
      */
     virtual std::string getOverlayText() const { return {}; };
+
+    /**
+     *  Set GStreamer RTSP pipeline
+     * 
+     *  @param[in] uri String with GStreamer RTSP pipeline
+     *
+     *  @return Status of request.
+     */
+    virtual Status setGstRTSPPipeline(std::string pipeline)
+    {
+         mCamGstRTSPPipeline = pipeline;
+         return Status::SUCCESS;
+    };
+
+    /**
+     *  Get GStreamer RTSP pipeline
+     *
+     *  @return string GStreamer RTSP Pipeline.
+     */
+    virtual std::string getGstRTSPPipeline() const { return mCamGstRTSPPipeline; };
 };
