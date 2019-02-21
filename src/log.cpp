@@ -26,7 +26,6 @@
 
 #define COLOR_RED          "\033[31m"
 #define COLOR_LIGHTBLUE    "\033[34;1m"
-#define COLOR_YELLOW       "\033[33;1m"
 #define COLOR_ORANGE       "\033[0;33m"
 #define COLOR_WHITE        "\033[37;1m"
 #define COLOR_RESET        "\033[0m"
@@ -45,8 +44,6 @@ const char *Log::_get_color(Level level)
         return COLOR_RED;
     case Level::WARNING:
         return COLOR_ORANGE;
-    case Level::NOTICE:
-        return COLOR_YELLOW;
     case Level::INFO:
         return COLOR_WHITE;
     case Level::DEBUG:

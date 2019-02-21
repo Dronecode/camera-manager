@@ -49,7 +49,7 @@ static void help(FILE *fp)
         "  -d --conf-dir <dir>              Directory where to look for .conf files overriding\n"
         "                                   default conf file.\n"
         "  -g --debug-log-level <level>     Set debug log level. Levels are\n"
-        "                                   <error|warning|notice|info|debug>\n"
+        "                                   <error|warning|info|debug>\n"
         "  -v --verbose                     Verbose. Same as --debug-log-level=debug\n"
         "  -h --help                        Print this message\n",
         program_invocation_short_name);
