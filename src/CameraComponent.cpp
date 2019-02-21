@@ -160,7 +160,7 @@ int CameraComponent::getParam(const char *param_id, size_t id_size, char *param_
         return 1;
 
     std::string value = mCamParam.getParameter(toString(param_id, id_size));
-    if (!value.empty())
+    if (value.empty())
         return 1;
 
     mem_cpy(param_value, value_size, value.data(), value.size(), value_size);
