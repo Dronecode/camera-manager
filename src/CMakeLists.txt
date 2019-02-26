@@ -80,6 +80,13 @@ add_executable(${PROJECT_NAME}
     ${SRC_FILES}
 )
 
+install(TARGETS ${PROJECT_NAME} DESTINATION bin)
+
+set(SYSTEMD_CONFIG_DIR "/lib/systemd/system" CACHE STRING "Path to the systemd configuration dir")
+set(SYSTEMD_UNIT_NAME "${PROJECT_BINARY_DIR}/${PROJECT_NAME}.service")
+configure_file("${PROJECT_SOURCE_DIR}/cmake/dronecode-camera-manager.service.in" "${SYSTEMD_UNIT_NAME}")
+install(FILES "${SYSTEMD_UNIT_NAME}" DESTINATION "${SYSTEMD_CONFIG_DIR}/" COMPONENT Runtime)
+
 target_link_libraries(${PROJECT_NAME}
     AeroAtomIspCamera
     CustomCamera
