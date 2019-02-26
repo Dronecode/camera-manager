@@ -90,12 +90,19 @@ static int parse_conf_files(ConfFile &conf, struct options *opt)
     char *files[128] = {};
     int i = 0, j = 0;
 
-    // First, open default conf file
-    ret = conf.parse(opt->filename);
-
-    // If there's no default conf file, everything is good
-    if (ret < 0 && ret != -ENOENT) {
-        return ret;
+    if (opt->filename != nullptr) {
+        // If filename was specified then use it and fail if it doesn't exist
+        ret = conf.parse(opt->filename);
+        if (ret < 0) {
+            return ret;
+        }
+    } else {
+        // Otherwise open default conf file
+        ret = conf.parse(get_default_file_name());
+        // If there's no default conf file, everything is good
+        if (ret < 0 && ret != -ENOENT) {
+            return ret;
+        }
     }
 
     // Then, parse all files on configuration directory
@@ -217,11 +224,9 @@ static int parse_argv(int argc, char *argv[], struct options *opt)
         return -EINVAL;
     }
 
-    if (!opt->filename)
-        opt->filename = get_default_file_name();
-
     if (!opt->conf_dir)
         opt->conf_dir = get_default_conf_dir();
+
     return 2;
 }
 
@@ -239,7 +244,11 @@ int main(int argc, char *argv[])
     }
 
     conf = new ConfFile();
-    parse_conf_files(*conf, &opt);
+    if (parse_conf_files(*conf, &opt) < 0) {
+        delete conf;
+        Log::close();
+        return EXIT_FAILURE;
+    }
 
     CameraServer camServer(*conf);
     camServer.start();
