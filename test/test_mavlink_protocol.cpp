@@ -1,5 +1,5 @@
 /*
- * This file is part of the Camera Streaming Daemon project
+ * This file is part of the Dronecode Camera Manager
  *
  * Copyright (C) 2017  Intel Corporation. All rights reserved.
  *
@@ -17,10 +17,13 @@
  */
 
 /**
-
-@brief  This is  a test application to test mavlink messages in the Camera Streaming Daemon.
-
-*/
+ *
+ * @brief  This is a test application to test mavlink messages in the Dronecode Camera Manager.
+ *
+ * This application connects to camera manager and simulates ground control station.
+ * It is used to test mavlink camera protocol support in camera manager.
+ * 
+ */
 
 #include <assert.h>
 #include <mavlink.h>
@@ -28,6 +31,8 @@
 #include <stdlib.h>
 #include <thread>
 #include <unistd.h>
+
+#include <iostream>
 
 #include "glib_mainloop.h"
 #include "log.h"
@@ -50,6 +55,8 @@ public:
     std::vector<int> getCameraIdList() const;
     std::string getCameraName(int camera_id) const;
     bool getCameraStream(int camera_id) const;
+
+    static void discovercam(void *cntx);
 
 private:
     struct Stream {
@@ -93,8 +100,9 @@ std::vector<int> Drone::getCameraIdList() const
              id_list != streams.end(); ++id_list) {
             camera_id_list.push_back(id_list->id);
         }
-        return camera_id_list;
     }
+
+    return camera_id_list;
 }
 
 std::string Drone::getCameraName(int camera_id) const
@@ -170,6 +178,8 @@ int Drone::getMode(int camera_id)
             return i.mode;
         }
     }
+
+    return -1;
 }
 
 void Drone::imageCapture(int camera_id, int count, int interval)
@@ -190,7 +200,7 @@ void Drone::handleHeartbeatCB(mavlink_message_t &msg)
             }
     }
 
-    log_info("Camera Daemon found: sysid: %d comp_id: %d", msg.sysid, msg.compid);
+    log_info("Camera Component found: sysid: %d comp_id: %d", msg.sysid, msg.compid);
     sysid = msg.sysid;
 
     mavlink_message_t out_msg;
@@ -236,8 +246,7 @@ void Drone::handleAckCB(mavlink_message_t &msg)
 
 void Drone::handleMavlinkMessageCB(mavlink_message_t &msg)
 {
-
-    if (msg.compid < MAV_COMP_ID_CAMERA2) {
+    if (msg.compid < MAV_COMP_ID_CAMERA || msg.compid > MAV_COMP_ID_CAMERA6) {
         return;
     }
 
@@ -270,8 +279,9 @@ void Drone::messageReceivedCB()
         }
     }
 }
+
 // Thread to handle mavlink messages
-void *discovercam(void *cntx)
+void Drone::discovercam(void *cntx)
 {
     GlibMainloop mainloop;
 
@@ -280,16 +290,17 @@ void *discovercam(void *cntx)
 
     mainloop.loop();
 }
+
 int main(int argc, char *argv[])
 {
     int camera_id;
     Log::open();
     Log::set_max_level(Log::Level::INFO);
-    log_debug("Camera Streaming MAVLink Client");
+    log_debug("Camera Manager MAVLink Client");
 
     class Drone *ctx;
     std::thread t_id;
-    t_id = std::thread(discovercam, (void *)&ctx);
+    t_id = std::thread(Drone::discovercam, (void *)&ctx);
     sleep(5);
     auto camera_list = ctx->getCameraIdList();
     log_info("\n");
@@ -302,22 +313,25 @@ int main(int argc, char *argv[])
     }
 
     log_info("Please make your selection (type stream number):");
-    scanf("%d", &camera_id);
-    if (!ctx->getCameraStream(camera_id)) {
+    cin >> camera_id;
+    if (cin.fail() || !ctx->getCameraStream(camera_id)) {
         log_error("Camera not found.");
         exit(EXIT_FAILURE);
-        ;
     }
 
     do {
         log_info("\nSelect an action\n 1.Set Mode\n 2.Get Mode\n 3.Image Capture\n 4.Exit");
         int option;
-        scanf("%d", &option);
+        cin >> option;
         switch (option) {
         case 1: {
             log_info("Select mode 0:image 1:video 2:image survey");
             int mode;
-            scanf("%d", &mode);
+            cin >> mode;
+            if (cin.fail() || mode < 0 || mode > 2) {
+                log_error("Input error.");
+                exit(EXIT_FAILURE);
+            }
             ctx->setMode(camera_id, mode);
             break;
         }
@@ -343,15 +357,15 @@ int main(int argc, char *argv[])
             log_info("Enter the number of images to be taken");
             int count;
             scanf("%d", &count);
-            log_info("Enter the intervel in which images to be taken");
-            int intervel;
-            scanf("%d", &intervel);
-            ctx->imageCapture(camera_id, count, intervel);
-            sleep(intervel + 1);
+            log_info("Enter the interval in which images to be taken");
+            int interval;
+            scanf("%d", &interval);
+            ctx->imageCapture(camera_id, count, interval);
+            sleep(interval + 1);
             break;
         }
         case 4:
-            log_info("Exiting appication");
+            log_info("Exiting application");
             break;
         default:
             log_info("Invalid Selection");
