@@ -17,10 +17,13 @@
  */
 
 /**
-
-@brief  This is  a test application to test mavlink imessages in the Dronecode Camera Manager.
-
-*/
+ *
+ * @brief  This is a test application to test mavlink messages in the Dronecode Camera Manager.
+ *
+ * This application connects to camera manager and simulates ground control station.
+ * It is used to test mavlink camera protocol support in camera manager.
+ * 
+ */
 
 #include <assert.h>
 #include <mavlink.h>
@@ -28,6 +31,8 @@
 #include <stdlib.h>
 #include <thread>
 #include <unistd.h>
+
+#include <iostream>
 
 #include "glib_mainloop.h"
 #include "log.h"
@@ -40,8 +45,6 @@
 
 using namespace std;
 
-void discovercam(void *cntx);
-
 class Drone {
 public:
     enum Mode { NONE = -1, IMAGE, VIDEO, SURVEY };
@@ -52,6 +55,8 @@ public:
     std::vector<int> getCameraIdList() const;
     std::string getCameraName(int camera_id) const;
     bool getCameraStream(int camera_id) const;
+
+    static void discovercam(void *cntx);
 
 private:
     struct Stream {
@@ -274,8 +279,9 @@ void Drone::messageReceivedCB()
         }
     }
 }
+
 // Thread to handle mavlink messages
-void discovercam(void *cntx)
+void Drone::discovercam(void *cntx)
 {
     GlibMainloop mainloop;
 
@@ -284,6 +290,7 @@ void discovercam(void *cntx)
 
     mainloop.loop();
 }
+
 int main(int argc, char *argv[])
 {
     int camera_id;
@@ -293,7 +300,7 @@ int main(int argc, char *argv[])
 
     class Drone *ctx;
     std::thread t_id;
-    t_id = std::thread(discovercam, (void *)&ctx);
+    t_id = std::thread(Drone::discovercam, (void *)&ctx);
     sleep(5);
     auto camera_list = ctx->getCameraIdList();
     log_info("\n");
@@ -306,22 +313,25 @@ int main(int argc, char *argv[])
     }
 
     log_info("Please make your selection (type stream number):");
-    scanf("%d", &camera_id);
-    if (!ctx->getCameraStream(camera_id)) {
+    cin >> camera_id;
+    if (cin.fail() || !ctx->getCameraStream(camera_id)) {
         log_error("Camera not found.");
         exit(EXIT_FAILURE);
-        ;
     }
 
     do {
         log_info("\nSelect an action\n 1.Set Mode\n 2.Get Mode\n 3.Image Capture\n 4.Exit");
         int option;
-        scanf("%d", &option);
+        cin >> option;
         switch (option) {
         case 1: {
             log_info("Select mode 0:image 1:video 2:image survey");
             int mode;
-            scanf("%d", &mode);
+            cin >> mode;
+            if (cin.fail() || mode < 0 || mode > 2) {
+                log_error("Input error.");
+                exit(EXIT_FAILURE);
+            }
             ctx->setMode(camera_id, mode);
             break;
         }
