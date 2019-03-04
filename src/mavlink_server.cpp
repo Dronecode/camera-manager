@@ -758,7 +758,7 @@ bool _heartbeat_cb(void *data)
 
 void MavlinkServer::start()
 {
-    log_error("MAVLINK START\n");
+    log_info("MAVLINK START");
     if (_is_running)
         return;
     _is_running = true;

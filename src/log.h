@@ -28,7 +28,6 @@ public:
     enum class Level {
         ERROR = 0,
         WARNING,
-        NOTICE,
         INFO,
         DEBUG,
     };
@@ -52,7 +51,6 @@ protected:
 
 #define log_debug(...) Log::log(Log::Level::DEBUG, __VA_ARGS__)
 #define log_info(...) Log::log(Log::Level::INFO, __VA_ARGS__)
-#define log_notice(...) Log::log(Log::Level::NOTICE, __VA_ARGS__)
 #define log_warning(...) Log::log(Log::Level::WARNING, __VA_ARGS__)
 #define log_error(...) Log::log(Log::Level::ERROR, __VA_ARGS__)
 
