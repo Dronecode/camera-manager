@@ -536,7 +536,7 @@ int VideoStreamRtsp::startRtspServer()
 
     /* attach the video to the RTSP URL */
     gst_rtsp_mount_points_add_factory(mounts, mPath.c_str(), factory);
-    log_info("RTSP stream ready at rtsp://<ip-address>:%s%s\n", std::to_string(mPort).c_str(),
+    log_info("RTSP stream ready at rtsp://<ip-address>:%s%s", std::to_string(mPort).c_str(),
              mPath.c_str());
     g_object_unref(mounts);
 
