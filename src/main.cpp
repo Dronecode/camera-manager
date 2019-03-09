@@ -33,11 +33,15 @@
 #include "Plugins/V4l2Camera/PluginV4l2.h"
 static PluginV4l2 pluginV4l2;
 
+#ifdef ENABLE_AERO
 #include "Plugins/AeroAtomIspCamera/PluginAeroAtomIsp.h"
 static PluginAeroAtomIsp pluginAeroAtomIsp;
+#endif
 
+#ifdef ENABLE_CUSTOM
 #include "Plugins/CustomCamera/PluginCustom.h"
 static PluginCustom pluginCustom;
+#endif
 
 #ifdef ENABLE_GAZEBO
 #include "Plugins/GazeboCamera/PluginGazebo.h"
