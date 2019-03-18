@@ -32,7 +32,7 @@ add_definitions(
     -Wno-missing-field-initializers
 )
 
-file(GLOB SRC_FILES 
+add_executable(${PROJECT_NAME}
     avahi_publisher.cpp
     conf_file.cpp
     main.cpp
@@ -51,10 +51,7 @@ file(GLOB SRC_FILES
     CameraServer.cpp
     log.cpp
     PluginManager.cpp
-    v4l2_interface.cpp)
-
-add_executable(${PROJECT_NAME}
-    ${SRC_FILES}
+    v4l2_interface.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}
