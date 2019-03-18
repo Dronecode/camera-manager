@@ -1,7 +1,7 @@
 /*
- * This file is part of the MAVLink Router project
+ * This file is part of the Dronecode Camera Manager
  *
- * Copyright (C) 2017  Intel Corporation. All rights reserved.
+ * Copyright (C) 2018  Intel Corporation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,20 +16,21 @@
  * limitations under the License.
  */
 #pragma once
-#include <map>
-#include <set>
+#include <string>
+#include <vector>
 
-class Settings {
+#include "CameraDevice.h"
+#include "PluginBase.h"
+
+class PluginCustom final : public PluginBase {
 public:
-    ~Settings(){};
-    static Settings &get_instance() { return settings; };
+    PluginCustom();
+    ~PluginCustom();
 
-    int import_conf_file(const char *filename);
-    std::map<std::string, std::map<std::string, std::string>> &get_sections() { return sections; };
-    std::set<std::string> get_value_as_set(std::string section, std::string key);
+    std::vector<std::string> getCameraDevices();
+    std::shared_ptr<CameraDevice> createCameraDevice(std::string);
 
 private:
-    std::map<std::string, std::map<std::string, std::string>> sections;
-    Settings() {}
-    static Settings settings;
+    std::vector<std::string> mCamList;
+    void discoverCameras(std::vector<std::string> &camList);
 };

@@ -15,15 +15,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include <string>
 #include <vector>
 
-#include "CameraDeviceAeroAtomIsp.h"
-#include "PluginAeroAtomIsp.h"
+#include "CameraDeviceCustom.h"
+#include "PluginCustom.h"
 
-static PluginAeroAtomIsp aero;
-
-PluginAeroAtomIsp::PluginAeroAtomIsp()
+PluginCustom::PluginCustom()
     : PluginBase()
 {
     /*
@@ -34,37 +33,33 @@ PluginAeroAtomIsp::PluginAeroAtomIsp()
     discoverCameras(mCamList);
 }
 
-PluginAeroAtomIsp::~PluginAeroAtomIsp()
+PluginCustom::~PluginCustom()
 {
 }
 
-std::vector<std::string> PluginAeroAtomIsp::getCameraDevices()
+std::vector<std::string> PluginCustom::getCameraDevices()
 {
     return mCamList;
 }
 
-std::shared_ptr<CameraDevice> PluginAeroAtomIsp::createCameraDevice(std::string deviceID)
+std::shared_ptr<CameraDevice> PluginCustom::createCameraDevice(std::string deviceID)
 {
-    /* check if the device exists in the list */
+    // check if the device exists in the list
     if (std::find(mCamList.begin(), mCamList.end(), deviceID) == mCamList.end()) {
         log_error("Camera Device not found : %s", deviceID.c_str());
         return nullptr;
     }
 
-    return std::make_shared<CameraDeviceAeroAtomIsp>(deviceID);
+    return std::make_shared<CameraDeviceCustom>(deviceID);
 }
 
-void PluginAeroAtomIsp::discoverCameras(std::vector<std::string> &camList)
+void PluginCustom::discoverCameras(std::vector<std::string> &camList)
 {
     /*
-     * Add the logic to discover the camera devices
-     * For RealSense cameras, its hardcoded
+     * 1. Add the logic to discover the camera devices
+     * 2. For V4L2, its scanning the video* nodes in /dev/ dir
+     * 3. For Gazebo, the topics with "camera/image" is assumed to be a camera
      */
-
-    /* Bottom Camera */
-    camList.push_back("bottom");
-    /* Front Camera*/
-    /* camList.push_back("front"); */
 
     return;
 }

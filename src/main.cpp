@@ -27,9 +27,31 @@
 #include "conf_file.h"
 #include "glib_mainloop.h"
 #include "log.h"
-#include "settings.h"
 #include "util.h"
 #include "CameraServer.h"
+
+#include "Plugins/V4l2Camera/PluginV4l2.h"
+static PluginV4l2 pluginV4l2;
+
+#ifdef ENABLE_AERO
+#include "Plugins/AeroAtomIspCamera/PluginAeroAtomIsp.h"
+static PluginAeroAtomIsp pluginAeroAtomIsp;
+#endif
+
+#ifdef ENABLE_CUSTOM
+#include "Plugins/CustomCamera/PluginCustom.h"
+static PluginCustom pluginCustom;
+#endif
+
+#ifdef ENABLE_GAZEBO
+#include "Plugins/GazeboCamera/PluginGazebo.h"
+static PluginGazebo pluginGazebo;
+#endif
+
+#ifdef ENABLE_REALSENSE
+#include "Plugins/RealSenseCamera/PluginRealSense.h"
+static PluginRealSense pluginRealSense;
+#endif
 
 #define DEFAULT_CONFFILE "/etc/dcm/main.conf"
 #define DEFAULT_CONF_DIR "/etc/dcm/config.d"

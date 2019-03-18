@@ -16,35 +16,33 @@
  * limitations under the License.
  */
 
+#include <algorithm>
+#include <array>
+#include <cstdio>
+#include <memory>
 #include <string>
-#include <vector>
 
-#include "CameraDeviceCustom.h"
-#include "PluginCustom.h"
+#include "CameraDeviceGazebo.h"
+#include "PluginGazebo.h"
 
-static PluginCustom custom;
+#define GZB_CMD_TOPIC "gz topic -l | grep \"camera/image\" "
 
-PluginCustom::PluginCustom()
+PluginGazebo::PluginGazebo()
     : PluginBase()
 {
-    /*
-     * 1. Discover the list of camera devices for this Plugin Class
-     * 2. Add the IDs of the devices in the list
-     */
-
     discoverCameras(mCamList);
 }
 
-PluginCustom::~PluginCustom()
+PluginGazebo::~PluginGazebo()
 {
 }
 
-std::vector<std::string> PluginCustom::getCameraDevices()
+std::vector<std::string> PluginGazebo::getCameraDevices()
 {
     return mCamList;
 }
 
-std::shared_ptr<CameraDevice> PluginCustom::createCameraDevice(std::string deviceID)
+std::shared_ptr<CameraDevice> PluginGazebo::createCameraDevice(std::string deviceID)
 {
     // check if the device exists in the list
     if (std::find(mCamList.begin(), mCamList.end(), deviceID) == mCamList.end()) {
@@ -52,16 +50,26 @@ std::shared_ptr<CameraDevice> PluginCustom::createCameraDevice(std::string devic
         return nullptr;
     }
 
-    return std::make_shared<CameraDeviceCustom>(deviceID);
+    return std::make_shared<CameraDeviceGazebo>(deviceID);
 }
 
-void PluginCustom::discoverCameras(std::vector<std::string> &camList)
+void PluginGazebo::discoverCameras(std::vector<std::string> &camList)
 {
-    /*
-     * 1. Add the logic to discover the camera devices
-     * 2. For V4L2, its scanning the video* nodes in /dev/ dir
-     * 3. For Gazebo, the topics with "camera/image" is assumed to be a camera
-     */
+    std::string result;
+    std::array<char, 128> buffer;
+    std::shared_ptr<FILE> pipe(popen(GZB_CMD_TOPIC, "r"), pclose);
+    if (!pipe) {
+        log_error("popen() failed!");
+        return;
+    }
+    while (!feof(pipe.get())) {
+        if (fgets(buffer.data(), 128, pipe.get()) != nullptr) {
+            result = buffer.data();
+            // Remove newline at the end
+            result.pop_back();
+            camList.push_back(result);
+        }
+    }
 
     return;
 }

@@ -15,36 +15,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#pragma once
 
-#include <algorithm>
+#include <string>
+#include <vector>
 
-#include "PluginV4l2.h"
-#include "v4l2_interface.h"
+#include "CameraDevice.h"
+#include "CameraDeviceV4l2.h"
+#include "PluginBase.h"
 
-static PluginV4l2 v4l2;
+class PluginV4l2 final : public PluginBase {
+public:
+    PluginV4l2();
+    ~PluginV4l2();
 
-PluginV4l2::PluginV4l2()
-    : PluginBase()
-{
-    v4l2_list_devices(mCamList);
-}
+    std::vector<std::string> getCameraDevices();
+    std::shared_ptr<CameraDevice> createCameraDevice(std::string);
 
-PluginV4l2::~PluginV4l2()
-{
-}
-
-std::vector<std::string> PluginV4l2::getCameraDevices()
-{
-    return mCamList;
-}
-
-std::shared_ptr<CameraDevice> PluginV4l2::createCameraDevice(std::string deviceID)
-{
-    // check if the device exists in the list
-    if (std::find(mCamList.begin(), mCamList.end(), deviceID) == mCamList.end()) {
-        log_error("Camera Device not found : %s", deviceID.c_str());
-        return nullptr;
-    }
-
-    return std::make_shared<CameraDeviceV4l2>(deviceID);
-}
+private:
+    std::vector<std::string> mCamList;
+};

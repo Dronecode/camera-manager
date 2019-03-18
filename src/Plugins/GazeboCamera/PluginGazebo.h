@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#pragma once
 
 #include <string>
 #include <vector>
@@ -22,10 +23,10 @@
 #include "CameraDevice.h"
 #include "PluginBase.h"
 
-class PluginCustom final : public PluginBase {
+class PluginGazebo final : public PluginBase {
 public:
-    PluginCustom();
-    ~PluginCustom();
+    PluginGazebo();
+    ~PluginGazebo();
 
     std::vector<std::string> getCameraDevices();
     std::shared_ptr<CameraDevice> createCameraDevice(std::string);
