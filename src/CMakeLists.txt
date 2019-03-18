@@ -32,7 +32,26 @@ add_definitions(
     -Wno-missing-field-initializers
 )
 
-file(GLOB SRC_FILES *.cpp)
+file(GLOB SRC_FILES 
+    avahi_publisher.cpp
+    conf_file.cpp
+    main.cpp
+    pollable.cpp    
+    VideoCaptureGst.cpp
+    CameraComponent.cpp
+    glib_mainloop.cpp
+    mainloop.cpp
+    socket.cpp
+    VideoStreamRtsp.cpp
+    CameraParameters.cpp
+    ImageCaptureGst.cpp
+    mavlink_server.cpp
+    util.cpp
+    VideoStreamUdp.cpp
+    CameraServer.cpp
+    log.cpp
+    PluginManager.cpp
+    v4l2_interface.cpp)
 
 add_executable(${PROJECT_NAME}
     ${SRC_FILES}
@@ -74,41 +93,41 @@ option(WITH_GAZEBO "Enable support for Gazebo simulated cameras" OFF)
 option(WITH_AERO "Enable support for Intel Aero cameras" OFF)
 option(WITH_CUSTOM "Enable support for Custom cameras" OFF)
 
-IF(WITH_MAVLINK)
+if(WITH_MAVLINK)
     add_definitions(-DENABLE_MAVLINK)
-ENDIF(WITH_MAVLINK)
+endif(WITH_MAVLINK)
 
-IF(WITH_AERO)
+if(WITH_AERO)
     add_definitions(-DENABLE_AERO)
     add_subdirectory(Plugins/AeroAtomIspCamera)
     target_link_libraries(${PROJECT_NAME}
          AeroAtomIspCamera
     )
-ENDIF(WITH_AERO)
+endif(WITH_AERO)
 
-IF(WITH_CUSTOM)
+if(WITH_CUSTOM)
     add_definitions(-DENABLE_CUSTOM)
     add_subdirectory(Plugins/CustomCamera)
     target_link_libraries(${PROJECT_NAME}
          CustomCamera
     )
-ENDIF(WITH_CUSTOM)
+endif(WITH_CUSTOM)
 
-IF(WITH_AVAHI)
+if(WITH_AVAHI)
     find_package(Avahi QUIET)
-    IF(Avahi_FOUND)
+    if(Avahi_FOUND)
         add_definitions(-DENABLE_AVAHI)
         target_link_libraries(${PROJECT_NAME}
             Avahi::client
             Avahi::glib
         )
         MESSAGE(STATUS "Found Avahi: ${Avahi_CLIENT_INCLUDE_DIRS}")
-    ENDIF(Avahi_FOUND)
-ENDIF(WITH_AVAHI)
+    endif(Avahi_FOUND)
+endif(WITH_AVAHI)
 
-IF(WITH_GAZEBO)
+if(WITH_GAZEBO)
     find_package(gazebo QUIET)
-    IF(gazebo_FOUND)
+    if(gazebo_FOUND)
         add_subdirectory(Plugins/GazeboCamera)
         add_definitions(-DENABLE_GAZEBO)
         target_link_libraries(${PROJECT_NAME}
@@ -116,12 +135,12 @@ IF(WITH_GAZEBO)
             ${GAZEBO_LIBRARIES}
         )
         MESSAGE(STATUS "Found Gazebo: ${GAZEBO_LIBRARIES}")
-    ENDIF(gazebo_FOUND)
-ENDIF(WITH_GAZEBO)
+    endif(gazebo_FOUND)
+endif(WITH_GAZEBO)
 
-IF(WITH_REALSENSE)
+if(WITH_REALSENSE)
     FIND_PACKAGE(RealSense QUIET)
-    IF(RealSense_FOUND)
+    if(RealSense_FOUND)
         add_subdirectory(Plugins/RealSenseCamera)
         add_definitions(-DENABLE_REALSENSE)
         target_link_libraries(${PROJECT_NAME}
@@ -129,14 +148,15 @@ IF(WITH_REALSENSE)
             ${RealSense_LIBRARIES}
         )
         MESSAGE(STATUS "Found RealSense: ${RealSense_INCLUDE_DIRS}")
-    ENDIF(RealSense_FOUND)
-ENDIF(WITH_REALSENSE)
+    endif(RealSense_FOUND)
+endif(WITH_REALSENSE)
 
 # RealSense2
+# Currently not supported - but it will be in the future
 #FIND_PACKAGE(RealSense2 QUIET)
-#IF(RealSense2_FOUND)
+#if(RealSense2_FOUND)
 #    MESSAGE(STATUS "Found RealSense2: ${RealSense2_INCLUDE_DIRS}")
-#ENDIF(RealSense2_FOUND)
+#endif(RealSense2_FOUND)
 
 install(TARGETS ${PROJECT_NAME} DESTINATION bin)
 

@@ -1,5 +1,6 @@
 # Copyright (c) 2015 Damien Buhl (alias daminetreg)
 # All rights reserved.
+# https://github.com/ruslo/hunter
 
 # Try to find Avahi client and libdns_sd_compat library.
 # It can be used as :
