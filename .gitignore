@@ -2,39 +2,10 @@
 *.lo
 *.la
 *.a
-/*.tar.xz
-/*.md5sum
 .deps/
 .libs/
 .dirstamp
-/Makefile
-Makefile.in
 
-/aclocal.m4
-/autom4te.cache
-/build-aux/
-/dronecode-camera-manager.service
-/config.h
-/config.h.in
-/config.log
-/config.status
-/configure
-/include/mavlink
-/libtool
-/perf.data
-/perf.data.old
-/stamp-h1
-/CMakeCache.txt
-/build
+build
 
-*~
-.*.swp
-cscope.out
-tags
 
-/src/CameraManager
-/dcm
-/test/test-camera-parameters
-/test/test-custom-stream
-/test/test-mavlink-protocol
-/test/test-rtsp-udp-stream-discovery
