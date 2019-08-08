@@ -68,12 +68,6 @@ private:
     void _image_captured_cb(image_callback_t cb_data, int result, int seq_num);
     void _handle_request_camera_capture_status(const struct sockaddr_in &addr,
                                                mavlink_command_long_t &cmd);
-#if 0
-    void _handle_camera_video_stream_request(const struct sockaddr_in &addr, int command,
-                                             unsigned int camera_id, unsigned int action);
-    void _handle_camera_set_video_stream_settings(const struct sockaddr_in &addr,
-                                                  mavlink_message_t *msg);
-#endif
     void _handle_param_ext_request_read(const struct sockaddr_in &addr, mavlink_message_t *msg);
     void _handle_param_ext_request_list(const struct sockaddr_in &addr, mavlink_message_t *msg);
     void _handle_param_ext_set(const struct sockaddr_in &addr, mavlink_message_t *msg);
