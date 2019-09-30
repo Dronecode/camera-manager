@@ -3,8 +3,8 @@
 # are case insensitive, so `Key=Value` is the same as `key=value`.
 #
 # [This-is-a-section]
-# ThisIsAKey=ThisIsAValuye
-#
+# ThisIsAKey=ThisIsAValue
+# <ThisIsAnVariable>=ThisIsAValue
 # Following specifications of expected sessions and key/values.
 #
 # Section [Mavlink]:
@@ -59,6 +59,7 @@
 # Keys:
 #  <camera-device-id>
 #      URI for the Camera Definition File of the camera device <camera-device-id>
+# video0 = http://ipofdronefromgroundstation/video0_camera_definition.xml
 #       
 #
 # Section [gazebo]:
@@ -146,3 +147,13 @@
 #       Location of the video file to write
 #       Default: /tmp/
 #       Possible Values: The path that is accessible and writeable
+#
+# Section [rtsp]:
+#
+# Keys:
+#   pipeline
+#       A gstreamer pipeline to transmit the video to the ground station.
+#       Default: none
+# [rtsp]
+# pipeline=v4l2src device=/dev/video0 ! videoconvert ! video/x-raw, format=I420 ! x264enc speed-preset=ultrafast tune=zerolatency ! rtph264pay name=pay0
+#
