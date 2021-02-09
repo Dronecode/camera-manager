@@ -16,6 +16,23 @@
  * limitations under the License.
  */
 #pragma once
+/**
+ *  The VideoStreamInfo structure is used to hold the Streaming information.
+ */
+struct VideoStreamInfo{
+  uint8_t stream_id;		/**Video Stream ID (1 for first, 2 for second, etc.)*/
+  uint8_t count	;		/**Number of streams available.*/
+  uint8_t type	;		/**VIDEO_STREAM_TYPE	Type of stream.*/
+  uint16_t flags;		/**VIDEO_STREAM_STATUS_FLAGS	Bitmap of stream status flags.*/
+  float framerate;		/**Hz		Frame rate.*/
+  uint16_t resolution_h;	/**pix		Horizontal resolution.*/
+  uint16_t resolution_v	;	/**pix		Vertical resolution.*/
+  uint32_t bitrate	;	/**bits/s		Bit rate.*/
+  uint16_t rotation	;	/**deg		Video image rotation clockwise.*/
+  uint16_t hfov	;		/**deg		Horizontal Field of view.*/
+  char name [32]	;	/**Stream name.*/
+  char uri [160]	;	/**Video stream URI (TCP or RTSP URI ground station should connect to) or port number (UDP port ground station should listen to).*/
+};
 
 class VideoStream {
 public:
@@ -26,6 +43,7 @@ public:
 
     virtual int init() = 0;
     virtual int uninit() = 0;
+    virtual int getInfo(VideoStreamInfo &vidStreamInfo) = 0;
     virtual int start() = 0;
     virtual int stop() = 0;
     virtual int getState() = 0;

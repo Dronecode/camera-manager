@@ -55,6 +55,8 @@ private:
     void _handle_mavlink_message(const struct sockaddr_in &addr, mavlink_message_t *msg);
     void _handle_request_camera_information(const struct sockaddr_in &addr,
                                             mavlink_command_long_t &cmd);
+    void _handle_request_video_stream_information(const struct sockaddr_in &addr,
+                                            mavlink_command_long_t &cmd);
     void _handle_request_camera_settings(const struct sockaddr_in &addr,
                                          mavlink_command_long_t &cmd);
     void _handle_request_storage_information(const struct sockaddr_in &addr,

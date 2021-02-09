@@ -143,6 +143,55 @@ void MavlinkServer::_handle_request_camera_information(const struct sockaddr_in 
     _send_ack(addr, cmd.command, cmd.target_component, success);
 }
 
+void MavlinkServer::_handle_request_video_stream_information(const struct sockaddr_in &addr,
+                                                       mavlink_command_long_t &cmd)
+{
+    log_debug("%s", __func__);
+
+    mavlink_message_t msg;
+    bool success = false;
+
+    CameraComponent *tgtComp = getCameraComponent(cmd.target_component);
+    if (tgtComp) {
+      const CameraInfo &camInfo = tgtComp->getCameraInfo();
+      const VideoStreamInfo &vidInfo = tgtComp->getVideoStreamInfo();
+      log_warning("stream_id:	%d",vidInfo.stream_id);/**Video Stream ID (1 for first, 2 for second, etc.)*/
+      log_warning("count:	%d",vidInfo.count);/**Number of streams available.*/
+      log_warning("type:	%d",vidInfo.type);/**VIDEO_STREAM_TYPE type of stream.*/
+      log_warning("flags:	%d",vidInfo.flags);/**VIDEO_STREAM_STATUS_FLAGS Bitmap of stream status flags.*/
+      log_warning("framerate:	%d",vidInfo.framerate);/**Hz		Frame rate.*/
+      log_warning("resolution_h:%d",vidInfo.resolution_h);/**pix		Horizontal resolution.*/
+      log_warning("resolution_v:%d",vidInfo.resolution_v);/**pix		Vertical resolution.*/
+      log_warning("bitrate:	%d",vidInfo.bitrate);/**bits/s		Bit rate.*/
+      log_warning("rotation:	%d",vidInfo.rotation);/**deg		Video image rotation clockwise.*/
+      log_warning("hfov:	%d",vidInfo.hfov);/**deg		Horizontal Field of view.*/
+      log_warning("name [32]:	%s",vidInfo.name);/**Stream name.*/
+      log_warning("uri [160]:	%s",vidInfo.uri);/**Video stream URI (TCP or RTSP URI ground station should connect to) or port number (UDP port ground station should listen to).*/
+      mavlink_msg_video_stream_information_pack(_system_id, cmd.target_component, &msg,
+						(const uint8_t )vidInfo.stream_id,
+						(const uint8_t )vidInfo.count,
+						(const uint8_t )vidInfo.type,
+						(const uint16_t )vidInfo.flags,
+						(const float)vidInfo.framerate,
+						(const uint16_t )vidInfo.resolution_h,
+						(const uint16_t )vidInfo.resolution_v,
+						(const uint32_t )vidInfo.bitrate,
+						(const uint16_t )vidInfo.rotation,
+						(const uint16_t )vidInfo.hfov,
+						(const char *)vidInfo.name,
+						(const char *)vidInfo.uri);
+						
+         if (!_send_mavlink_message(&addr, msg)) {
+             log_error("Sending video stream information failed for camera %d.", cmd.target_component);
+             return;
+         }
+
+         success = true;
+    }
+
+    _send_ack(addr, cmd.command, cmd.target_component, success);
+}
+
 void MavlinkServer::_handle_request_camera_settings(const struct sockaddr_in &addr,
                                                     mavlink_command_long_t &cmd)
 {
@@ -519,6 +568,7 @@ void MavlinkServer::_handle_mavlink_message(const struct sockaddr_in &addr, mavl
             this->_handle_request_camera_information(addr, cmd);
             break;
         case MAV_CMD_REQUEST_VIDEO_STREAM_INFORMATION:
+	    this->_handle_request_video_stream_information(addr, cmd);
             break;
         case MAV_CMD_REQUEST_CAMERA_SETTINGS:
             this->_handle_request_camera_settings(addr, cmd);

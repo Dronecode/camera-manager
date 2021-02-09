@@ -72,10 +72,12 @@ static std::string getGstVideoEncoder(CameraParameters::VIDEO_CODING_FORMAT encF
 
     switch (encFormat) {
     case CameraParameters::VIDEO_CODING_AVC:
-        enc = std::string("vaapih264enc");
+      //        enc = std::string("vaapih264enc");
+        enc = std::string("x264enc speed-preset=ultrafast tune=zerolatency");
         break;
     default:
-        enc = std::string("vaapih264enc");
+      //        enc = std::string("vaapih264enc");
+        enc = std::string("x264enc speed-preset=ultrafast tune=zerolatency");
         break;
     }
 
@@ -207,6 +209,28 @@ int VideoStreamRtsp::uninit()
     setState(STATE_IDLE);
     return 0;
 }
+
+int VideoStreamRtsp::getInfo(VideoStreamInfo &vidStreamInfo)
+{
+  log_info("[%s::%s]", typeid(this).name(), __func__);
+     
+     vidStreamInfo.stream_id=1;
+     vidStreamInfo.count=1;
+     vidStreamInfo.type=0;
+     vidStreamInfo.flags=0;
+     vidStreamInfo.framerate=0;
+     vidStreamInfo.resolution_h=mWidth;
+     vidStreamInfo.resolution_v=mHeight;
+     vidStreamInfo.bitrate=0;
+     vidStreamInfo.rotation=0;
+     vidStreamInfo.hfov=0;
+     strncpy((char *)vidStreamInfo.name, mPath.c_str(), sizeof(vidStreamInfo.name));
+     vidStreamInfo.name[sizeof(vidStreamInfo.name) - 1] = 0;log_warning("name [32]:	%s",vidStreamInfo.name);
+     sprintf((char *)vidStreamInfo.uri,"rtsp://%s:%d%s",mHost.c_str(),mPort,mPath.c_str());
+     vidStreamInfo.uri[sizeof(vidStreamInfo.uri) - 1] = 0;
+     return this->getState();
+}
+
 
 int VideoStreamRtsp::start()
 {
@@ -357,17 +381,23 @@ std::string VideoStreamRtsp::getGstPipeline(std::map<std::string, std::string> &
 {
     std::string name;
     std::string source;
+    log_warning("%s:%s", __func__, name.c_str());
+
     if (mCamDev->isGstV4l2Src()) {
         source = "v4l2src device=/dev/" + mCamDev->getDeviceId();
     } else {
         source = "appsrc name=mysrc";
     }
-
+    log_warning("source : %s", source.c_str());
+    log_warning("convertor : %s", getGstVideoConvertor().c_str());
+    log_warning("cap : %s",  getGstVideoConvertorCaps(params, mWidth, mHeight).c_str());
+    log_warning("encoder : %s",  getGstVideoEncoder(mEncFormat).c_str());
+    log_warning("sink : %s",  getGstRtspVideoSink().c_str());
+    
     name = source + " ! " + getGstVideoConvertor() + " ! "
         + getGstVideoConvertorCaps(params, mWidth, mHeight) + " ! " + getGstVideoEncoder(mEncFormat)
         + " ! " + getGstRtspVideoSink();
 
-    log_debug("%s:%s", __func__, name.c_str());
     return name;
 }
 

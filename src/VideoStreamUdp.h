@@ -31,6 +31,7 @@ public:
 
     int init();
     int uninit();
+    int getInfo(VideoStreamInfo &vidStreamInfo);
     int start();
     int stop();
     int getState();
