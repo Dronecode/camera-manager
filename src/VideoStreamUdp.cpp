@@ -58,6 +58,30 @@ int VideoStreamUdp::uninit()
     return 0;
 }
 
+int VideoStreamUdp::getInfo(VideoStreamInfo &vidStreamInfo)
+{
+     log_debug("%s::%s", typeid(this).name(), __func__);
+     vidStreamInfo.stream_id=1;
+     vidStreamInfo.count=1;
+     vidStreamInfo.type=0;
+     vidStreamInfo.flags=0;
+     vidStreamInfo.framerate=0;
+     vidStreamInfo.resolution_h=0;
+     vidStreamInfo.resolution_v=0;
+     vidStreamInfo.bitrate=0;
+     vidStreamInfo.rotation=0;
+     vidStreamInfo.hfov=0;
+     strncpy((char *)vidStreamInfo.name, "dummy", sizeof(vidStreamInfo.name));
+     vidStreamInfo.name[sizeof(vidStreamInfo.name) - 1] = 0;
+     strncpy((char *)vidStreamInfo.uri, "none", sizeof(vidStreamInfo.uri));
+     vidStreamInfo.uri[sizeof(vidStreamInfo.uri) - 1] = 0;
+    // vidStreamInfo.name="";
+     // vidStreamInfo.uri="";
+     return this->getState();
+}
+
+
+
 int VideoStreamUdp::start()
 {
     log_info("%s::%s", typeid(this).name(), __func__);

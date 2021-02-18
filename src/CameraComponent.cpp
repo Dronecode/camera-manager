@@ -126,6 +126,14 @@ const StorageInfo &CameraComponent::getStorageInfo() const
     return mStoreInfo;
 }
 
+VideoStreamInfo &CameraComponent::getVideoStreamInfo()
+{
+   log_info("[%s::%s]", typeid(this).name(), __func__);
+    if(mVidStream) 
+        mVidStream->getInfo(mVidStreamInfo);
+    return mVidStreamInfo;
+}
+
 const std::map<std::string, std::string> &CameraComponent::getParamList() const
 {
     return mCamParam.getParameterList();
