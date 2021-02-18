@@ -1,3 +1,5 @@
+# THIS REPOSITORY HAS BEEN DEPRECATED
+
 # Dronecode Camera Manager
 
 [![Build Status](https://travis-ci.org/Dronecode/camera-manager.svg?branch=master)](https://travis-ci.org/intel/camera-streaming-daemon)
